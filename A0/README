@@ -1,0 +1,7 @@
+--COMPILATION--
+default is ok
+premake4 gmake
+make
+
+--MANUAL--
+Rotation bounds are set from 0 rad to 6.28 rad with the assumption that 6.28 is close enough to 2pi.
