@@ -64,6 +64,7 @@ void A1::init()
 		glm::radians( 45.0f ),
 		float( m_framebufferWidth ) / float( m_framebufferHeight ),
 		1.0f, 1000.0f );
+
 }
 
 void A1::initGrid()
@@ -207,6 +208,61 @@ void A1::draw()
 		glDrawArrays( GL_LINES, 0, (3+DIM)*4 );
 
 		// Draw the cubes
+		GLfloat cube_vertices[] = {
+		-1.0f,-1.0f,-1.0f, // triangle 1 : begin
+   		-1.0f,-1.0f, 1.0f,
+    		-1.0f, 1.0f, 1.0f, // triangle 1 : end
+    		1.0f, 1.0f,-1.0f, // triangle 2 : begin
+    		-1.0f,-1.0f,-1.0f,
+    -		1.0f, 1.0f,-1.0f, // triangle 2 : end
+    		1.0f,-1.0f, 1.0f,
+    		-1.0f,-1.0f,-1.0f,
+    		1.0f,-1.0f,-1.0f,
+    		1.0f, 1.0f,-1.0f,
+    		1.0f,-1.0f,-1.0f,
+    		-1.0f,-1.0f,-1.0f,
+    		-1.0f,-1.0f,-1.0f,
+    		-1.0f, 1.0f, 1.0f,
+    		-1.0f, 1.0f,-1.0f,
+    		1.0f,-1.0f, 1.0f,
+    		-1.0f,-1.0f, 1.0f,
+    		-1.0f,-1.0f,-1.0f,
+    		-1.0f, 1.0f, 1.0f,
+    		-1.0f,-1.0f, 1.0f,
+    		1.0f,-1.0f, 1.0f,
+    		1.0f, 1.0f, 1.0f,
+    		1.0f,-1.0f,-1.0f,
+    		1.0f, 1.0f,-1.0f,
+    		1.0f,-1.0f,-1.0f,
+    		1.0f, 1.0f, 1.0f,
+    		1.0f,-1.0f, 1.0f,
+    		1.0f, 1.0f, 1.0f,
+    		1.0f, 1.0f,-1.0f,
+    		-1.0f, 1.0f,-1.0f,
+    		1.0f, 1.0f, 1.0f,
+    		-1.0f, 1.0f,-1.0f,
+    		-1.0f, 1.0f, 1.0f,
+    		1.0f, 1.0f, 1.0f,
+    		-1.0f, 1.0f, 1.0f,
+    		1.0f,-1.0f, 1.0f };
+
+		GLuint vbo;
+		GLuint vao;
+		glGenBuffers( 1, &vbo );
+		glBindBuffer( GL_ARRAY_BUFFER, vbo );
+		glBufferData( GL_ARRAY_BUFFER, sizeof(cube_vertices),
+			cube_vertices, GL_STATIC_DRAW );
+
+		glGenVertexArrays( 1, &vao );
+		glBindVertexArray( vao );
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, 0, 0, cube_vertices);
+   		 //glEnableVertexAttribArray(ATTRIB_VERTEX);
+		//glBindVertexArray(cube_vertices);
+		//glEnableVertexAttribArray(0); //?
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glDrawArrays( GL_TRIANGLES, 0, 12*3);
+
 		// Highlight the active square.
 	m_shader.disable();
 
