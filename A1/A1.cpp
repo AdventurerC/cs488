@@ -141,120 +141,50 @@ void A1::push_vertex(GLfloat* cube, GLfloat* vertex, int &index){
 void A1::drawCube(int x, int z){
 	//std::vector<GLfloat*> cube_vertices;
 	int y = height[x][z];
+	int x1 = x+1;
+	int z1 = z+1;
 	if (y <= 0) return;
 	//cube_vertices.push_back({x, 0, z});
 	//cube_vertices.push_back({})
 
-	GLfloat v[8][3] = {
-		{x, y, z}, //-1, 1, -1		0
-		{x, y, z+1}, //-1, 1, 1		1
-		{x+1, y, z+1}, //1, 1, 1	2
-		{x+1, y, z}, // 1, 1, -1	3
-		{x, 0, z}, //-1, -1, -1		4
-		{x, 0, z+1}, //-1, -1, 1	5
-		{x+1, 0, z+1}, //1, -1, 1	6
-		{x+1, 0, z} //1, -1, -1	7
+	GLfloat cube_vertices[] = {
+		x, 0, z,//-1.0f,-1.0f,-1.0f, // triangle 1 : begin
+   		x, 0, z1,//-1.0f,-1.0f, 1.0f,
+    	x, y, z1,	//-1.0f, 1.0f, 1.0f, // triangle 1 : end
+    	x1, y, z,//	1.0f, 1.0f,-1.0f, // triangle 2 : begin
+    	x, 0, z,//	-1.0f,-1.0f,-1.0f,
+    	x, y, z,//	-1.0f, 1.0f,-1.0f, // triangle 2 : end
+    	x1, 0, z1,//	1.0f,-1.0f, 1.0f,
+    	x, 0, z,//	-1.0f,-1.0f,-1.0f,
+    	x1, 0, z,//	1.0f,-1.0f,-1.0f,
+    	x1, y, z,//	1.0f, 1.0f,-1.0f,
+    	x1, 0, z,//	1.0f,-1.0f,-1.0f,
+    	x, 0, z,//	-1.0f,-1.0f,-1.0f,
+    	x, 0, z,//	-1.0f,-1.0f,-1.0f,
+    	x, y, z1,//	-1.0f, 1.0f, 1.0f,
+    	x, y, z,//	-1.0f, 1.0f,-1.0f,
+    	x1, 0, z1,//	1.0f,-1.0f, 1.0f,
+    	x, 0, z1,//	-1.0f,-1.0f, 1.0f,
+    	x, 0, z,//	-1.0f,-1.0f,-1.0f,
+    	x, y, z1,//	-1.0f, 1.0f, 1.0f,
+    	x, 0, z1,//	-1.0f,-1.0f, 1.0f,
+    	x1, 0, z1,//	1.0f,-1.0f, 1.0f,
+    	x1, y, z1,//	1.0f, 1.0f, 1.0f,
+    	x1, 0, z,//	1.0f,-1.0f,-1.0f,
+    	x1, y, z,//	1.0f, 1.0f,-1.0f,
+    	x1, 0, z,//	1.0f,-1.0f,-1.0f,
+    	x1, y, z1,//	1.0f, 1.0f, 1.0f,
+    	x1, 0, z1,//	1.0f,-1.0f, 1.0f,
+    	x1, y, z1,///	1.0f, 1.0f, 1.0f,
+    	x1, y, z,///	1.0f, 1.0f,-1.0f,
+    	x, y, z,//	-1.0f, 1.0f,-1.0f,
+    	x1, y, z1,//	1.0f, 1.0f, 1.0f,
+    	x, y, z,//	-1.0f, 1.0f,-1.0f,
+    	x, y, z1,//	-1.0f, 1.0f, 1.0f,
+    	x1, y, z1,//	1.0f, 1.0f, 1.0f,
+    	x, y, z1,//	-1.0f, 1.0f, 1.0f,
+    	x1, 0, z1//	1.0f,-1.0f, 1.0f };
 	};
-
-	GLfloat* cube_vertices;
-	int i=0;
-	push_vertex(cube_vertices,v[4],i);
-	push_vertex(cube_vertices,v[5],i);
-	push_vertex(cube_vertices,v[1],i);
-
-	push_vertex(cube_vertices,v[3],i);
-	push_vertex(cube_vertices,v[4],i);
-	push_vertex(cube_vertices,v[0],i);
-
-	push_vertex(cube_vertices,v[6],i);
-	push_vertex(cube_vertices,v[4],i);
-	push_vertex(cube_vertices,v[7],i);
-
-	push_vertex(cube_vertices,v[3],i);
-	push_vertex(cube_vertices,v[7],i);
-	push_vertex(cube_vertices,v[4],i);
-
-	push_vertex(cube_vertices,v[4],i);
-	push_vertex(cube_vertices,v[1],i);
-	push_vertex(cube_vertices,v[0],i);
-
-	push_vertex(cube_vertices,v[6],i);
-	push_vertex(cube_vertices,v[5],i);
-	push_vertex(cube_vertices,v[4],i);
-
-	push_vertex(cube_vertices,v[1],i);
-	push_vertex(cube_vertices,v[5],i);
-	push_vertex(cube_vertices,v[6],i);
-
-	push_vertex(cube_vertices,v[2],i);
-	push_vertex(cube_vertices,v[7],i);
-	push_vertex(cube_vertices,v[3],i);
-
-	push_vertex(cube_vertices,v[7],i);
-	push_vertex(cube_vertices,v[2],i);
-	push_vertex(cube_vertices,v[6],i);
-
-	push_vertex(cube_vertices,v[2],i);
-	push_vertex(cube_vertices,v[3],i);
-	push_vertex(cube_vertices,v[0],i);
-
-	push_vertex(cube_vertices,v[2],i);
-	push_vertex(cube_vertices,v[0],i);
-	push_vertex(cube_vertices,v[1],i);
-
-	push_vertex(cube_vertices,v[2],i);
-	push_vertex(cube_vertices,v[1],i);
-	push_vertex(cube_vertices,v[6],i);
-	//cube_vertices.emplace_back(v[4],v[5],v[1]);
-	//cube_vertices.emplace_back(v[3],v[4],v[0]);
-	//cube_vertices.emplace_back(v[6],v[4],v[7]);
-	//cube_vertices.emplace_back(v[3],v[7],v[4]);
-	//cube_vertices.emplace_back(v[4],v[1],v[0]);
-	//cube_vertices.emplace_back(v[6],v[5],v[4]);
-	//cube_vertices.emplace_back(v[1],v[5],v[6]);
-	//cube_vertices.emplace_back(v[2],v[7],v[3]);
-	//cube_vertices.emplace_back(v[7],v[2],v[6]);
-	//cube_vertices.emplace_back(v[2],v[3],v[0]);
-	//cube_vertices.emplace_back(v[2],v[0],v[1]);
-	//cube_vertices.emplace_back(v[2],v[1],v[6]);
-
-	//GLfloat cube_vertices[] = {
-		//-1.0f,-1.0f,-1.0f, // triangle 1 : begin
-   		//-1.0f,-1.0f, 1.0f,
-    		//-1.0f, 1.0f, 1.0f, // triangle 1 : end
-    	//	1.0f, 1.0f,-1.0f, // triangle 2 : begin
-    	//	-1.0f,-1.0f,-1.0f,
-    	//	-1.0f, 1.0f,-1.0f, // triangle 2 : end
-    	//	1.0f,-1.0f, 1.0f,
-    	//	-1.0f,-1.0f,-1.0f,
-    	//	1.0f,-1.0f,-1.0f,
-    	//	1.0f, 1.0f,-1.0f,
-    	//	1.0f,-1.0f,-1.0f,
-    	//	-1.0f,-1.0f,-1.0f,
-    	//	-1.0f,-1.0f,-1.0f,
-    	//	-1.0f, 1.0f, 1.0f,
-    	//	-1.0f, 1.0f,-1.0f,
-    	//	1.0f,-1.0f, 1.0f,
-    	//	-1.0f,-1.0f, 1.0f,
-    	//	-1.0f,-1.0f,-1.0f,
-    	//	-1.0f, 1.0f, 1.0f,
-    	//	-1.0f,-1.0f, 1.0f,
-    	//	1.0f,-1.0f, 1.0f,
-    	//	1.0f, 1.0f, 1.0f,
-    	//	1.0f,-1.0f,-1.0f,
-    	//	1.0f, 1.0f,-1.0f,
-    	//	1.0f,-1.0f,-1.0f,
-    	//	1.0f, 1.0f, 1.0f,
-    	//	1.0f,-1.0f, 1.0f,
-    	///	1.0f, 1.0f, 1.0f,
-    	///	1.0f, 1.0f,-1.0f,
-    	//	-1.0f, 1.0f,-1.0f,
-    	//	1.0f, 1.0f, 1.0f,
-    	//	-1.0f, 1.0f,-1.0f,
-    	//	-1.0f, 1.0f, 1.0f,
-    	//	1.0f, 1.0f, 1.0f,
-    	//	-1.0f, 1.0f, 1.0f,
-    	//	1.0f,-1.0f, 1.0f };
 
 		GLuint vbo;
 		GLuint vao;
