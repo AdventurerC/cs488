@@ -26,9 +26,11 @@ protected:
 	virtual bool mouseScrollEvent(double xOffSet, double yOffSet) override;
 	virtual bool windowResizeEvent(int width, int height) override;
 	virtual bool keyInputEvent(int key, int action, int mods) override;
-
 private:
 	void initGrid();
+	void drawCube(int x, int z);
+	void push_vertex(GLfloat* cube, GLfloat* vertex, int &index);
+	//void push_triangle(GLfloat* cube, GLfloat *v0, GLfloat *v1, GLfloat *v2, int &index);
 
 	// Fields related to the shader and uniforms.
 	ShaderProgram m_shader;
@@ -42,11 +44,18 @@ private:
 	GLuint m_grid_vao; // Vertex Array Object
 	GLuint m_grid_vbo; // Vertex Buffer Object
 
+	GLuint m_cube_vao; // Vertex Array Object
+	GLuint m_cube_vbo; // Vertex Buffer Object
+
 	// Matrices controlling the camera and projection.
 	glm::mat4 proj;
 	glm::mat4 view;
 
 	float colour[3];
 	int current_col;
-	//GLfloat cube_vertices[];
+	int height[16][16];
+	
+	
+	//int*[] grid_vertices;
+
 };
