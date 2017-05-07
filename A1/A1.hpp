@@ -30,6 +30,7 @@ private:
 	void initGrid();
 	void drawCube(int x, int z);
 	void drawIndicator();
+	void highlightCells(int x, int x1, float y, int z, int z1, float r, float g, float b);
 	
 	// Fields related to the shader and uniforms.
 	ShaderProgram m_shader;

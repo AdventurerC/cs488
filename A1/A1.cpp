@@ -189,33 +189,32 @@ void A1::drawCube(int x, int z){
 
 		
 		glEnableVertexAttribArray(0);
-		//glVertexAttribPointer(0, 3, GL_FLOAT, 0, 0, cube_vertices);
-   		 //glEnableVertexAttribArray(ATTRIB_VERTEX);
-		//glBindVertexArray(cube_vertices);
-		//glEnableVertexAttribArray(0); //?
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-		int index = _grid.getColour(_x, _z);
+		int index = _grid.getColour(x, z);
 
 		glUniform3f(col_uni, colour[index][0],  colour[index][1],
 				 colour[index][2]);
 
 		glDrawArrays( GL_TRIANGLES, 0, 36);
+
+		if (x == _x && z == _z && y > 0){
+			glUniform3f(col_uni, 0.0f, 0.0f, 0.0f);
+			glDrawArrays( GL_LINES, 0, 36);
+		}
+
 		CHECK_GL_ERRORS;
 }
 
-void A1::drawIndicator(){
-	drawCube(_x,_y);
-	glUniform3f(col_uni, 0.0f, 0.0f, 0.0f);
-	glDrawArrays( GL_LINES, 0, 36);
-	int y = _grid.getHeight(_x, _y);
+void A1::highlightCells(int x, int x1, float y, int z, int z1, float r, float g, float b){
+	glUniform3f(col_uni, r, g, b);
 	GLfloat vertext_buf[] = {
-		_x, y, _z,
-		_x, y, _z+1,
-		_x+1, y, _z+1,
-		_x, y, _z,
-		_x+1, y, _z+1,
-		_x+1, y, _z
+		x, y, z,
+		x, y, z1,
+		x1, y, z1,
+		x, y, z,
+		x1, y, z1,
+		x1, y, z
 	};
 
 	GLuint vbo;
@@ -234,6 +233,19 @@ void A1::drawIndicator(){
 	glDrawArrays( GL_TRIANGLES, 0, 12);
 	CHECK_GL_ERRORS;
 	
+}
+
+void A1::drawIndicator(){
+	int y = _grid.getHeight(_x, _z);
+	
+	float indY = y + 0.1;
+
+	highlightCells(_x, _x + 1, indY, _z, _z+1, 0.1, 0.1, 0.1);
+
+	highlightCells(-1, _x, -0.1, _z, _z+1, 0.9, 0.9, 0.9);
+	highlightCells(_x+1, DIM+1, -0.1, _z, _z+1, 0.9, 0.9, 0.9);
+	highlightCells(_x, _x+1, -0.1, -1, _z, 0.9, 0.9, 0.9);	
+	highlightCells(_x, _x+1, -0.1, _z+1, DIM+1, 0.9, 0.9, 0.9);
 }
 
 //----------------------------------------------------------------------------------------
@@ -331,7 +343,7 @@ void A1::draw()
 		//height[1][1] = 2;
 		for (int i = 0; i < DIM; i++)
 			for (int j = 0; j < DIM; j++)
-				if (i != _x || j != _z)
+				//if (i != _x || j != _z)
 					drawCube(i, j);
 
 		// Highlight the active square.
