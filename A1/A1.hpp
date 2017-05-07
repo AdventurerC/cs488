@@ -29,6 +29,7 @@ protected:
 private:
 	void initGrid();
 	void drawCube(int x, int z);
+	void drawIndicator();
 	
 	// Fields related to the shader and uniforms.
 	ShaderProgram m_shader;
@@ -46,7 +47,7 @@ private:
 	glm::mat4 proj;
 	glm::mat4 view;
 
-	float colour[3];
+	float colour[8][3];
 	int current_col;
 	
 	int height[16][16];

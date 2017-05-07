@@ -23,9 +23,9 @@ A1::A1()
 	_z(0),
 	_y(0)
 {
-	colour[0] = 0.0f;
-	colour[1] = 0.0f;
-	colour[2] = 0.0f;
+	colour[0][0] = 0.5f;
+	colour[0][1] = 0.5f;
+	colour[0][2] = 0.5f;
 
 	for (int i = 0; i < DIM; i++){
 		for (int j = 0; j < DIM; j++){
@@ -194,8 +194,46 @@ void A1::drawCube(int x, int z){
 		//glBindVertexArray(cube_vertices);
 		//glEnableVertexAttribArray(0); //?
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+		int index = _grid.getColour(_x, _z);
+
+		glUniform3f(col_uni, colour[index][0],  colour[index][1],
+				 colour[index][2]);
+
 		glDrawArrays( GL_TRIANGLES, 0, 36);
 		CHECK_GL_ERRORS;
+}
+
+void A1::drawIndicator(){
+	drawCube(_x,_y);
+	glUniform3f(col_uni, 0.0f, 0.0f, 0.0f);
+	glDrawArrays( GL_LINES, 0, 36);
+	int y = _grid.getHeight(_x, _y);
+	GLfloat vertext_buf[] = {
+		_x, y, _z,
+		_x, y, _z+1,
+		_x+1, y, _z+1,
+		_x, y, _z,
+		_x+1, y, _z+1,
+		_x+1, y, _z
+	};
+
+	GLuint vbo;
+	GLuint vao;
+	glGenVertexArrays( 1, &vao );
+	glBindVertexArray( vao );
+
+	glGenBuffers( 1, &vbo );
+	glBindBuffer( GL_ARRAY_BUFFER, vbo );
+	glBufferData( GL_ARRAY_BUFFER, sizeof(vertext_buf),
+			vertext_buf, GL_STATIC_DRAW );
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glDrawArrays( GL_TRIANGLES, 0, 12);
+	CHECK_GL_ERRORS;
+	
 }
 
 //----------------------------------------------------------------------------------------
@@ -239,10 +277,11 @@ void A1::guiLogic()
 		// displayed.
 
 		ImGui::PushID( 0 );
-		ImGui::ColorEdit3( "##Colour", colour );
+		ImGui::ColorEdit3( "##Colour", colour[0] );
 		ImGui::SameLine();
 		if( ImGui::RadioButton( "##Col", &current_col, 0 ) ) {
 			// Select this colour.
+			_grid.setColour(_x, _z, current_col);
 		}
 		ImGui::PopID();
 
@@ -292,9 +331,11 @@ void A1::draw()
 		//height[1][1] = 2;
 		for (int i = 0; i < DIM; i++)
 			for (int j = 0; j < DIM; j++)
-				drawCube(i, j);
+				if (i != _x || j != _z)
+					drawCube(i, j);
 
 		// Highlight the active square.
+		drawIndicator();
 	m_shader.disable();
 
 	// Restore defaults
