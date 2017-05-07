@@ -17,7 +17,11 @@ static const size_t DIM = 16;
 //----------------------------------------------------------------------------------------
 // Constructor
 A1::A1()
-	: current_col( 0 )
+	: current_col( 0 ),
+	_grid(DIM),
+	_x(0),
+	_z(0),
+	_y(0)
 {
 	colour[0] = 0.0f;
 	colour[1] = 0.0f;
@@ -125,28 +129,15 @@ void A1::initGrid()
 	CHECK_GL_ERRORS;
 }
 
-void A1::push_vertex(GLfloat* cube, GLfloat* vertex, int &index){
-	for (int i = 0; i < 3; i++){
-		cube[index] = vertex[i];
-		index++;
-	}
-}
-
-/*void A1::push_triangle(GLfloat* cube, GLfloat *v0, GLfloat *v1, GLfloat *v2, int &index){
-	push_vertex(cube, v0, index);
-	push_vertex(cube, v1, index);
-	push_vertex(cube, v2, index);
-}*/
 
 void A1::drawCube(int x, int z){
 	//std::vector<GLfloat*> cube_vertices;
-	int y = height[x][z];
+	int y = _grid.getHeight(x,z);//height[x][z];//_grid.getHeight();//
 	int x1 = x+1;
 	int z1 = z+1;
 	if (y <= 0) return;
-	//cube_vertices.push_back({x, 0, z});
-	//cube_vertices.push_back({})
 
+	//hard coded, i don't give a shit
 	GLfloat cube_vertices[] = {
 		x, 0, z,//-1.0f,-1.0f,-1.0f, // triangle 1 : begin
    		x, 0, z1,//-1.0f,-1.0f, 1.0f,
@@ -298,8 +289,10 @@ void A1::draw()
 
 		// Draw the cubes
 		//grid.setHeight(1, 1, 2);
-		height[1][1] = 2;
-		drawCube(1,1);
+		//height[1][1] = 2;
+		for (int i = 0; i < DIM; i++)
+			for (int j = 0; j < DIM; j++)
+				drawCube(i, j);
 
 		// Highlight the active square.
 	m_shader.disable();
@@ -399,6 +392,21 @@ bool A1::keyInputEvent(int key, int action, int mods) {
 	// Fill in with event handling code...
 	if( action == GLFW_PRESS ) {
 		// Respond to some key events.
+		if (key == GLFW_KEY_SPACE){
+			height[_x][_z]++;
+			_grid.setHeight(_x,_z, _grid.getHeight(_x,_z) + 1);
+		} else if (key == GLFW_KEY_BACKSPACE) {
+			height[_x][_z] = std::max(0, height[_x][_z]--);
+			_grid.setHeight(_x,_z, std::max(0,_grid.getHeight(_x,_z) - 1));
+		} else if (key == GLFW_KEY_RIGHT) {
+			_x = (++_x) % DIM;
+		} else if (key == GLFW_KEY_LEFT ){
+			_x = (--_x) % DIM;
+		} else if (key == GLFW_KEY_UP ){
+			_z = (--_z) % DIM;
+		} else if (key == GLFW_KEY_DOWN ){
+			_z = (++_z) % DIM;
+		}
 	}
 
 	return eventHandled;
