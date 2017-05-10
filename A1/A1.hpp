@@ -54,7 +54,15 @@ private:
 	int height[16][16];
 	int _x;
 	int _z;
-	int _y;
+
+	bool _inCopyMode;
+	bool _inRotateMode;
+
+	double _mouseX;
+	double _mouseY;
+
+	double _rotateX;
+	double _rotateY;
 
 	
 	Grid _grid;

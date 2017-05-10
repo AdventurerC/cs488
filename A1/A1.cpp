@@ -13,6 +13,7 @@ using namespace glm;
 using namespace std;
 
 static const size_t DIM = 16;
+const float PI = 3.14159265f;
 
 //----------------------------------------------------------------------------------------
 // Constructor
@@ -21,17 +22,44 @@ A1::A1()
 	_grid(DIM),
 	_x(0),
 	_z(0),
-	_y(0)
+	_inCopyMode(false),
+	_inRotateMode(false),
+	_mouseX(0),
+	_mouseY(0),
+	_rotateX(0),
+	_rotateY(0)
 {
 	colour[0][0] = 0.5f;
 	colour[0][1] = 0.5f;
 	colour[0][2] = 0.5f;
 
-	for (int i = 0; i < DIM; i++){
-		for (int j = 0; j < DIM; j++){
-			height[i][j] = 0;
-		}
-	}
+	colour[1][0] = 0.1f;
+	colour[1][1] = 0.5f;
+	colour[1][2] = 0.5f;
+
+	colour[2][0] = 0.5f;
+	colour[2][1] = 0.1f;
+	colour[2][2] = 0.5f;
+
+	colour[3][0] = 0.5f;
+	colour[3][1] = 0.5f;
+	colour[3][2] = 0.1f;
+
+	colour[4][0] = 0.1f;
+	colour[4][1] = 0.1f;
+	colour[4][2] = 0.5f;
+
+	colour[5][0] = 0.5f;
+	colour[5][1] = 0.1f;
+	colour[5][2] = 0.1f;
+
+	colour[6][0] = 0.1f;
+	colour[6][1] = 0.5f;
+	colour[6][2] = 0.1f;
+
+	colour[7][0] = 0.18f;
+	colour[7][1] = 0.31f;
+	colour[7][2] = 0.31f;
 }
 
 //----------------------------------------------------------------------------------------
@@ -139,42 +167,42 @@ void A1::drawCube(int x, int z){
 
 	//hard coded, i don't give a shit
 	GLfloat cube_vertices[] = {
-		x, 0, z,//-1.0f,-1.0f,-1.0f, // triangle 1 : begin
-   		x, 0, z1,//-1.0f,-1.0f, 1.0f,
-    	x, y, z1,	//-1.0f, 1.0f, 1.0f, // triangle 1 : end
-    	x1, y, z,//	1.0f, 1.0f,-1.0f, // triangle 2 : begin
-    	x, 0, z,//	-1.0f,-1.0f,-1.0f,
-    	x, y, z,//	-1.0f, 1.0f,-1.0f, // triangle 2 : end
-    	x1, 0, z1,//	1.0f,-1.0f, 1.0f,
-    	x, 0, z,//	-1.0f,-1.0f,-1.0f,
-    	x1, 0, z,//	1.0f,-1.0f,-1.0f,
-    	x1, y, z,//	1.0f, 1.0f,-1.0f,
-    	x1, 0, z,//	1.0f,-1.0f,-1.0f,
-    	x, 0, z,//	-1.0f,-1.0f,-1.0f,
-    	x, 0, z,//	-1.0f,-1.0f,-1.0f,
-    	x, y, z1,//	-1.0f, 1.0f, 1.0f,
-    	x, y, z,//	-1.0f, 1.0f,-1.0f,
-    	x1, 0, z1,//	1.0f,-1.0f, 1.0f,
-    	x, 0, z1,//	-1.0f,-1.0f, 1.0f,
-    	x, 0, z,//	-1.0f,-1.0f,-1.0f,
-    	x, y, z1,//	-1.0f, 1.0f, 1.0f,
-    	x, 0, z1,//	-1.0f,-1.0f, 1.0f,
-    	x1, 0, z1,//	1.0f,-1.0f, 1.0f,
-    	x1, y, z1,//	1.0f, 1.0f, 1.0f,
-    	x1, 0, z,//	1.0f,-1.0f,-1.0f,
-    	x1, y, z,//	1.0f, 1.0f,-1.0f,
-    	x1, 0, z,//	1.0f,-1.0f,-1.0f,
-    	x1, y, z1,//	1.0f, 1.0f, 1.0f,
-    	x1, 0, z1,//	1.0f,-1.0f, 1.0f,
-    	x1, y, z1,///	1.0f, 1.0f, 1.0f,
-    	x1, y, z,///	1.0f, 1.0f,-1.0f,
-    	x, y, z,//	-1.0f, 1.0f,-1.0f,
-    	x1, y, z1,//	1.0f, 1.0f, 1.0f,
-    	x, y, z,//	-1.0f, 1.0f,-1.0f,
-    	x, y, z1,//	-1.0f, 1.0f, 1.0f,
-    	x1, y, z1,//	1.0f, 1.0f, 1.0f,
-    	x, y, z1,//	-1.0f, 1.0f, 1.0f,
-    	x1, 0, z1//	1.0f,-1.0f, 1.0f };
+		x, 0, z,
+   		x, 0, z1,
+    	x, y, z1,	
+    	x1, y, z,
+    	x, 0, z,
+    	x, y, z,
+    	x1, 0, z1,
+    	x, 0, z,
+    	x1, 0, z,
+    	x1, y, z,
+    	x1, 0, z,
+    	x, 0, z,
+    	x, 0, z,
+    	x, y, z1,
+    	x, y, z,
+    	x1, 0, z1,
+    	x, 0, z1,
+    	x, 0, z,
+    	x, y, z1,
+    	x, 0, z1,
+    	x1, 0, z1,
+    	x1, y, z1,
+    	x1, 0, z,
+    	x1, y, z,
+    	x1, 0, z,
+    	x1, y, z1,
+    	x1, 0, z1,
+    	x1, y, z1,
+    	x1, y, z,
+    	x, y, z,
+    	x1, y, z1,
+    	x, y, z,
+    	x, y, z1,
+    	x1, y, z1,
+    	x, y, z1,
+    	x1, 0, z1
 	};
 
 		GLuint vbo;
@@ -255,6 +283,9 @@ void A1::drawIndicator(){
 void A1::appLogic()
 {
 	// Place per frame, application logic here ...
+	if (_inCopyMode){
+		//_grid.setHeight(_x,_z,_y);
+	}
 }
 
 //----------------------------------------------------------------------------------------
@@ -288,14 +319,19 @@ void A1::guiLogic()
 		// Prefixing a widget name with "##" keeps it from being
 		// displayed.
 
-		ImGui::PushID( 0 );
-		ImGui::ColorEdit3( "##Colour", colour[0] );
-		ImGui::SameLine();
-		if( ImGui::RadioButton( "##Col", &current_col, 0 ) ) {
-			// Select this colour.
-			_grid.setColour(_x, _z, current_col);
+		for (int i = 0; i < 8; i++) {
+			ImGui::PushID( i );
+			ImGui::ColorEdit3( "##Colour", colour[i] );
+			ImGui::SameLine();
+			if( ImGui::RadioButton( "##Col", &current_col, i ) ) {
+				// Select this colour.
+				_grid.setColour(_x, _z, current_col);
+			}
+			ImGui::PopID();
 		}
-		ImGui::PopID();
+
+
+		
 
 /*
 		// For convenience, you can uncomment this to show ImGui's massive
@@ -343,8 +379,7 @@ void A1::draw()
 		//height[1][1] = 2;
 		for (int i = 0; i < DIM; i++)
 			for (int j = 0; j < DIM; j++)
-				//if (i != _x || j != _z)
-					drawCube(i, j);
+				drawCube(i, j);
 
 		// Highlight the active square.
 		drawIndicator();
@@ -391,6 +426,23 @@ bool A1::mouseMoveEvent(double xPos, double yPos)
 		// Probably need some instance variables to track the current
 		// rotation amount, and maybe the previous X position (so 
 		// that you can rotate relative to the *change* in X.
+
+		if (_inRotateMode) {
+			double deltaX = (xPos - _mouseX)*0.2;
+			double deltaY = (yPos - _mouseY)*0.1;
+			_rotateX += deltaX;
+			_rotateY += deltaY;
+
+			float theta = glm::radians(_rotateX);
+			float phi = glm::radians(_rotateY);
+			
+			view = glm::lookAt(glm::vec3(2*DIM*M_SQRT1_2*sin(theta), float(DIM)*2.0*M_SQRT1_2*cos(phi), 2*DIM*M_SQRT1_2*cos(theta)),
+				glm::vec3(0.0, 0.0, 0.0),
+				glm::vec3(0.0, 1.0, 0.0));
+		}
+
+		_mouseX = xPos;
+		_mouseY = yPos;
 	}
 
 	return eventHandled;
@@ -406,6 +458,17 @@ bool A1::mouseButtonInputEvent(int button, int actions, int mods) {
 	if (!ImGui::IsMouseHoveringAnyWindow()) {
 		// The user clicked in the window.  If it's the left
 		// mouse button, initiate a rotation.
+		if (actions == GLFW_PRESS){
+			if (button == GLFW_MOUSE_BUTTON_LEFT) {
+				_inRotateMode = true;
+			}
+		}
+	}
+
+	if (actions == GLFW_RELEASE){
+		 if (button == GLFW_MOUSE_BUTTON_LEFT) {
+			_inRotateMode = false;
+		}
 	}
 
 	return eventHandled;
@@ -441,24 +504,56 @@ bool A1::windowResizeEvent(int width, int height) {
  */
 bool A1::keyInputEvent(int key, int action, int mods) {
 	bool eventHandled(false);
+	int prevX = _x, prevZ = _z;
 
 	// Fill in with event handling code...
 	if( action == GLFW_PRESS ) {
 		// Respond to some key events.
 		if (key == GLFW_KEY_SPACE){
-			height[_x][_z]++;
 			_grid.setHeight(_x,_z, _grid.getHeight(_x,_z) + 1);
+			_grid.setColour(_x, _z, current_col);
+			eventHandled = true;
 		} else if (key == GLFW_KEY_BACKSPACE) {
-			height[_x][_z] = std::max(0, height[_x][_z]--);
 			_grid.setHeight(_x,_z, std::max(0,_grid.getHeight(_x,_z) - 1));
+			eventHandled = true;
 		} else if (key == GLFW_KEY_RIGHT) {
 			_x = (++_x) % DIM;
+			if (_inCopyMode){
+				_grid.setColour(_x,_z, _grid.getColour(prevX, _z));
+				_grid.setHeight(_x,_z, _grid.getHeight(prevX,_z));
+			}
+			eventHandled = true;
 		} else if (key == GLFW_KEY_LEFT ){
 			_x = (--_x) % DIM;
+			if (_inCopyMode){
+				_grid.setColour(_x,_z, _grid.getColour(prevX, _z));
+				_grid.setHeight(_x,_z, _grid.getHeight(prevX,_z));
+			}
+			eventHandled = true;
 		} else if (key == GLFW_KEY_UP ){
 			_z = (--_z) % DIM;
+			if (_inCopyMode){
+				_grid.setColour(_x,_z, _grid.getColour(_x, prevZ));
+				_grid.setHeight(_x,_z, _grid.getHeight(_x,prevZ));
+			}
+			eventHandled = true;
 		} else if (key == GLFW_KEY_DOWN ){
 			_z = (++_z) % DIM;
+			if (_inCopyMode){
+				_grid.setColour(_x,_z, _grid.getColour(_x, prevZ));
+				_grid.setHeight(_x,_z, _grid.getHeight(_x,prevZ));
+			}
+			eventHandled = true;
+		} else if (key == GLFW_KEY_LEFT_SHIFT ){
+			_inCopyMode = true;
+			eventHandled = true;
+		}
+	}
+
+	if( action == GLFW_RELEASE ) {
+		if (key == GLFW_KEY_LEFT_SHIFT) {
+			_inCopyMode = false;
+			eventHandled = true;
 		}
 	}
 
