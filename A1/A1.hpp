@@ -71,6 +71,5 @@ private:
 
 	
 	Grid _grid;
-	//int*[] grid_vertices;
 
 };

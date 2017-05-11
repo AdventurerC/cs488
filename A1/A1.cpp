@@ -29,7 +29,7 @@ A1::A1()
 	_rotateX(0),
 	_rotateY(0),
 	_zoom( 0 ),
-	_zoomMultiplier(1.0)
+	_zoomMultiplier(float(DIM)*2.0*M_SQRT1_2)
 {
 	colour[0][0] = 0.5f;
 	colour[0][1] = 0.5f;
@@ -164,12 +164,11 @@ void A1::initGrid()
 
 void A1::drawCube(int x, int z){
 	//std::vector<GLfloat*> cube_vertices;
-	int y = _grid.getHeight(x,z);//height[x][z];//_grid.getHeight();//
+	int y = _grid.getHeight(x,z);
 	int x1 = x+1;
 	int z1 = z+1;
 	if (y <= 0) return;
 
-	//hard coded, i don't give a shit
 	GLfloat cube_vertices[] = {
 		x, 0, z,
    		x, 0, z1,
@@ -335,8 +334,6 @@ void A1::guiLogic()
 		}
 
 
-		
-
 /*
 		// For convenience, you can uncomment this to show ImGui's massive
 		// demonstration window right in your application.  Very handy for
@@ -368,13 +365,9 @@ void A1::draw()
 
 	float theta = glm::radians(_rotateX);
 	float phi = glm::radians(_rotateY);
-	view = glm::lookAt(glm::vec3(2*DIM*M_SQRT1_2*sin(theta), float(DIM)*2.0*M_SQRT1_2*cos(phi), 2*DIM*M_SQRT1_2*cos(theta)),
+	view = glm::lookAt(glm::vec3(_zoomMultiplier*sin(theta), _zoomMultiplier*cos(phi), _zoomMultiplier*cos(theta)),
 		glm::vec3(0.0, 0.0, 0.0),
 		glm::vec3(0.0, 1.0, 0.0));
-
-	for (int i = 0; i < _zoom; i++){
-		view = glm::translate(view, glm::normalize(glm::vec3(sin(theta)*_zoomMultiplier, cos(phi)*_zoomMultiplier, cos(theta)*_zoomMultiplier)));
-	}
 
 	m_shader.enable();
 		glEnable( GL_DEPTH_TEST );
@@ -449,14 +442,7 @@ bool A1::mouseMoveEvent(double xPos, double yPos)
 
 			float theta = glm::radians(_rotateX);
 			float phi = glm::radians(_rotateY);
-
-			view = glm::lookAt(glm::vec3(2*DIM*M_SQRT1_2*sin(theta), float(DIM)*2.0*M_SQRT1_2*cos(phi), 2*DIM*M_SQRT1_2*cos(theta)),
-				glm::vec3(0.0, 0.0, 0.0),
-				glm::vec3(0.0, 1.0, 0.0));
-
-			view = glm::translate(view, glm::normalize(glm::vec3(sin(theta)*_zoomMultiplier, cos(phi)*_zoomMultiplier, cos(theta)*_zoomMultiplier)));
 			
-
 			eventHandled = true;
 		}
 
@@ -503,34 +489,21 @@ bool A1::mouseScrollEvent(double xOffSet, double yOffSet) {
 	bool eventHandled(false);
 
 	// Zoom in or out.
-	_zoom += yOffSet > 0? 1 : -1;
+	_zoom += yOffSet > 0? -1 : 1;
 
-	//_zoom = std::max(1.0, _zoom);
-	//_zoom = std::min(50.0, _zoom);
 
-	if (_zoom >= 0 && _zoom <= 20){
+	if (_zoom >= 0 && _zoom <= 40){
 		float theta = glm::radians(_rotateX);
 		float phi = glm::radians(_rotateY);
 
-		_zoomMultiplier = 0.5;
+		_zoomMultiplier += yOffSet*0.5;
 
-		//_zoomMultiplier = glm::translate(view, glm::normalize(glm::vec3(sin(theta)*yOffSet*0.5, cos(phi)*yOffSet*0.5, cos(theta)*yOffSet*0.5)));
-
-		//view = glm::translate(view, glm::normalize(glm::vec3(sin(theta)*yOffSet*0.5, cos(phi)*yOffSet*0.5, cos(theta)*yOffSet*0.5)));
-		
-		//_zoomMultiplier = inverse(view)*orig_view;
-
-		cout << "_zoom = " << _zoom << endl;
+		//cout << "_zoom = " << _zoom << endl;
 		eventHandled = true;
 	} else {
-		_zoom = std::min(_zoom, 20);
+		_zoom = std::min(_zoom, 40);
 		_zoom = std::max(_zoom, 0);
 	}
-
-	/*proj = glm::perspective(
-		(float)glm::radians(_zoom),
-		float( m_framebufferWidth ) / float( m_framebufferHeight ),
-		1.0f, 1000.0f );*/
 
 	return eventHandled;
 }
@@ -626,7 +599,7 @@ void A1::reset(){
 	_x = 0;
 	_z = 0;
 	_grid.reset();
-	_zoomMultiplier = 0;
+	_zoomMultiplier = float(DIM)*2.0*M_SQRT1_2;
 
 	// Set up initial view and projection matrices (need to do this here,
 	// since it depends on the GLFW window being set up correctly).
@@ -635,11 +608,6 @@ void A1::reset(){
 		glm::vec3( 0.0f, 0.0f, 0.0f ),
 		glm::vec3( 0.0f, 1.0f, 0.0f ) );
 
-	proj = orig_proj;/*glm::perspective( 
-		glm::radians( 45.0f ),
-		float( m_framebufferWidth ) / float( m_framebufferHeight ),
-		1.0f, 1000.0f );*/
-
-	//draw();
+	proj = orig_proj;
 
 }
