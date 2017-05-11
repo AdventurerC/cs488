@@ -31,6 +31,7 @@ private:
 	void drawCube(int x, int z);
 	void drawIndicator();
 	void highlightCells(int x, int x1, float y, int z, int z1, float r, float g, float b);
+	void reset();
 	
 	// Fields related to the shader and uniforms.
 	ShaderProgram m_shader;
@@ -48,10 +49,11 @@ private:
 	glm::mat4 proj;
 	glm::mat4 view;
 
+	glm::mat4 orig_proj;
+
 	float colour[8][3];
 	int current_col;
 	
-	int height[16][16];
 	int _x;
 	int _z;
 
@@ -63,6 +65,9 @@ private:
 
 	double _rotateX;
 	double _rotateY;
+
+	int _zoom;
+	double _zoomMultiplier;
 
 	
 	Grid _grid;

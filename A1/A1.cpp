@@ -27,7 +27,9 @@ A1::A1()
 	_mouseX(0),
 	_mouseY(0),
 	_rotateX(0),
-	_rotateY(0)
+	_rotateY(0),
+	_zoom( 0 ),
+	_zoomMultiplier(1.0)
 {
 	colour[0][0] = 0.5f;
 	colour[0][1] = 0.5f;
@@ -103,6 +105,8 @@ void A1::init()
 		glm::radians( 45.0f ),
 		float( m_framebufferWidth ) / float( m_framebufferHeight ),
 		1.0f, 1000.0f );
+
+	orig_proj = proj;
 
 }
 
@@ -283,9 +287,6 @@ void A1::drawIndicator(){
 void A1::appLogic()
 {
 	// Place per frame, application logic here ...
-	if (_inCopyMode){
-		//_grid.setHeight(_x,_z,_y);
-	}
 }
 
 //----------------------------------------------------------------------------------------
@@ -310,6 +311,9 @@ void A1::guiLogic()
 			glfwSetWindowShouldClose(m_window, GL_TRUE);
 		}
 
+		if( ImGui::Button( "Reset" ) ) {
+			reset();
+		}
 		// Eventually you'll create multiple colour widgets with
 		// radio buttons.  If you use PushID/PopID to give them all
 		// unique IDs, then ImGui will be able to keep them separate.
@@ -361,6 +365,16 @@ void A1::draw()
 	// Create a global transformation for the model (centre it).
 	mat4 W;
 	W = glm::translate( W, vec3( -float(DIM)/2.0f, 0, -float(DIM)/2.0f ) );
+
+	float theta = glm::radians(_rotateX);
+	float phi = glm::radians(_rotateY);
+	view = glm::lookAt(glm::vec3(2*DIM*M_SQRT1_2*sin(theta), float(DIM)*2.0*M_SQRT1_2*cos(phi), 2*DIM*M_SQRT1_2*cos(theta)),
+		glm::vec3(0.0, 0.0, 0.0),
+		glm::vec3(0.0, 1.0, 0.0));
+
+	for (int i = 0; i < _zoom; i++){
+		view = glm::translate(view, glm::normalize(glm::vec3(sin(theta)*_zoomMultiplier, cos(phi)*_zoomMultiplier, cos(theta)*_zoomMultiplier)));
+	}
 
 	m_shader.enable();
 		glEnable( GL_DEPTH_TEST );
@@ -435,10 +449,15 @@ bool A1::mouseMoveEvent(double xPos, double yPos)
 
 			float theta = glm::radians(_rotateX);
 			float phi = glm::radians(_rotateY);
-			
+
 			view = glm::lookAt(glm::vec3(2*DIM*M_SQRT1_2*sin(theta), float(DIM)*2.0*M_SQRT1_2*cos(phi), 2*DIM*M_SQRT1_2*cos(theta)),
 				glm::vec3(0.0, 0.0, 0.0),
 				glm::vec3(0.0, 1.0, 0.0));
+
+			view = glm::translate(view, glm::normalize(glm::vec3(sin(theta)*_zoomMultiplier, cos(phi)*_zoomMultiplier, cos(theta)*_zoomMultiplier)));
+			
+
+			eventHandled = true;
 		}
 
 		_mouseX = xPos;
@@ -461,6 +480,7 @@ bool A1::mouseButtonInputEvent(int button, int actions, int mods) {
 		if (actions == GLFW_PRESS){
 			if (button == GLFW_MOUSE_BUTTON_LEFT) {
 				_inRotateMode = true;
+				eventHandled = true;
 			}
 		}
 	}
@@ -468,6 +488,7 @@ bool A1::mouseButtonInputEvent(int button, int actions, int mods) {
 	if (actions == GLFW_RELEASE){
 		 if (button == GLFW_MOUSE_BUTTON_LEFT) {
 			_inRotateMode = false;
+			eventHandled = true;
 		}
 	}
 
@@ -482,6 +503,34 @@ bool A1::mouseScrollEvent(double xOffSet, double yOffSet) {
 	bool eventHandled(false);
 
 	// Zoom in or out.
+	_zoom += yOffSet > 0? 1 : -1;
+
+	//_zoom = std::max(1.0, _zoom);
+	//_zoom = std::min(50.0, _zoom);
+
+	if (_zoom >= 0 && _zoom <= 20){
+		float theta = glm::radians(_rotateX);
+		float phi = glm::radians(_rotateY);
+
+		_zoomMultiplier = 0.5;
+
+		//_zoomMultiplier = glm::translate(view, glm::normalize(glm::vec3(sin(theta)*yOffSet*0.5, cos(phi)*yOffSet*0.5, cos(theta)*yOffSet*0.5)));
+
+		//view = glm::translate(view, glm::normalize(glm::vec3(sin(theta)*yOffSet*0.5, cos(phi)*yOffSet*0.5, cos(theta)*yOffSet*0.5)));
+		
+		//_zoomMultiplier = inverse(view)*orig_view;
+
+		cout << "_zoom = " << _zoom << endl;
+		eventHandled = true;
+	} else {
+		_zoom = std::min(_zoom, 20);
+		_zoom = std::max(_zoom, 0);
+	}
+
+	/*proj = glm::perspective(
+		(float)glm::radians(_zoom),
+		float( m_framebufferWidth ) / float( m_framebufferHeight ),
+		1.0f, 1000.0f );*/
 
 	return eventHandled;
 }
@@ -509,7 +558,11 @@ bool A1::keyInputEvent(int key, int action, int mods) {
 	// Fill in with event handling code...
 	if( action == GLFW_PRESS ) {
 		// Respond to some key events.
-		if (key == GLFW_KEY_SPACE){
+
+		if (key == GLFW_KEY_R){
+			reset();
+			eventHandled = true;
+		} else if (key == GLFW_KEY_SPACE){
 			_grid.setHeight(_x,_z, _grid.getHeight(_x,_z) + 1);
 			_grid.setColour(_x, _z, current_col);
 			eventHandled = true;
@@ -558,4 +611,35 @@ bool A1::keyInputEvent(int key, int action, int mods) {
 	}
 
 	return eventHandled;
+}
+
+void A1::reset(){
+
+	current_col = 0;
+	_rotateX = 0;
+	_rotateY = 0;
+	_zoom = 0;
+	_mouseX = 0;
+	_mouseY = 0;
+	_inCopyMode = false;
+	_inRotateMode = false;
+	_x = 0;
+	_z = 0;
+	_grid.reset();
+	_zoomMultiplier = 0;
+
+	// Set up initial view and projection matrices (need to do this here,
+	// since it depends on the GLFW window being set up correctly).
+	view = glm::lookAt( 
+		glm::vec3( 0.0f, float(DIM)*2.0*M_SQRT1_2, float(DIM)*2.0*M_SQRT1_2 ),
+		glm::vec3( 0.0f, 0.0f, 0.0f ),
+		glm::vec3( 0.0f, 1.0f, 0.0f ) );
+
+	proj = orig_proj;/*glm::perspective( 
+		glm::radians( 45.0f ),
+		float( m_framebufferWidth ) / float( m_framebufferHeight ),
+		1.0f, 1000.0f );*/
+
+	//draw();
+
 }
