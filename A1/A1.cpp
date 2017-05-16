@@ -535,7 +535,10 @@ bool A1::keyInputEvent(int key, int action, int mods) {
 		if (key == GLFW_KEY_R){
 			reset();
 			eventHandled = true;
-		} else if (key == GLFW_KEY_SPACE){
+		} else if (key == GLFW_KEY_Q){
+			glfwSetWindowShouldClose(m_window, GL_TRUE);
+			eventHandled = true;
+		}else if (key == GLFW_KEY_SPACE){
 			_grid.setHeight(_x,_z, _grid.getHeight(_x,_z) + 1);
 			_grid.setColour(_x, _z, current_col);
 			eventHandled = true;
