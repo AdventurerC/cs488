@@ -25,9 +25,34 @@ VertexData::VertexData()
 //----------------------------------------------------------------------------------------
 // Constructor
 A2::A2()
-	: m_currentLineColour(vec3(0.0f))
+	: m_currentLineColour(vec3(0.0f)),
+	 model(mat4()),
+	 scale(mat4()),
+	 view(mat4()),
+	 proj(mat4()),
+	 screen(mat4()),
+	 m_movingX(false),
+	 m_movingY(false),
+	 m_movingZ(false),
+	 m_near(2.0),
+	 m_far(5.0),
+	 m_activeCoord(MODEL),
+	 aspect(1.0),
+	 m_fov(90)
 {
+	//back
+	m_cube3D[0] = vec3(-1, 1, -1);
+	m_cube3D[1] = vec3(1,1,-1);
+	m_cube3D[2] = vec3(1, -1, -1);
+	m_cube3D[3] = vec3(-1,-1,-1);
 
+	//front
+	m_cube3D[4] = vec3(-1,1,1);
+	m_cube3D[7] = vec3(-1,-1,1);
+	m_cube3D[6] = vec3(1,-1,1);
+	m_cube3D[5] = vec3(1,1,1);
+
+	
 }
 
 //----------------------------------------------------------------------------------------
@@ -156,6 +181,64 @@ void A2::initLineData()
 }
 
 //---------------------------------------------------------------------------------------
+void A2::drawCube(){
+	perspective();
+	//transform each cube vertex into 2D
+	for (int i = 0; i < 8; i++){
+		vec4 temp = view * model * vec4(m_cube3D[i],1);
+		float z = temp[2];
+		temp = proj * temp;
+		m_cube2D[i] = normalize(temp);
+		m_cube2D[i][0] /= z;
+		m_cube2D[i][1] /= z;
+		//std::cout << i << "( " << m_cube2D[i][0] << ", " << m_cube2D[i][1] << " )" <<std::endl; 
+	}
+
+	// Draw outer square:
+	setLineColour(vec3(1.0f, 0.7f, 0.8f));
+	drawLine(m_cube2D[4],m_cube2D[5]);
+	drawLine(m_cube2D[5], m_cube2D[6]);
+	drawLine(m_cube2D[6], m_cube2D[7]);
+	drawLine(m_cube2D[7],m_cube2D[4]);
+
+	//sides
+	drawLine(m_cube2D[4],m_cube2D[0]);
+	drawLine(m_cube2D[5], m_cube2D[1]);
+	drawLine(m_cube2D[6], m_cube2D[2]);
+	drawLine(m_cube2D[7],m_cube2D[3]);
+
+	// Draw inner square:
+	setLineColour(vec3(0.2f, 1.0f, 1.0f));
+	drawLine(m_cube2D[0],m_cube2D[1]);
+	drawLine(m_cube2D[1], m_cube2D[2]);
+	drawLine(m_cube2D[2], m_cube2D[3]);
+	drawLine(m_cube2D[3], m_cube2D[0]);
+}
+
+glm::vec2 A2::normalize(glm::vec4 &point){
+	float z = point[2];
+	float x = point[0]/z;
+	float y = point[1]/z;
+
+	return vec2(x,y);	
+}
+
+void A2::lookAt(glm::vec3 &lookAt, glm::vec3 &lookFrom, glm::vec3 &up) {
+
+}
+
+
+void A2::perspective(){
+	float cot = 1.0/tan(glm::radians(m_fov)/2);
+	
+	proj[0] = vec4(cot/aspect, 0, 0, 0);
+	proj[1] = vec4(0, cot, 0, 0);
+	proj[2] = vec4(0, 0, (m_far + m_near)/(m_far - m_near), -2*m_far*m_near/(m_far - m_near));
+	proj[3] = vec4(0, 0, -1.0, 0);
+
+}
+
+//---------------------------------------------------------------------------------------
 void A2::setLineColour (
 		const glm::vec3 & colour
 ) {
@@ -189,8 +272,10 @@ void A2::appLogic()
 	// Call at the beginning of frame, before drawing lines:
 	initLineData();
 
+	drawCube();
+
 	// Draw outer square:
-	setLineColour(vec3(1.0f, 0.7f, 0.8f));
+	/*setLineColour(vec3(1.0f, 0.7f, 0.8f));
 	drawLine(vec2(-0.5f, -0.5f), vec2(0.5f, -0.5f));
 	drawLine(vec2(0.5f, -0.5f), vec2(0.5f, 0.5f));
 	drawLine(vec2(0.5f, 0.5f), vec2(-0.5f, 0.5f));
@@ -202,7 +287,7 @@ void A2::appLogic()
 	drawLine(vec2(-0.25f, -0.25f), vec2(0.25f, -0.25f));
 	drawLine(vec2(0.25f, -0.25f), vec2(0.25f, 0.25f));
 	drawLine(vec2(0.25f, 0.25f), vec2(-0.25f, 0.25f));
-	drawLine(vec2(-0.25f, 0.25f), vec2(-0.25f, -0.25f));
+	drawLine(vec2(-0.25f, 0.25f), vec2(-0.25f, -0.25f));*/
 }
 
 //----------------------------------------------------------------------------------------

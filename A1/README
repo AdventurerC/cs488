@@ -5,3 +5,4 @@ make
 
 --MANUAL--
 Rotation includes the Y axis. Otherwise nothing out of the ordinary.
+Tested on gl14

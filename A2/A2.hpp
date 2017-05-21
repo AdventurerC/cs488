@@ -60,6 +60,12 @@ protected:
 			const glm::vec2 & v1
 	);
 
+	void drawCube();
+
+	glm::vec2 normalize(glm::vec4 &point);
+	void lookAt(glm::vec3 &lookAt, glm::vec3 &lookFrom, glm::vec3 &up);
+	void perspective();
+
 	ShaderProgram m_shader;
 
 	GLuint m_vao;            // Vertex Array Object
@@ -70,4 +76,31 @@ protected:
 
 	glm::vec3 m_currentLineColour;
 
+	glm::mat4 model;
+	glm::mat4 scale;
+	glm::mat4 view;
+	glm::mat4 proj;
+	glm::mat4 screen;
+
+	GLfloat aspect; //= w/h
+
+	bool m_movingX;
+	bool m_movingY;
+	bool m_movingZ;
+
+	glm::vec3 m_cube3D[8];
+	glm::vec2 m_cube2D[8];
+
+	GLfloat m_near;
+	GLfloat m_far;
+	GLfloat m_fov;
+
+	int m_activeCoord;
+
+	enum Coordinates {
+		MODEL,
+		VIEW,
+		WORLD,
+		SCREEN
+	};
 };
