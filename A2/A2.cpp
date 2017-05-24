@@ -27,18 +27,24 @@ VertexData::VertexData()
 A2::A2()
 	: m_currentLineColour(vec3(0.0f)),
 	 model(mat4()),
-	 scale(mat4()),
+	 scaler(mat4()),
 	 view(mat4()),
 	 proj(mat4()),
 	 screen(mat4()),
 	 m_movingX(false),
 	 m_movingY(false),
 	 m_movingZ(false),
+	 m_translating(false),
+	 m_rotating(false),
+	 m_scaling(false),
 	 m_near(2.0),
 	 m_far(5.0),
 	 m_activeCoord(MODEL),
 	 aspect(1.0),
-	 m_fov(90)
+	 m_fov(90),
+	 m_mouseX(0.0),
+	 m_mouseY(0.0),
+	 m_scaleFactor(1.0)
 {
 	//back
 	m_cube3D[0] = vec3(-1, 1, -1);
@@ -186,11 +192,11 @@ void A2::drawCube(){
 	//transform each cube vertex into 2D
 	for (int i = 0; i < 8; i++){
 		vec4 temp = view * model * vec4(m_cube3D[i],1);
-		float z = temp[2];
+		//float z = temp[2];
 		temp = proj * temp;
 		m_cube2D[i] = normalize(temp);
-		m_cube2D[i][0] /= z;
-		m_cube2D[i][1] /= z;
+		//m_cube2D[i][0] /= z;
+		//m_cube2D[i][1] /= z;
 		//std::cout << i << "( " << m_cube2D[i][0] << ", " << m_cube2D[i][1] << " )" <<std::endl; 
 	}
 
@@ -216,9 +222,10 @@ void A2::drawCube(){
 }
 
 glm::vec2 A2::normalize(glm::vec4 &point){
+	float w = point[3];
 	float z = point[2];
-	float x = point[0]/z;
-	float y = point[1]/z;
+	float x = point[0]*z/w;
+	float y = point[1]*z/w;
 
 	return vec2(x,y);	
 }
@@ -234,7 +241,74 @@ void A2::perspective(){
 	proj[0] = vec4(cot/aspect, 0, 0, 0);
 	proj[1] = vec4(0, cot, 0, 0);
 	proj[2] = vec4(0, 0, (m_far + m_near)/(m_far - m_near), -2*m_far*m_near/(m_far - m_near));
-	proj[3] = vec4(0, 0, -1.0, 0);
+	proj[3] = vec4(0, 0, 1.0, 0);
+
+}
+
+void A2::rotate(float amount){
+	float theta = radians(amount);
+	
+	mat4 rotateX;
+	mat4 rotateY;
+	mat4 rotateZ;
+	if (m_movingX){
+		rotateX[0] = vec4(1, 0, 0, 0);
+		rotateX[1] = vec4(0, cos(theta), sin(theta), 0);
+		rotateX[2] = vec4(0, -sin(theta), cos(theta), 0);
+		rotateX[3] = vec4(0, 0, 0, 1);
+	}
+
+	if (m_movingY){
+		rotateY[0] = vec4(cos(theta), 0, -sin(theta), 0);
+		rotateY[1] = vec4(0, 1, 0, 0);
+		rotateY[2] = vec4(sin(theta), 0, cos(theta), 0);
+		rotateY[3] = vec4(0, 0, 0, 1);
+	}	
+
+	if (m_movingZ){
+		rotateZ[0] = vec4(cos(theta), sin(theta), 0, 0);
+		rotateZ[1] = vec4(-sin(theta), cos(theta), 0, 0);
+		rotateZ[2] = vec4(0, 0, 1, 0);
+		rotateZ[3] = vec4(0, 0, 0, 1);
+	}
+
+	if (m_activeCoord == MODEL){
+		model = rotateZ*rotateY*rotateX*model;
+	} else if (m_activeCoord == VIEW){
+		view = rotateZ*rotateY*rotateX*view;
+	} else if (m_activeCoord == PERSP){
+		proj = rotateZ*rotateY*rotateX*proj;
+	}
+
+}
+
+void A2::translate(float amount){
+	float x = 0;
+	float y = 0;
+	float z = 0;
+
+	mat4 translate;
+	if (m_movingX) x = amount;
+	if (m_movingY) y = amount;
+	if (m_movingZ) z = amount;
+
+	cout << amount << endl;
+
+	translate[0] = vec4(1, 0, 0, 0);
+	translate[1] = vec4(0, 1, 0, 0);
+	translate[2] = vec4(0, 0, 1, 0);
+	translate[3] = vec4(x, y, z, 1);
+
+	if (m_activeCoord == MODEL){
+		model = translate*model;
+	} else if (m_activeCoord == VIEW){
+		view = translate*view;
+	} else if (m_activeCoord == PERSP){
+		proj = translate*proj;
+	}
+}
+
+void A2::scale(float amount){
 
 }
 
@@ -400,7 +474,18 @@ bool A2::mouseMoveEvent (
 ) {
 	bool eventHandled(false);
 
-	// Fill in with event handling code...
+	float delta = 0.01*m_scaleFactor*(xPos-m_mouseX);
+
+	if (m_rotating){
+		rotate(delta);
+		eventHandled = true;
+	} else if (m_translating){
+		translate(delta);
+		eventHandled = true;
+	}
+
+	m_mouseX = xPos;
+	m_mouseY = yPos;
 
 	return eventHandled;
 }
@@ -416,7 +501,21 @@ bool A2::mouseButtonInputEvent (
 ) {
 	bool eventHandled(false);
 
-	// Fill in with event handling code...
+	if (actions == GLFW_PRESS){
+		//temp
+		m_translating = true;
+		if (button == GLFW_MOUSE_BUTTON_LEFT) {
+			m_movingX = true;
+			eventHandled = true;
+		}
+	}
+
+	if (actions == GLFW_RELEASE){
+		 if (button == GLFW_MOUSE_BUTTON_LEFT) {
+			m_movingX = false;
+			eventHandled = true;
+		}
+	}
 
 	return eventHandled;
 }

@@ -65,6 +65,9 @@ protected:
 	glm::vec2 normalize(glm::vec4 &point);
 	void lookAt(glm::vec3 &lookAt, glm::vec3 &lookFrom, glm::vec3 &up);
 	void perspective();
+	void rotate(float amount);
+	void translate(float amount);
+	void scale(float amount);
 
 	ShaderProgram m_shader;
 
@@ -77,7 +80,7 @@ protected:
 	glm::vec3 m_currentLineColour;
 
 	glm::mat4 model;
-	glm::mat4 scale;
+	glm::mat4 scaler;
 	glm::mat4 view;
 	glm::mat4 proj;
 	glm::mat4 screen;
@@ -88,19 +91,31 @@ protected:
 	bool m_movingY;
 	bool m_movingZ;
 
+	bool m_translating;
+	bool m_rotating;
+	bool m_scaling;
+
+	float m_mouseX;
+	float m_mouseY;
+
+	float m_scaleFactor;
+
 	glm::vec3 m_cube3D[8];
 	glm::vec2 m_cube2D[8];
+
+	glm::vec3 m_gnomon3D[4];
+	glm::vec2 m_gnomon2D[4];
 
 	GLfloat m_near;
 	GLfloat m_far;
 	GLfloat m_fov;
 
-	int m_activeCoord;
-
-	enum Coordinates {
+	enum Coordinate {
 		MODEL,
 		VIEW,
-		WORLD,
+		PERSP,
 		SCREEN
 	};
+
+	Coordinate m_activeCoord;
 };
