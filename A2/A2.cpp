@@ -37,11 +37,11 @@ A2::A2()
 	 m_translating(false),
 	 m_rotating(false),
 	 m_scaling(false),
-	 m_near(2.0),
+	 m_near(1.5),
 	 m_far(5.0),
 	 m_activeCoord(MODEL),
 	 aspect(1.0),
-	 m_fov(90),
+	 m_fov(60),
 	 m_mouseX(0.0),
 	 m_mouseY(0.0),
 	 m_scaleFactor(1.0)
@@ -191,7 +191,7 @@ void A2::drawCube(){
 	perspective();
 	//transform each cube vertex into 2D
 	for (int i = 0; i < 8; i++){
-		vec4 temp = view * model * vec4(m_cube3D[i],0);
+		vec4 temp = view * model * vec4(m_cube3D[i],1);
 		//float z = temp[2];
 		temp = proj * temp;
 		m_cube2D[i] = normalize(temp);
@@ -224,8 +224,8 @@ void A2::drawCube(){
 glm::vec2 A2::normalize(glm::vec4 &point){
 	float w = point[3];
 	float z = point[2];
-	float x = point[0]*z/w;
-	float y = point[1]*z/w;
+	float x = point[0]/z;//*z/w;
+	float y = point[1]/z;//*z/w;
 
 	return vec2(x,y);	
 }
@@ -240,8 +240,8 @@ void A2::perspective(){
 	
 	proj[0] = vec4(cot/aspect, 0, 0, 0);
 	proj[1] = vec4(0, cot, 0, 0);
-	proj[2] = vec4(0, 0, (m_far + m_near)/(m_far - m_near), -2*m_far*m_near/(m_far - m_near));
-	proj[3] = vec4(0, 0, -1.0, 0);
+	proj[2] = vec4(0, 0, -1*(m_far + m_near)/(m_far - m_near), -1);//-2*m_far*m_near/(m_far - m_near));
+	proj[3] = vec4(0, 0, -2*m_far*m_near/(m_far-m_near),0);
 
 }
 
@@ -307,7 +307,7 @@ void A2::translate(float amount){
 	if (m_movingY) y = amount;
 	if (m_movingZ) z = amount;
 
-	cout << amount << endl;
+	//cout << amount << endl;
 
 	translate[0] = vec4(1, 0, 0, 0);
 	translate[1] = vec4(0, 1, 0, 0);
@@ -315,6 +315,7 @@ void A2::translate(float amount){
 	translate[3] = vec4(x, y, z, 1);
 
 	if (m_activeCoord == MODEL){
+		cout << amount <<endl;
 		model = translate*model;
 	} else if (m_activeCoord == VIEW){
 		view = translate*view;
@@ -593,6 +594,7 @@ bool A2::keyInputEvent (
 			m_activeCoord = VIEW;
 		} else if (key == GLFW_KEY_N) {
 			m_translating = true;
+			m_rotating = false;
 			m_activeCoord = VIEW;
 		} else if (key == GLFW_KEY_P){
 			m_activeCoord = PERSP;
@@ -602,9 +604,11 @@ bool A2::keyInputEvent (
 			m_activeCoord = MODEL;
 		} else if (key == GLFW_KEY_T){
 			m_translating = true;
+			m_rotating = false;
 			m_activeCoord = MODEL;
 		} else if (key == GLFW_KEY_S){
 			m_scaling = true;
+			m_rotating = false;
 			m_activeCoord = MODEL;
 		} else if (key == GLFW_KEY_V){
 			//viewport stuff
