@@ -58,7 +58,10 @@ A2::A2()
 	m_cube3D[6] = vec3(1,-1,1);
 	m_cube3D[5] = vec3(1,1,1);
 
-	
+	m_gnomon3D[0] = vec3(0);
+	m_gnomon3D[1] = vec3(0.4, 0, 0); //x
+	m_gnomon3D[2] = vec3(0, 0.4, 0); //y
+	m_gnomon3D[3] = vec3(0, 0, 0.4); //z	
 }
 
 //----------------------------------------------------------------------------------------
@@ -219,6 +222,35 @@ void A2::drawCube(){
 	drawLine(m_cube2D[1], m_cube2D[2]);
 	drawLine(m_cube2D[2], m_cube2D[3]);
 	drawLine(m_cube2D[3], m_cube2D[0]);
+
+	//DRAW GNOMONS
+
+	//model
+	for (int i = 0; i < 4; i++){
+		vec4 temp = proj * view * model * vec4(m_gnomon3D[i], 1);
+		m_gnomon2D[i] = normalize(temp);
+	}
+
+	setLineColour(vec3(1.0f,0,0));
+	drawLine(m_gnomon2D[0], m_gnomon2D[1]);
+	setLineColour(vec3(0, 0, 1.0f));
+	drawLine(m_gnomon2D[0], m_gnomon2D[2]);
+	setLineColour(vec3(0, 1.0f, 0));
+	drawLine(m_gnomon2D[0], m_gnomon2D[3]);
+
+	for (int i = 0; i < 4; i++){
+		vec4 temp = proj * view * vec4(m_gnomon3D[i], 1);
+		m_gnomon2D[i] = normalize(temp);
+	}
+
+	//world
+	setLineColour(vec3(0.5f,0,0));
+	drawLine(m_gnomon2D[0], m_gnomon2D[1]);
+	setLineColour(vec3(0, 0, 0.5f));
+	drawLine(m_gnomon2D[0], m_gnomon2D[2]);
+	setLineColour(vec3(0, 0.5f, 0));
+	drawLine(m_gnomon2D[0], m_gnomon2D[3]);
+
 }
 
 glm::vec2 A2::normalize(glm::vec4 &point){
