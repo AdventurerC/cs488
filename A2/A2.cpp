@@ -191,7 +191,7 @@ void A2::drawCube(){
 	perspective();
 	//transform each cube vertex into 2D
 	for (int i = 0; i < 8; i++){
-		vec4 temp = view * model * vec4(m_cube3D[i],1);
+		vec4 temp = view * model * vec4(m_cube3D[i],0);
 		//float z = temp[2];
 		temp = proj * temp;
 		m_cube2D[i] = normalize(temp);
@@ -241,7 +241,7 @@ void A2::perspective(){
 	proj[0] = vec4(cot/aspect, 0, 0, 0);
 	proj[1] = vec4(0, cot, 0, 0);
 	proj[2] = vec4(0, 0, (m_far + m_near)/(m_far - m_near), -2*m_far*m_near/(m_far - m_near));
-	proj[3] = vec4(0, 0, 1.0, 0);
+	proj[3] = vec4(0, 0, -1.0, 0);
 
 }
 
@@ -256,6 +256,11 @@ void A2::rotate(float amount){
 		rotateX[1] = vec4(0, cos(theta), sin(theta), 0);
 		rotateX[2] = vec4(0, -sin(theta), cos(theta), 0);
 		rotateX[3] = vec4(0, 0, 0, 1);
+		if (m_activeCoord == MODEL){
+			model = rotateX*model;
+		} else if (m_activeCoord == VIEW){
+			view = rotateX*view;
+		}
 	}
 
 	if (m_movingY){
@@ -263,6 +268,11 @@ void A2::rotate(float amount){
 		rotateY[1] = vec4(0, 1, 0, 0);
 		rotateY[2] = vec4(sin(theta), 0, cos(theta), 0);
 		rotateY[3] = vec4(0, 0, 0, 1);
+		if (m_activeCoord == MODEL){
+			model = rotateY*model;
+		} else if (m_activeCoord == VIEW){
+			view = rotateY*view;
+		}
 	}	
 
 	if (m_movingZ){
@@ -270,15 +280,20 @@ void A2::rotate(float amount){
 		rotateZ[1] = vec4(-sin(theta), cos(theta), 0, 0);
 		rotateZ[2] = vec4(0, 0, 1, 0);
 		rotateZ[3] = vec4(0, 0, 0, 1);
+		if (m_activeCoord == MODEL){
+			model = rotateZ*model;
+		} else if (m_activeCoord == VIEW){
+			view = rotateZ*view;
+		}
 	}
 
-	if (m_activeCoord == MODEL){
-		model = rotateZ*rotateY*rotateX*model;
+	/*if (m_activeCoord == MODEL){
+		model = (rotateZ*rotateY*rotateX)*model;
 	} else if (m_activeCoord == VIEW){
-		view = rotateZ*rotateY*rotateX*view;
+		view = (rotateZ*rotateY*rotateX)*view;
 	} else if (m_activeCoord == PERSP){
-		proj = rotateZ*rotateY*rotateX*proj;
-	}
+		proj = (rotateZ*rotateY*rotateX)*proj;
+	}*/
 
 }
 
@@ -474,13 +489,13 @@ bool A2::mouseMoveEvent (
 ) {
 	bool eventHandled(false);
 
-	float delta = 0.01*m_scaleFactor*(xPos-m_mouseX);
+	float delta = (xPos-m_mouseX);
 
 	if (m_rotating){
-		rotate(delta);
+		rotate(0.1*delta);
 		eventHandled = true;
 	} else if (m_translating){
-		translate(delta);
+		translate(0.01*delta);
 		eventHandled = true;
 	}
 
@@ -503,17 +518,27 @@ bool A2::mouseButtonInputEvent (
 
 	if (actions == GLFW_PRESS){
 		//temp
-		m_translating = true;
+		//m_translating = true;
 		if (button == GLFW_MOUSE_BUTTON_LEFT) {
 			m_movingX = true;
+			eventHandled = true;
+		} else if (button == GLFW_MOUSE_BUTTON_MIDDLE){
+			m_movingY = true;
+			eventHandled = true;
+		} else if (button == GLFW_MOUSE_BUTTON_RIGHT){
+			m_movingZ = true;
 			eventHandled = true;
 		}
 	}
 
 	if (actions == GLFW_RELEASE){
-		 if (button == GLFW_MOUSE_BUTTON_LEFT) {
+		if (button == GLFW_MOUSE_BUTTON_LEFT) {
 			m_movingX = false;
 			eventHandled = true;
+		} else if (button == GLFW_MOUSE_BUTTON_MIDDLE){
+			m_movingY = false;
+		} else if (button == GLFW_MOUSE_BUTTON_RIGHT){
+			m_movingZ = false;
 		}
 	}
 
@@ -561,7 +586,56 @@ bool A2::keyInputEvent (
 ) {
 	bool eventHandled(false);
 
-	// Fill in with event handling code...
+	if ( action == GLFW_PRESS){
+		
+		if (key == GLFW_KEY_O){
+			m_rotating = true;
+			m_activeCoord = VIEW;
+		} else if (key == GLFW_KEY_N) {
+			m_translating = true;
+			m_activeCoord = VIEW;
+		} else if (key == GLFW_KEY_P){
+			m_activeCoord = PERSP;
+			//fov stuff
+		} else if (key == GLFW_KEY_R){
+			m_rotating = true;
+			m_activeCoord = MODEL;
+		} else if (key == GLFW_KEY_T){
+			m_translating = true;
+			m_activeCoord = MODEL;
+		} else if (key == GLFW_KEY_S){
+			m_scaling = true;
+			m_activeCoord = MODEL;
+		} else if (key == GLFW_KEY_V){
+			//viewport stuff
+		}
+
+	}
+
+	if ( action == GLFW_RELEASE) {
+		if (key == GLFW_KEY_O){
+			m_rotating = false;
+			//m_activeCoord = VIEW;
+		} else if (key == GLFW_KEY_N) {
+			m_translating = false;
+			//m_activeCoord = VIEW;
+		} else if (key == GLFW_KEY_P){
+			m_activeCoord = PERSP;
+			//fov stuff
+		} else if (key == GLFW_KEY_R){
+			m_rotating = false;
+			//m_activeCoord = MODEL;
+		} else if (key == GLFW_KEY_T){
+			m_translating = false;
+			//m_activeCoord = MODEL;
+		} else if (key == GLFW_KEY_S){
+			m_scaling = false;
+			//m_activeCoord = MODEL;
+		} else if (key == GLFW_KEY_V){
+			//viewport stuff
+		}
+
+	}
 
 	return eventHandled;
 }
