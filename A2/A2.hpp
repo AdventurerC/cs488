@@ -69,6 +69,8 @@ protected:
 	void translate(float amount);
 	void scale(float amount);
 
+	glm::vec2 toGLCoord(GLfloat x, GLfloat y);
+
 	ShaderProgram m_shader;
 
 	GLuint m_vao;            // Vertex Array Object
@@ -91,9 +93,9 @@ protected:
 	bool m_movingY;
 	bool m_movingZ;
 
-	bool m_translating;
-	bool m_rotating;
-	bool m_scaling;
+	//bool m_translating;
+	//bool m_rotating;
+	//bool m_scaling;
 
 	float m_mouseX;
 	float m_mouseY;
@@ -106,9 +108,27 @@ protected:
 	glm::vec3 m_gnomon3D[4];
 	glm::vec2 m_gnomon2D[4];
 
+	glm::vec2 m_screen[4];
+	glm::vec2 topLeft;
+	glm::vec2 bottomRight;
+	bool beginDrag;
+	bool endDrag;
+
 	GLfloat m_near;
 	GLfloat m_far;
 	GLfloat m_fov;
+
+	int temp;
+
+	enum Mode {
+		ROTATE,
+		TRANSLATE,
+		SCALE,
+		FOV,
+		VIEWPORT
+	};
+
+	Mode m_activeMode;
 
 	enum Coordinate {
 		MODEL,

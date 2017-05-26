@@ -34,9 +34,7 @@ A2::A2()
 	 m_movingX(false),
 	 m_movingY(false),
 	 m_movingZ(false),
-	 m_translating(false),
-	 m_rotating(false),
-	 m_scaling(false),
+	 m_activeMode(ROTATE),
 	 m_near(1.5),
 	 m_far(5.0),
 	 m_activeCoord(MODEL),
@@ -62,6 +60,18 @@ A2::A2()
 	m_gnomon3D[1] = vec3(0.4, 0, 0); //x
 	m_gnomon3D[2] = vec3(0, 0.4, 0); //y
 	m_gnomon3D[3] = vec3(0, 0, 0.4); //z	
+
+	m_screen[0] = toGLCoord(0,0);
+	m_screen[1] = toGLCoord(m_windowWidth, 0);
+	m_screen[2] = toGLCoord(m_windowWidth, m_windowHeight);
+	m_screen[3] = toGLCoord(0, m_windowHeight);
+
+
+	/*temp[0] = true;
+
+	for (int i = 1; i < 7; i++){
+		temp[i] = false;
+	}*/
 }
 
 //----------------------------------------------------------------------------------------
@@ -71,6 +81,12 @@ A2::~A2()
 
 }
 
+
+glm::vec2 A2::toGLCoord(GLfloat x, GLfloat y){
+
+	return vec2((2.0f * x) / m_windowWidth - 1.0f,
+			1.0f - ( (2.0f * y) / m_windowHeight));
+}
 //----------------------------------------------------------------------------------------
 /*
  * Called once, at program start.
@@ -194,7 +210,7 @@ void A2::drawCube(){
 	perspective();
 	//transform each cube vertex into 2D
 	for (int i = 0; i < 8; i++){
-		vec4 temp = view * model * vec4(m_cube3D[i],1);
+		vec4 temp = view * scaler * model * vec4(m_cube3D[i],1);
 		//float z = temp[2];
 		temp = proj * temp;
 		m_cube2D[i] = normalize(temp);
@@ -223,34 +239,6 @@ void A2::drawCube(){
 	drawLine(m_cube2D[2], m_cube2D[3]);
 	drawLine(m_cube2D[3], m_cube2D[0]);
 
-	//DRAW GNOMONS
-
-	//model
-	for (int i = 0; i < 4; i++){
-		vec4 temp = proj * view * model * vec4(m_gnomon3D[i], 1);
-		m_gnomon2D[i] = normalize(temp);
-	}
-
-	setLineColour(vec3(1.0f,0,0));
-	drawLine(m_gnomon2D[0], m_gnomon2D[1]);
-	setLineColour(vec3(0, 0, 1.0f));
-	drawLine(m_gnomon2D[0], m_gnomon2D[2]);
-	setLineColour(vec3(0, 1.0f, 0));
-	drawLine(m_gnomon2D[0], m_gnomon2D[3]);
-
-	for (int i = 0; i < 4; i++){
-		vec4 temp = proj * view * vec4(m_gnomon3D[i], 1);
-		m_gnomon2D[i] = normalize(temp);
-	}
-
-	//world
-	setLineColour(vec3(0.5f,0,0));
-	drawLine(m_gnomon2D[0], m_gnomon2D[1]);
-	setLineColour(vec3(0, 0, 0.5f));
-	drawLine(m_gnomon2D[0], m_gnomon2D[2]);
-	setLineColour(vec3(0, 0.5f, 0));
-	drawLine(m_gnomon2D[0], m_gnomon2D[3]);
-
 }
 
 glm::vec2 A2::normalize(glm::vec4 &point){
@@ -263,7 +251,7 @@ glm::vec2 A2::normalize(glm::vec4 &point){
 }
 
 void A2::lookAt(glm::vec3 &lookAt, glm::vec3 &lookFrom, glm::vec3 &up) {
-
+	
 }
 
 
@@ -347,7 +335,6 @@ void A2::translate(float amount){
 	translate[3] = vec4(x, y, z, 1);
 
 	if (m_activeCoord == MODEL){
-		cout << amount <<endl;
 		model = translate*model;
 	} else if (m_activeCoord == VIEW){
 		view = translate*view;
@@ -358,6 +345,29 @@ void A2::translate(float amount){
 
 void A2::scale(float amount){
 
+	if (amount > 0){
+		amount = 1.1;
+	} else if (amount < 0) {
+		amount = 0.9;
+	} else {
+		amount = 1;
+	}
+	
+	float x = 1;
+	float y = 1;
+	float z = 1;
+
+	if (m_movingX) x = amount;
+	if (m_movingY) y = amount;
+	if (m_movingZ) z = amount;
+
+	mat4 temp;
+	temp[0] = vec4(x, 0, 0, 0);
+	temp[1] = vec4(0, y, 0, 0);
+	temp[2] = vec4(0, 0, z, 0);
+	temp[3] = vec4(0, 0, 0, 1);
+
+	scaler = temp*scaler;
 }
 
 //---------------------------------------------------------------------------------------
@@ -396,20 +406,41 @@ void A2::appLogic()
 
 	drawCube();
 
-	// Draw outer square:
-	/*setLineColour(vec3(1.0f, 0.7f, 0.8f));
-	drawLine(vec2(-0.5f, -0.5f), vec2(0.5f, -0.5f));
-	drawLine(vec2(0.5f, -0.5f), vec2(0.5f, 0.5f));
-	drawLine(vec2(0.5f, 0.5f), vec2(-0.5f, 0.5f));
-	drawLine(vec2(-0.5f, 0.5f), vec2(-0.5f, -0.5f));
+	//DRAW GNOMONS
 
+	//model
+	for (int i = 0; i < 4; i++){
+		vec4 temp = proj * view * model * vec4(m_gnomon3D[i], 1);
+		m_gnomon2D[i] = normalize(temp);
+	}
 
-	// Draw inner square:
-	setLineColour(vec3(0.2f, 1.0f, 1.0f));
-	drawLine(vec2(-0.25f, -0.25f), vec2(0.25f, -0.25f));
-	drawLine(vec2(0.25f, -0.25f), vec2(0.25f, 0.25f));
-	drawLine(vec2(0.25f, 0.25f), vec2(-0.25f, 0.25f));
-	drawLine(vec2(-0.25f, 0.25f), vec2(-0.25f, -0.25f));*/
+	setLineColour(vec3(1.0f,0,0));
+	drawLine(m_gnomon2D[0], m_gnomon2D[1]);
+	setLineColour(vec3(0, 0, 1.0f));
+	drawLine(m_gnomon2D[0], m_gnomon2D[2]);
+	setLineColour(vec3(0, 1.0f, 0));
+	drawLine(m_gnomon2D[0], m_gnomon2D[3]);
+
+	for (int i = 0; i < 4; i++){
+		vec4 temp = proj * view * vec4(m_gnomon3D[i], 1);
+		m_gnomon2D[i] = normalize(temp);
+	}
+
+	//world
+	setLineColour(vec3(0.5f,0,0));
+	drawLine(m_gnomon2D[0], m_gnomon2D[1]);
+	setLineColour(vec3(0, 0, 0.5f));
+	drawLine(m_gnomon2D[0], m_gnomon2D[2]);
+	setLineColour(vec3(0, 0.5f, 0));
+	drawLine(m_gnomon2D[0], m_gnomon2D[3]);
+
+	//DRAW VIEWPORT
+	setLineColour(vec3(0.0));
+	drawLine(m_screen[0], m_screen[1]);
+	drawLine(m_screen[1], m_screen[2]);
+	drawLine(m_screen[2], m_screen[3]);
+	drawLine(m_screen[3], m_screen[0]);
+
 }
 
 //----------------------------------------------------------------------------------------
@@ -439,6 +470,61 @@ void A2::guiLogic()
 		if( ImGui::Button( "Quit Application" ) ) {
 			glfwSetWindowShouldClose(m_window, GL_TRUE);
 		}
+		
+
+		if( ImGui::RadioButton( "Rotate Model", &temp, 0 ) ) {
+			m_activeMode = ROTATE;
+			m_activeCoord = MODEL;
+		}
+
+		if( ImGui::RadioButton( "Translate Model", &temp, 1 ) ) {
+			m_activeMode = TRANSLATE;
+			m_activeCoord = MODEL;
+		}
+
+		if( ImGui::RadioButton( "Scale Model", &temp, 2 ) ) {
+			m_activeMode = SCALE;
+			m_activeCoord = MODEL;
+		}
+
+		if( ImGui::RadioButton( "Rotate View", &temp, 3 ) ) {
+			m_activeMode = ROTATE;
+			m_activeCoord = VIEW;
+		}
+
+		if( ImGui::RadioButton( "Translate View", &temp, 4 ) ) {
+			m_activeMode = TRANSLATE;
+			m_activeCoord = VIEW;
+		}
+
+		if( ImGui::RadioButton( "Change FOV", &temp, 5 ) ) {
+			m_activeMode = FOV;
+			m_activeCoord = PERSP;
+		}
+
+		if( ImGui::RadioButton( "Viewport", &temp, 6 ) ) {
+			m_activeMode = VIEWPORT;
+			m_activeCoord = SCREEN;
+		}
+
+		ImGui::SliderFloat("Near Plane", &m_near, 1.0f, std::min(10.0f,m_far - 1.0f));
+		ImGui::SliderFloat("Far Plane", &m_far, std::max(m_near + 1.0f, 2.0f), 20.0f);
+
+
+		std::string near = "";
+		std::string far = "";
+
+		for (int i = 0; i < m_near; i++){
+			near = near + " ";
+		}
+
+		for (int i = 0; i < m_far - m_near; i++){
+			far = far + "_";
+		}
+
+		ImGui::Text( "<) %s|%s|", near.c_str(), far.c_str() );
+
+		ImGui::Text( "FOV: %.1f DEG", m_fov);
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
 
@@ -524,12 +610,31 @@ bool A2::mouseMoveEvent (
 
 	float delta = (xPos-m_mouseX);
 
-	if (m_rotating){
+	if (m_activeMode == ROTATE){
 		rotate(0.1*delta);
 		eventHandled = true;
-	} else if (m_translating){
+	} else if (m_activeMode == TRANSLATE){
 		translate(0.01*delta);
 		eventHandled = true;
+	} else if (m_activeMode == SCALE){
+		scale(delta);
+	} else if (m_activeMode == FOV && m_movingX){
+		m_fov += delta;
+
+		m_fov = std::max(1.0f, m_fov);
+		m_fov = std::min(360.0f, m_fov);
+		
+	} else if (m_activeMode == VIEWPORT && m_movingX){
+		if (beginDrag){
+			topLeft = toGLCoord(xPos, yPos);
+			beginDrag = false;
+		}
+		bottomRight = toGLCoord(xPos, yPos);
+		//endDrag = false;
+		m_screen[0] = vec2(topLeft[0], topLeft[1]);		
+		m_screen[1] = vec2(bottomRight[0], topLeft[1]);
+		m_screen[2] = vec2(bottomRight[0], bottomRight[1]);
+		m_screen[3] = vec2(topLeft[0], bottomRight[1]);
 	}
 
 	m_mouseX = xPos;
@@ -553,6 +658,10 @@ bool A2::mouseButtonInputEvent (
 		//temp
 		//m_translating = true;
 		if (button == GLFW_MOUSE_BUTTON_LEFT) {
+			if (m_activeMode == VIEWPORT){
+				beginDrag = true;
+				endDrag = false;
+			}
 			m_movingX = true;
 			eventHandled = true;
 		} else if (button == GLFW_MOUSE_BUTTON_MIDDLE){
@@ -566,6 +675,10 @@ bool A2::mouseButtonInputEvent (
 
 	if (actions == GLFW_RELEASE){
 		if (button == GLFW_MOUSE_BUTTON_LEFT) {
+			if (m_activeMode == VIEWPORT){
+				endDrag = true;
+				beginDrag = false;
+			}
 			m_movingX = false;
 			eventHandled = true;
 		} else if (button == GLFW_MOUSE_BUTTON_MIDDLE){
@@ -622,53 +735,33 @@ bool A2::keyInputEvent (
 	if ( action == GLFW_PRESS){
 		
 		if (key == GLFW_KEY_O){
-			m_rotating = true;
+			m_activeMode = ROTATE;
 			m_activeCoord = VIEW;
+			temp = 3;
 		} else if (key == GLFW_KEY_N) {
-			m_translating = true;
-			m_rotating = false;
+			m_activeMode = TRANSLATE;
 			m_activeCoord = VIEW;
+			temp = 4;
 		} else if (key == GLFW_KEY_P){
 			m_activeCoord = PERSP;
-			//fov stuff
+			m_activeMode = FOV;
+			temp = 5;
 		} else if (key == GLFW_KEY_R){
-			m_rotating = true;
+			m_activeMode = ROTATE;
 			m_activeCoord = MODEL;
+			temp = 0;
 		} else if (key == GLFW_KEY_T){
-			m_translating = true;
-			m_rotating = false;
+			m_activeMode = TRANSLATE;
 			m_activeCoord = MODEL;
+			temp = 1;
 		} else if (key == GLFW_KEY_S){
-			m_scaling = true;
-			m_rotating = false;
+			m_activeMode = SCALE;
 			m_activeCoord = MODEL;
+			temp = 2;
 		} else if (key == GLFW_KEY_V){
-			//viewport stuff
-		}
-
-	}
-
-	if ( action == GLFW_RELEASE) {
-		if (key == GLFW_KEY_O){
-			m_rotating = false;
-			//m_activeCoord = VIEW;
-		} else if (key == GLFW_KEY_N) {
-			m_translating = false;
-			//m_activeCoord = VIEW;
-		} else if (key == GLFW_KEY_P){
-			m_activeCoord = PERSP;
-			//fov stuff
-		} else if (key == GLFW_KEY_R){
-			m_rotating = false;
-			//m_activeCoord = MODEL;
-		} else if (key == GLFW_KEY_T){
-			m_translating = false;
-			//m_activeCoord = MODEL;
-		} else if (key == GLFW_KEY_S){
-			m_scaling = false;
-			//m_activeCoord = MODEL;
-		} else if (key == GLFW_KEY_V){
-			//viewport stuff
+			temp = 6;
+			m_activeMode = VIEWPORT;
+			m_activeCoord = SCREEN;
 		}
 
 	}
