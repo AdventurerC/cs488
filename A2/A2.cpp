@@ -61,10 +61,10 @@ A2::A2()
 	m_gnomon3D[2] = vec3(0, 0.4, 0); //y
 	m_gnomon3D[3] = vec3(0, 0, 0.4); //z	
 
-	m_screen[0] = vec2(-0.75,-0.75);
-	m_screen[1] = vec2(0.75, -0.75);
-	m_screen[2] = vec2(0.75, 0.75);
-	m_screen[3] = vec2(-0.75, 0.75);
+	m_screen[0] = vec2(-0.9,-0.9);
+	m_screen[1] = vec2(0.9, -0.9);
+	m_screen[2] = vec2(0.9, 0.9);
+	m_screen[3] = vec2(-0.9, 0.9);
 
 }
 
@@ -112,10 +112,10 @@ void A2::reset(){
 	beginDrag = false;
 	temp = 0;
 
-	m_screen[0] = vec2(-0.75,-0.75);
-	m_screen[1] = vec2(0.75, -0.75);
-	m_screen[2] = vec2(0.75, 0.75);
-	m_screen[3] = vec2(-0.75, 0.75);
+	m_screen[0] = vec2(-0.9,-0.9);
+	m_screen[1] = vec2(0.9, -0.9);
+	m_screen[2] = vec2(0.9, 0.9);
+	m_screen[3] = vec2(-0.9, 0.9);
 
 }
 
