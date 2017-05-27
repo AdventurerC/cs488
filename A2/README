@@ -1,0 +1,8 @@
+--COMPILATION--
+default is ok:
+premake4 gmake
+make
+
+--MANUAL--
+Tested on gl14
+Z axis goes into the screen
