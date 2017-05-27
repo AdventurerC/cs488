@@ -60,10 +60,22 @@ protected:
 			const glm::vec2 & v1
 	);
 
-	void clipDrawLine (
-			const glm::vec2 & v0,
-			const glm::vec2 & v1
+	bool clipPlane (
+		glm::vec3 &v0,
+		glm::vec3 &v1,
+		glm::vec3 p,
+		glm::vec3 n
 	);
+
+	void checkDraw (
+		glm::vec2 &v0,
+		glm::vec2 &v1
+	);
+
+	/*bool nearFarCheck (
+		glm::vec3 & v0,
+		glm::vec3 & v1
+	);*/
 
 	void drawCube();
 
@@ -118,6 +130,7 @@ protected:
 	glm::vec2 bottomRight;
 	bool beginDrag;
 	bool endDrag;
+	bool refreshViewport;
 
 	GLfloat m_near;
 	GLfloat m_far;

@@ -211,33 +211,34 @@ void A2::drawCube(){
 	//transform each cube vertex into 2D
 	for (int i = 0; i < 8; i++){
 		vec4 temp = view * scaler * model * vec4(m_cube3D[i],1);
+		bool draw = true;
 		//float z = temp[2];
 		temp = proj * temp;
+
+		//check near/far clipping
+
 		m_cube2D[i] = normalize(temp);
-		//m_cube2D[i][0] /= z;
-		//m_cube2D[i][1] /= z;
-		//std::cout << i << "( " << m_cube2D[i][0] << ", " << m_cube2D[i][1] << " )" <<std::endl; 
 	}
 
 	// Draw outer square:
 	setLineColour(vec3(1.0f, 0.7f, 0.8f));
-	drawLine(m_cube2D[4],m_cube2D[5]);
-	drawLine(m_cube2D[5], m_cube2D[6]);
-	drawLine(m_cube2D[6], m_cube2D[7]);
-	drawLine(m_cube2D[7],m_cube2D[4]);
+	checkDraw(m_cube2D[4],m_cube2D[5]);
+	checkDraw(m_cube2D[5], m_cube2D[6]);
+	checkDraw(m_cube2D[6], m_cube2D[7]);
+	checkDraw(m_cube2D[7],m_cube2D[4]);
 
 	//sides
-	drawLine(m_cube2D[4],m_cube2D[0]);
-	drawLine(m_cube2D[5], m_cube2D[1]);
-	drawLine(m_cube2D[6], m_cube2D[2]);
-	drawLine(m_cube2D[7],m_cube2D[3]);
+	checkDraw(m_cube2D[4],m_cube2D[0]);
+	checkDraw(m_cube2D[5], m_cube2D[1]);
+	checkDraw(m_cube2D[6], m_cube2D[2]);
+	checkDraw(m_cube2D[7],m_cube2D[3]);
 
 	// Draw inner square:
 	setLineColour(vec3(0.2f, 1.0f, 1.0f));
-	drawLine(m_cube2D[0],m_cube2D[1]);
-	drawLine(m_cube2D[1], m_cube2D[2]);
-	drawLine(m_cube2D[2], m_cube2D[3]);
-	drawLine(m_cube2D[3], m_cube2D[0]);
+	checkDraw(m_cube2D[0],m_cube2D[1]);
+	checkDraw(m_cube2D[1], m_cube2D[2]);
+	checkDraw(m_cube2D[2], m_cube2D[3]);
+	checkDraw(m_cube2D[3], m_cube2D[0]);
 
 }
 
@@ -397,21 +398,49 @@ void A2::drawLine(
 bool A2::clipPlane (
 		glm::vec3 & v0,
 		glm::vec3 & v1,
-		glm::vec3 & p,
-		glm::vec3 & n
+		glm::vec3  p,
+		glm::vec3  n
 ){
 
-	vec3 wecA;
-	vec3 wecB;
+	float wecA = glm::dot(v0 - p, n);
+	float wecB = glm::dot(v1 - p, n);
 
-	for (int i = 0; i < 4; i++){
-		wecA = (v0 - vec3(m_screen[i], 0))	
+	if (wecA < 0 && wecB < 0 ) return false; //reject
+	if (wecA >=  0 && wecB >= 0) return true; //trivial accept
+	float t = wecA/(wecA - wecB);
 
-
+	if (wecA < 0){
+		v0 = v0 + t*(v1 - v0);
+	} else {
+		v1 = v0 + t*(v1 - v0);
 	}
 
+	return true;
 }
 
+void A2::checkDraw (
+		glm::vec2 &v0,
+		glm::vec2 &v1
+) {
+	bool draw = true;
+
+	vec3 A = vec3(v0, 0);
+	vec3 B = vec3(v1, 0);
+
+	draw &= clipPlane(A, B, vec3(m_screen[0],0), vec3(0, 1, 0)); //top
+	draw &= clipPlane(A, B, vec3(m_screen[1],0), vec3(-1, 0, 0)); //right
+	draw &= clipPlane(A, B, vec3(m_screen[2],0), vec3(0, -1, 0)); //bottom
+	draw &= clipPlane(A, B, vec3(m_screen[3],0), vec3(1, 0, 0)); //left
+
+	v0[0] = A[0];
+	v0[1] = A[1];
+	v1[0] = B[0];
+	v1[1] = B[1];
+
+	if (!draw) return;
+
+	drawLine(v0, v1);
+}
 //----------------------------------------------------------------------------------------
 /*
  * Called once per frame, before guiLogic().
@@ -628,6 +657,7 @@ bool A2::mouseMoveEvent (
 	bool eventHandled(false);
 
 	float delta = (xPos-m_mouseX);
+	//refreshViewport = true;
 
 	if (m_activeMode == ROTATE){
 		rotate(0.1*delta);
@@ -644,12 +674,21 @@ bool A2::mouseMoveEvent (
 		m_fov = std::min(360.0f, m_fov);
 		
 	} else if (m_activeMode == VIEWPORT && m_movingX){
+		refreshViewport = false;
 		if (beginDrag){
 			topLeft = toGLCoord(xPos, yPos);
 			beginDrag = false;
 		}
 		bottomRight = toGLCoord(xPos, yPos);
 		//endDrag = false;
+		if (endDrag){
+			if (bottomRight[0] < topLeft[0] || bottomRight[1] < topLeft[1]){
+				vec2 temp = bottomRight;
+				bottomRight = topLeft;
+				topLeft = temp;
+			}
+			refreshViewport = true;
+		}
 		m_screen[0] = vec2(topLeft[0], topLeft[1]);		
 		m_screen[1] = vec2(bottomRight[0], topLeft[1]);
 		m_screen[2] = vec2(bottomRight[0], bottomRight[1]);
