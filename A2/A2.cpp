@@ -393,6 +393,25 @@ void A2::drawLine(
 	m_vertexData.numVertices += 2;
 }
 
+
+bool A2::clipPlane (
+		glm::vec3 & v0,
+		glm::vec3 & v1,
+		glm::vec3 & p,
+		glm::vec3 & n
+){
+
+	vec3 wecA;
+	vec3 wecB;
+
+	for (int i = 0; i < 4; i++){
+		wecA = (v0 - vec3(m_screen[i], 0))	
+
+
+	}
+
+}
+
 //----------------------------------------------------------------------------------------
 /*
  * Called once per frame, before guiLogic().

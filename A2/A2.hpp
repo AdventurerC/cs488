@@ -60,6 +60,11 @@ protected:
 			const glm::vec2 & v1
 	);
 
+	void clipDrawLine (
+			const glm::vec2 & v0,
+			const glm::vec2 & v1
+	);
+
 	void drawCube();
 
 	glm::vec2 normalize(glm::vec4 &point);
