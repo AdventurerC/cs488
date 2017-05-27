@@ -30,7 +30,7 @@ A2::A2()
 	 scaler(mat4()),
 	 view(mat4()),
 	 proj(mat4()),
-	 screen(mat4()),
+	 look(mat4()),
 	 m_movingX(false),
 	 m_movingY(false),
 	 m_movingZ(false),
@@ -61,17 +61,11 @@ A2::A2()
 	m_gnomon3D[2] = vec3(0, 0.4, 0); //y
 	m_gnomon3D[3] = vec3(0, 0, 0.4); //z	
 
-	m_screen[0] = toGLCoord(0,0);
-	m_screen[1] = toGLCoord(m_windowWidth, 0);
-	m_screen[2] = toGLCoord(m_windowWidth, m_windowHeight);
-	m_screen[3] = toGLCoord(0, m_windowHeight);
+	m_screen[0] = vec2(-0.75,-0.75);
+	m_screen[1] = vec2(0.75, -0.75);
+	m_screen[2] = vec2(0.75, 0.75);
+	m_screen[3] = vec2(-0.75, 0.75);
 
-
-	/*temp[0] = true;
-
-	for (int i = 1; i < 7; i++){
-		temp[i] = false;
-	}*/
 }
 
 //----------------------------------------------------------------------------------------
@@ -82,11 +76,49 @@ A2::~A2()
 }
 
 
-glm::vec2 A2::toGLCoord(GLfloat x, GLfloat y){
+glm::vec2 A2::toGLCoord(vec2 point){
 
+	GLfloat x = point[0];
+	GLfloat y = point[1];
+	GLfloat w = m_windowWidth == 0 ? 768 : m_windowWidth;
+	GLfloat h = m_windowHeight == 0 ? 768 : m_windowHeight;
+	return vec2((2.0f * x) / w - 1.0f,
+			1.0f - ( (2.0f * y) / h));
+}
+
+glm::vec2 A2::toGLCoord(GLfloat x, GLfloat y){
+	GLfloat w = m_windowWidth == 0 ? 768 : m_windowWidth;
+	GLfloat h = m_windowHeight == 0 ? 768 : m_windowHeight;
 	return vec2((2.0f * x) / m_windowWidth - 1.0f,
 			1.0f - ( (2.0f * y) / m_windowHeight));
 }
+
+void A2::reset(){
+	model = mat4();
+	scaler = mat4();
+	view = mat4();
+	proj = mat4();
+	m_movingX = false;
+	m_movingY = false;
+	m_movingZ = false;
+	m_activeMode = ROTATE;
+	m_activeCoord = MODEL;
+	m_near = 1.5,
+	m_far = 5.0,
+	//aspect = 1.0,
+	m_fov = 60,
+	m_scaleFactor= 1.0;
+	endDrag = false;
+	beginDrag = false;
+	temp = 0;
+
+	m_screen[0] = vec2(-0.75,-0.75);
+	m_screen[1] = vec2(0.75, -0.75);
+	m_screen[2] = vec2(0.75, 0.75);
+	m_screen[3] = vec2(-0.75, 0.75);
+
+}
+
 //----------------------------------------------------------------------------------------
 /*
  * Called once, at program start.
@@ -210,12 +242,10 @@ void A2::drawCube(){
 	perspective();
 	//transform each cube vertex into 2D
 	for (int i = 0; i < 8; i++){
-		vec4 temp = view * scaler * model * vec4(m_cube3D[i],1);
+		vec4 temp = view * look * scaler * model * vec4(m_cube3D[i],1);
 		bool draw = true;
 		//float z = temp[2];
 		temp = proj * temp;
-
-		//check near/far clipping
 
 		m_cube2D[i] = normalize(temp);
 	}
@@ -251,9 +281,17 @@ glm::vec2 A2::normalize(glm::vec4 &point){
 	return vec2(x,y);	
 }
 
-void A2::lookAt(glm::vec3 &lookAt, glm::vec3 &lookFrom, glm::vec3 &up) {
-	
-}
+/*void A2::lookAt(const glm::vec3 &lookAt, const glm::vec3 &lookFrom, const glm::vec3 &up) {
+	vec3 vz = glm::normalize(lookAt - lookFrom);
+	vec3 vx  = glm::normalize(glm::cross(up, vz));
+	vec3 vy = glm::cross(vz, vx);
+
+	mat4 temp;
+	look[0] = vec4(vz, 0);
+	look[1] = vec4(vy, 0);
+	look[2] = vec4(vz, 0);
+	look[3] = vec4(0, 0, 0, 1);
+}*/
 
 
 void A2::perspective(){
@@ -308,13 +346,6 @@ void A2::rotate(float amount){
 		}
 	}
 
-	/*if (m_activeCoord == MODEL){
-		model = (rotateZ*rotateY*rotateX)*model;
-	} else if (m_activeCoord == VIEW){
-		view = (rotateZ*rotateY*rotateX)*view;
-	} else if (m_activeCoord == PERSP){
-		proj = (rotateZ*rotateY*rotateX)*proj;
-	}*/
 
 }
 
@@ -339,9 +370,7 @@ void A2::translate(float amount){
 		model = translate*model;
 	} else if (m_activeCoord == VIEW){
 		view = translate*view;
-	} else if (m_activeCoord == PERSP){
-		proj = translate*proj;
-	}
+	} 
 }
 
 void A2::scale(float amount){
@@ -404,29 +433,37 @@ bool A2::clipPlane (
 
 	float wecA = glm::dot(v0 - p, n);
 	float wecB = glm::dot(v1 - p, n);
+	//cout << "v0 = " << v0 << " v1 = " << v1 <<endl;
+	//cout << "p = " << p << " n = " << n <<endl;;
+	//cout << "wecA = " << wecA << ", wecB = " << wecB << endl;
 
 	if (wecA < 0 && wecB < 0 ) return false; //reject
-	if (wecA >=  0 && wecB >= 0) return true; //trivial accept
+	if (wecA >= 0 && wecB >= 0) return true; //trivial accept
 	float t = wecA/(wecA - wecB);
 
 	if (wecA < 0){
 		v0 = v0 + t*(v1 - v0);
+		//cout << v0 << endl;
 	} else {
 		v1 = v0 + t*(v1 - v0);
+		//cout << v1 << endl;
 	}
 
 	return true;
 }
 
 void A2::checkDraw (
-		glm::vec2 &v0,
-		glm::vec2 &v1
+		glm::vec2 v0,
+		glm::vec2 v1
 ) {
 	bool draw = true;
 
+	if (refreshViewport){
 	vec3 A = vec3(v0, 0);
 	vec3 B = vec3(v1, 0);
 
+	//cout << "v0 = " << v0 << " v1 = " << v1 <<endl;
+	//cout << "screen 1 clipping" <<endl;
 	draw &= clipPlane(A, B, vec3(m_screen[0],0), vec3(0, 1, 0)); //top
 	draw &= clipPlane(A, B, vec3(m_screen[1],0), vec3(-1, 0, 0)); //right
 	draw &= clipPlane(A, B, vec3(m_screen[2],0), vec3(0, -1, 0)); //bottom
@@ -436,9 +473,11 @@ void A2::checkDraw (
 	v0[1] = A[1];
 	v1[0] = B[0];
 	v1[1] = B[1];
+	}
 
 	if (!draw) return;
 
+	//cout << " drawing (" << v0 << ") to (" << v1 <<")"<<endl;
 	drawLine(v0, v1);
 }
 //----------------------------------------------------------------------------------------
@@ -463,11 +502,11 @@ void A2::appLogic()
 	}
 
 	setLineColour(vec3(1.0f,0,0));
-	drawLine(m_gnomon2D[0], m_gnomon2D[1]);
+	checkDraw(m_gnomon2D[0], m_gnomon2D[1]);
 	setLineColour(vec3(0, 0, 1.0f));
-	drawLine(m_gnomon2D[0], m_gnomon2D[2]);
+	checkDraw(m_gnomon2D[0], m_gnomon2D[2]);
 	setLineColour(vec3(0, 1.0f, 0));
-	drawLine(m_gnomon2D[0], m_gnomon2D[3]);
+	checkDraw(m_gnomon2D[0], m_gnomon2D[3]);
 
 	for (int i = 0; i < 4; i++){
 		vec4 temp = proj * view * vec4(m_gnomon3D[i], 1);
@@ -476,18 +515,18 @@ void A2::appLogic()
 
 	//world
 	setLineColour(vec3(0.5f,0,0));
-	drawLine(m_gnomon2D[0], m_gnomon2D[1]);
+	checkDraw(m_gnomon2D[0], m_gnomon2D[1]);
 	setLineColour(vec3(0, 0, 0.5f));
-	drawLine(m_gnomon2D[0], m_gnomon2D[2]);
+	checkDraw(m_gnomon2D[0], m_gnomon2D[2]);
 	setLineColour(vec3(0, 0.5f, 0));
-	drawLine(m_gnomon2D[0], m_gnomon2D[3]);
+	checkDraw(m_gnomon2D[0], m_gnomon2D[3]);
 
 	//DRAW VIEWPORT
 	setLineColour(vec3(0.0));
-	drawLine(m_screen[0], m_screen[1]);
-	drawLine(m_screen[1], m_screen[2]);
-	drawLine(m_screen[2], m_screen[3]);
-	drawLine(m_screen[3], m_screen[0]);
+	drawLine((m_screen[0]), (m_screen[1]));
+	drawLine((m_screen[1]), (m_screen[2]));
+	drawLine((m_screen[2]), (m_screen[3]));
+	drawLine((m_screen[3]), (m_screen[0]));
 
 }
 
@@ -519,6 +558,9 @@ void A2::guiLogic()
 			glfwSetWindowShouldClose(m_window, GL_TRUE);
 		}
 		
+		if( ImGui::Button( "Reset" ) ) {
+			reset();
+		}
 
 		if( ImGui::RadioButton( "Rotate Model", &temp, 0 ) ) {
 			m_activeMode = ROTATE;
@@ -657,7 +699,7 @@ bool A2::mouseMoveEvent (
 	bool eventHandled(false);
 
 	float delta = (xPos-m_mouseX);
-	//refreshViewport = true;
+	refreshViewport = true;
 
 	if (m_activeMode == ROTATE){
 		rotate(0.1*delta);
@@ -673,26 +715,32 @@ bool A2::mouseMoveEvent (
 		m_fov = std::max(1.0f, m_fov);
 		m_fov = std::min(360.0f, m_fov);
 		
-	} else if (m_activeMode == VIEWPORT && m_movingX){
+	} else if (m_activeMode == VIEWPORT && (m_movingX || endDrag)){
 		refreshViewport = false;
 		if (beginDrag){
-			topLeft = toGLCoord(xPos, yPos);
+			topLeft = vec2(xPos, yPos);
 			beginDrag = false;
 		}
-		bottomRight = toGLCoord(xPos, yPos);
+		bottomRight = vec2(xPos, yPos);
 		//endDrag = false;
 		if (endDrag){
 			if (bottomRight[0] < topLeft[0] || bottomRight[1] < topLeft[1]){
-				vec2 temp = bottomRight;
-				bottomRight = topLeft;
-				topLeft = temp;
+				//cout << "reversed" << endl;
+				vec2 oldTL = topLeft;
+				vec2 oldBR = bottomRight;
+				topLeft = vec2(std::min(oldTL[0], oldBR[0]),
+						std::min(oldTL[1], oldBR[1]));
+				bottomRight = vec2(std::max(oldTL[0], oldBR[0]),
+						std::max(oldTL[1], oldBR[1]));
 			}
+			endDrag = false;
 			refreshViewport = true;
 		}
-		m_screen[0] = vec2(topLeft[0], topLeft[1]);		
-		m_screen[1] = vec2(bottomRight[0], topLeft[1]);
-		m_screen[2] = vec2(bottomRight[0], bottomRight[1]);
-		m_screen[3] = vec2(topLeft[0], bottomRight[1]);
+		//cout << "TL = " << topLeft << " BR = " << bottomRight << endl;
+		m_screen[3] = toGLCoord(topLeft[0], topLeft[1]);		
+		m_screen[2] = toGLCoord(bottomRight[0], topLeft[1]);
+		m_screen[1] = toGLCoord(bottomRight[0], bottomRight[1]);
+		m_screen[0] = toGLCoord(topLeft[0], bottomRight[1]);
 	}
 
 	m_mouseX = xPos;
@@ -774,7 +822,7 @@ bool A2::windowResizeEvent (
 ) {
 	bool eventHandled(false);
 
-	// Fill in with event handling code...
+	aspect = (float)width/(float)height;
 
 	return eventHandled;
 }
@@ -791,8 +839,12 @@ bool A2::keyInputEvent (
 	bool eventHandled(false);
 
 	if ( action == GLFW_PRESS){
-		
-		if (key == GLFW_KEY_O){
+
+		if( key == GLFW_KEY_Q ) {
+			glfwSetWindowShouldClose(m_window, GL_TRUE);
+		}else if( key == GLFW_KEY_A) {
+			reset();
+		}else if (key == GLFW_KEY_O){
 			m_activeMode = ROTATE;
 			m_activeCoord = VIEW;
 			temp = 3;

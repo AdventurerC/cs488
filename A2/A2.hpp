@@ -68,24 +68,22 @@ protected:
 	);
 
 	void checkDraw (
-		glm::vec2 &v0,
-		glm::vec2 &v1
+		glm::vec2 v0,
+		glm::vec2 v1
 	);
 
-	/*bool nearFarCheck (
-		glm::vec3 & v0,
-		glm::vec3 & v1
-	);*/
+	void reset();
 
 	void drawCube();
 
 	glm::vec2 normalize(glm::vec4 &point);
-	void lookAt(glm::vec3 &lookAt, glm::vec3 &lookFrom, glm::vec3 &up);
+	//void lookAt(const glm::vec3 &lookAt, const glm::vec3 &lookFrom, const glm::vec3 &up);
 	void perspective();
 	void rotate(float amount);
 	void translate(float amount);
 	void scale(float amount);
 
+	glm::vec2 toGLCoord(glm::vec2 point);
 	glm::vec2 toGLCoord(GLfloat x, GLfloat y);
 
 	ShaderProgram m_shader;
@@ -102,17 +100,13 @@ protected:
 	glm::mat4 scaler;
 	glm::mat4 view;
 	glm::mat4 proj;
-	glm::mat4 screen;
+	glm::mat4 look;
 
 	GLfloat aspect; //= w/h
 
 	bool m_movingX;
 	bool m_movingY;
 	bool m_movingZ;
-
-	//bool m_translating;
-	//bool m_rotating;
-	//bool m_scaling;
 
 	float m_mouseX;
 	float m_mouseY;
