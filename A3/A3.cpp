@@ -413,10 +413,12 @@ void A3::renderSceneGraph(const SceneNode & root) {
 	// could put a set of mutually recursive functions in this class, which
 	// walk down the tree from nodes of different types.
 
-	for (const SceneNode * node : root.children) {
+	/*for (const SceneNode * node : root.children) {
 
-		if (node->m_nodeType != NodeType::GeometryNode)
-			continue;
+		cout << node << endl;
+		if (node->m_nodeType == NodeType::GeometryNode)
+
+		
 
 		const GeometryNode * geometryNode = static_cast<const GeometryNode *>(node);
 
@@ -430,10 +432,38 @@ void A3::renderSceneGraph(const SceneNode & root) {
 		m_shader.enable();
 		glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
 		m_shader.disable();
-	}
+	}*/
+
+	renderNodes((SceneNode *) &root);
 
 	glBindVertexArray(0);
 	CHECK_GL_ERRORS;
+}
+
+void A3::renderNodes(SceneNode *root){
+	cout << root <<endl;
+	//glPushMatrix();
+	//glMultMatrix( root->get_transform());
+
+	if (root->m_nodeType == NodeType::GeometryNode){
+		const GeometryNode * geometryNode = static_cast<const GeometryNode *>(root);
+
+		updateShaderUniforms(m_shader, *geometryNode, m_view);
+
+		BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
+
+		//-- Now render the mesh:
+		m_shader.enable();
+		glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
+		m_shader.disable();
+	}
+	for (SceneNode *child : root->children){
+		cout << " ";
+		child->set_transform(root->get_transform() * child->get_transform());
+		renderNodes(child);
+		child->set_transform(root->get_inverse() * child->get_transform());
+	}
+	//glPopMatrix();
 }
 
 //----------------------------------------------------------------------------------------
