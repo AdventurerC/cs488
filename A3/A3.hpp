@@ -9,6 +9,7 @@
 
 #include <glm/glm.hpp>
 #include <memory>
+#include <vector>
 
 struct LightSource {
 	glm::vec3 position;
@@ -48,7 +49,7 @@ protected:
 	void initPerspectiveMatrix();
 	void uploadCommonSceneUniforms();
 	void renderSceneGraph(const SceneNode &node);
-	void renderNodes(SceneNode *root);
+	void renderNodes(SceneNode *root, bool picking = false);
 	void renderArcCircle();
 
 	void resetOrientation();
@@ -56,8 +57,13 @@ protected:
 	void resetJoints();
 	void resetAll();
 
+	void moveJoints(SceneNode *root, float x, float y);
+
+
 	glm::mat4 m_perpsective;
 	glm::mat4 m_view;
+	glm::mat4 m_translation;
+	glm::mat4 m_rotation;
 
 	LightSource m_light;
 
@@ -96,5 +102,12 @@ protected:
 	bool m_backfaceCulling;
 	bool m_frontfaceCulling;
 
-	std::vector<std::shared_ptr<SceneNode> > m_selectedJoints;
+	float m_mouseX;
+	float m_mouseY;
+
+	bool lmb_down;
+	bool mmb_down;
+	bool rmb_down;
+
+	std::vector<SceneNode*> m_selectedJoints;
 };

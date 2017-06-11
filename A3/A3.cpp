@@ -29,7 +29,20 @@ A3::A3(const std::string & luaSceneFile)
 	  m_vbo_vertexPositions(0),
 	  m_vbo_vertexNormals(0),
 	  m_vao_arcCircle(0),
-	  m_vbo_arcCircle(0)
+	  m_vbo_arcCircle(0),
+	  m_mouseX(0.0),
+	  m_mouseY(0.0),
+	  tempMode(0),
+	  m_mode(Mode::POSITION),
+	  m_drawCircle(true),
+	  m_zbuffer(false),
+	  m_backfaceCulling(false),
+	  m_frontfaceCulling(false),
+	  lmb_down(false),
+	  mmb_down(false),
+	  rmb_down(false),
+	  m_translation(mat4()),
+	  m_rotation(mat4())
 {
 
 }
@@ -423,6 +436,8 @@ static void updateShaderUniforms(
  */
 void A3::draw() {
 
+	m_view = m_translation * m_view;
+
 	glEnable( GL_DEPTH_TEST );
 	renderSceneGraph(*m_rootNode);
 
@@ -456,7 +471,7 @@ void A3::renderSceneGraph(const SceneNode & root) {
 	CHECK_GL_ERRORS;
 }
 
-void A3::renderNodes(SceneNode *root){
+void A3::renderNodes(SceneNode *root, bool picking){
 	//cout << *root << endl;
 
 	if (root->m_nodeType == NodeType::GeometryNode){
@@ -502,11 +517,13 @@ void A3::renderArcCircle() {
 }
 
 void A3::resetOrientation(){
+	//m_view = glm::inverse(m_rotation) * m_view;
 	m_rootNode->set_transform(glm::inverse(m_rootNode->get_rotation()) * m_rootNode->get_transform());
 }
 
 void A3::resetPosition(){
-	m_rootNode->set_transform(glm::inverse(m_rootNode->get_translation()) * m_rootNode->get_transform());
+	m_view = glm::inverse(m_translation) * m_view;
+	//m_rootNode->set_transform(glm::inverse(m_rootNode->get_translation()) * m_rootNode->get_transform());
 }
 
 
@@ -515,7 +532,9 @@ void A3::resetJoints(){
 }
 
 void A3::resetAll(){
-
+	resetOrientation();
+	resetPosition();
+	resetJoints();
 }
 
 //----------------------------------------------------------------------------------------
@@ -551,9 +570,63 @@ bool A3::mouseMoveEvent (
 ) {
 	bool eventHandled(false);
 
-	// Fill in with event handling code...
+	float deltaX = xPos - m_mouseX;
+	float deltaY = yPos - m_mouseY;
+	float modifier = 0.1;
 
+	if (m_mode == POSITION){
+		if (lmb_down){
+			m_translation = glm::translate(m_translation, vec3(modifier*deltaX, modifier*deltaY, 0));
+		} else if (mmb_down){
+			m_translation = glm::translate(m_translation, vec3(0, 0, modifier*deltaY));
+		} else if (rmb_down){
+			m_rootNode->rotate('y', glm::radians(deltaX));
+		}
+
+	} else if (m_mode == JOINT){
+		moveJoints((SceneNode *) &m_rootNode, deltaX, deltaY);
+	}
+
+	m_mouseX = xPos;
+	m_mouseY = yPos;
 	return eventHandled;
+}
+
+void A3::moveJoints(SceneNode *root, float x, float y){
+	/*for (SceneNode *child : root->children){
+		//cout << " ";
+		if (child->isSelected){
+			if (mmb_down && child.m_name != "neckJoint"){
+				child->rotate('x', glm::radians(x));
+				child->rotate('y', glm::radians(y));
+			}
+
+			if (rmb_down && child.m_name == "neckJoint"){
+				child->rotate('y', glm::radians(y));
+			}
+
+		}
+		moveJoints(child);
+	}*/
+	if (mmb_down){
+		std::vector<SceneNode*>::iterator it = m_selectedJoints.begin();
+		for (it; it != m_selectedJoints.end(); ++it){
+			if ((*it)->m_name != "neckJoint"){
+				(*it)->rotate('x', glm::radians(x));
+				(*it)->rotate('y', glm::radians(y));
+			}
+		}
+	}
+
+	if (rmb_down){
+		std::vector<SceneNode*>::iterator it = m_selectedJoints.begin();
+		for (it; it != m_selectedJoints.end(); ++it){
+			if ((*it)->m_name == "neckJoint"){
+				//it->rotate('x', glm::radians(x));
+				(*it)->rotate('y', glm::radians(y));
+			}
+		}
+	}
 }
 
 //----------------------------------------------------------------------------------------
@@ -568,6 +641,33 @@ bool A3::mouseButtonInputEvent (
 	bool eventHandled(false);
 
 	// Fill in with event handling code...
+	if (actions == GLFW_PRESS){
+		if (button == GLFW_MOUSE_BUTTON_LEFT){
+			if (m_mode == JOINT){
+
+			} else {
+				lmb_down = true;
+			}
+		} else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+			mmb_down = true;
+		} else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+			rmb_down = true;
+		}
+	}
+
+	if (actions == GLFW_RELEASE){
+		if (button == GLFW_MOUSE_BUTTON_LEFT){
+			if (m_mode == JOINT) {
+
+			} 
+			lmb_down = false;
+			
+		} else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+			mmb_down = false;
+		} else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+			rmb_down = false;
+		}
+	}
 
 	return eventHandled;
 }
