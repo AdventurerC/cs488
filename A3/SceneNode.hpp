@@ -26,6 +26,8 @@ public:
     
     const glm::mat4& get_transform() const;
     const glm::mat4& get_inverse() const;
+    const glm::mat4& get_translation() const;
+    const glm::mat4& get_rotation() const;
     
     void set_transform(const glm::mat4& m);
     
@@ -45,6 +47,8 @@ public:
     
     // Transformations
     glm::mat4 trans;
+    glm::mat4 rot;
+    glm::mat4 transl;
     glm::mat4 invtrans;
     
     std::list<SceneNode*> children;

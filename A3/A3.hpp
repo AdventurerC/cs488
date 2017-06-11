@@ -51,6 +51,11 @@ protected:
 	void renderNodes(SceneNode *root);
 	void renderArcCircle();
 
+	void resetOrientation();
+	void resetPosition();
+	void resetJoints();
+	void resetAll();
+
 	glm::mat4 m_perpsective;
 	glm::mat4 m_view;
 
@@ -78,4 +83,18 @@ protected:
 	std::string m_luaSceneFile;
 
 	std::shared_ptr<SceneNode> m_rootNode;
+
+	enum Mode {
+		POSITION,
+		JOINT
+	};
+
+	int tempMode;
+	Mode m_mode;
+	bool m_drawCircle;
+	bool m_zbuffer;
+	bool m_backfaceCulling;
+	bool m_frontfaceCulling;
+
+	std::vector<std::shared_ptr<SceneNode> > m_selectedJoints;
 };

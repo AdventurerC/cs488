@@ -322,21 +322,58 @@ void A3::guiLogic()
 	ImGuiWindowFlags windowFlags(ImGuiWindowFlags_AlwaysAutoResize);
 	float opacity(0.5f);
 
-	ImGui::Begin("Properties", &showDebugWindow, ImVec2(100,100), opacity,
+	ImGui::Begin("Application", &showDebugWindow, ImVec2(100,100), opacity,
 			windowFlags);
-
-
-		// Add more gui elements here here ...
-
 
 		// Create Button, and check if it was clicked:
 		if( ImGui::Button( "Quit Application" ) ) {
 			glfwSetWindowShouldClose(m_window, GL_TRUE);
 		}
 
+		if( ImGui::Button( "Reset Position" ) ) {
+			glfwSetWindowShouldClose(m_window, GL_TRUE);
+		}
+
+		if( ImGui::Button( "Reset Orientation" ) ) {
+			glfwSetWindowShouldClose(m_window, GL_TRUE);
+		}
+
+		if( ImGui::Button( "Reset Joints" ) ) {
+			glfwSetWindowShouldClose(m_window, GL_TRUE);
+		}
+
+		if( ImGui::Button( "Reset All" ) ) {
+			glfwSetWindowShouldClose(m_window, GL_TRUE);
+		}
+
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
 
 	ImGui::End();
+
+	ImGui::Begin("Edit", &showDebugWindow, ImVec2(100,100), opacity,
+			windowFlags);
+		if( ImGui::Button( "Undo" ) ) {
+			
+		}
+
+		if( ImGui::Button( "Redo" ) ) {
+			
+		}
+
+	ImGui::End();
+
+	ImGui::Begin("Options", &showDebugWindow, ImVec2(100,100), opacity,
+			windowFlags);
+
+		if( ImGui::RadioButton( "Position/Orientation", &tempMode, 0 ) ) {
+			m_mode = POSITION;
+		}
+
+		if( ImGui::RadioButton( "Joints", &tempMode, 1 ) ) {
+			m_mode = JOINT;
+		}
+	ImGui::End();
+	
 }
 
 //----------------------------------------------------------------------------------------
@@ -420,7 +457,7 @@ void A3::renderSceneGraph(const SceneNode & root) {
 }
 
 void A3::renderNodes(SceneNode *root){
-	cout << *root <<endl;
+	//cout << *root << endl;
 
 	if (root->m_nodeType == NodeType::GeometryNode){
 		const GeometryNode * geometryNode = static_cast<const GeometryNode *>(root);
@@ -435,12 +472,11 @@ void A3::renderNodes(SceneNode *root){
 		m_shader.disable();
 	}
 	for (SceneNode *child : root->children){
-		cout << " ";
+		//cout << " ";
 		child->set_transform(root->get_transform() * child->get_transform());
 		renderNodes(child);
 		child->set_transform(glm::inverse(root->get_transform()) * child->get_transform());
 	}
-
 }
 
 //----------------------------------------------------------------------------------------
@@ -463,6 +499,23 @@ void A3::renderArcCircle() {
 
 	glBindVertexArray(0);
 	CHECK_GL_ERRORS;
+}
+
+void A3::resetOrientation(){
+	m_rootNode->set_transform(glm::inverse(m_rootNode->get_rotation()) * m_rootNode->get_transform());
+}
+
+void A3::resetPosition(){
+	m_rootNode->set_transform(glm::inverse(m_rootNode->get_translation()) * m_rootNode->get_transform());
+}
+
+
+void A3::resetJoints(){
+
+}
+
+void A3::resetAll(){
+
 }
 
 //----------------------------------------------------------------------------------------
@@ -562,6 +615,8 @@ bool A3::keyInputEvent (
 		if( key == GLFW_KEY_M ) {
 			show_gui = !show_gui;
 			eventHandled = true;
+		} else if (key == GLFW_KEY_Q) {
+			glfwSetWindowShouldClose(m_window, GL_TRUE);
 		}
 	}
 	// Fill in with event handling code...
