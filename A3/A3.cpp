@@ -39,8 +39,8 @@ A3::A3(const std::string & luaSceneFile)
 	  m_mouseY(0.0),
 	  tempMode(0),
 	  m_mode(Mode::POSITION),
-	  m_drawCircle(true),
-	  m_zbuffer(false),
+	  m_drawCircle(false),
+	  m_zbuffer(true),
 	  m_backfaceCulling(false),
 	  m_frontfaceCulling(false),
 	  lmb_down(false),
@@ -386,6 +386,23 @@ void A3::guiLogic()
 
 	ImGui::Begin("Options", &showDebugWindow, ImVec2(100,100), opacity,
 			windowFlags);
+			
+		if( ImGui::Checkbox( "Circle", &m_drawCircle) ) {
+			
+		}
+
+		if( ImGui::Checkbox( "Z-buffer", &m_zbuffer) ) {
+			
+		}
+
+		if( ImGui::Checkbox( "Z-buffer", &m_backfaceCulling) ) {
+			
+		}
+		
+		if( ImGui::Checkbox( "Z-buffer", &m_frontfaceCulling) ) {
+			
+		}
+
 
 		if( ImGui::RadioButton( "Position/Orientation", &tempMode, 0 ) ) {
 			m_mode = POSITION;
@@ -484,12 +501,30 @@ void A3::draw() {
 	m_view = m_translation * m_rotation * glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
 			vec3(0.0f, 1.0f, 0.0f));
 
-	glEnable( GL_DEPTH_TEST );
+	if (m_zbuffer)
+		glEnable( GL_DEPTH_TEST );
+
+	if (m_backfaceCulling || m_frontfaceCulling){
+		glEnable(GL_CULL_FACE);
+		if (m_backfaceCulling && m_frontfaceCulling){
+			glCullFace(GL_FRONT_AND_BACK);
+		} else if (m_backfaceCulling){
+			glCullFace(GL_BACK);
+		} else if (m_frontfaceCulling){
+			glCullFace(GL_FRONT);
+		}
+	}
+
 	renderSceneGraph(*m_rootNode);
 
+	if (m_zbuffer)
+		glDisable( GL_DEPTH_TEST );
 
-	glDisable( GL_DEPTH_TEST );
-	renderArcCircle();
+	if (m_backfaceCulling || m_frontfaceCulling){
+		glDisable(GL_CULL_FACE);
+	}
+	if (m_drawCircle)
+		renderArcCircle();
 }
 
 //----------------------------------------------------------------------------------------
