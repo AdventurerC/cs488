@@ -52,9 +52,11 @@ protected:
 	void renderNodes(SceneNode *root, bool picking = false);
 	void renderArcCircle();
 
+	void jointPickerGui(SceneNode *node);
+
 	void resetOrientation();
 	void resetPosition();
-	void resetJoints();
+	void resetJoints(SceneNode *root);
 	void resetAll();
 
 	void moveJoints(SceneNode *root, float x, float y);

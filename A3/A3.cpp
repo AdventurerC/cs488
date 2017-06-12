@@ -344,19 +344,19 @@ void A3::guiLogic()
 		}
 
 		if( ImGui::Button( "Reset Position" ) ) {
-			glfwSetWindowShouldClose(m_window, GL_TRUE);
+			resetPosition();
 		}
 
 		if( ImGui::Button( "Reset Orientation" ) ) {
-			glfwSetWindowShouldClose(m_window, GL_TRUE);
+			resetOrientation();
 		}
 
 		if( ImGui::Button( "Reset Joints" ) ) {
-			glfwSetWindowShouldClose(m_window, GL_TRUE);
+			resetJoints((SceneNode*)&m_rootNode);
 		}
 
 		if( ImGui::Button( "Reset All" ) ) {
-			glfwSetWindowShouldClose(m_window, GL_TRUE);
+			resetAll();
 		}
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
@@ -386,7 +386,27 @@ void A3::guiLogic()
 			m_mode = JOINT;
 		}
 	ImGui::End();
+
+	ImGui::Begin("Temp Joint Picker", &showDebugWindow, ImVec2(100,100), opacity,
+			windowFlags);
+		
+		jointPickerGui((SceneNode*)&m_rootNode);
+
+	ImGui::End();
 	
+}
+
+//makes a list of joints to pick in case no time for picking
+void A3::jointPickerGui(SceneNode *node){
+	if (node->m_nodeType == NodeType::JointNode) {
+		if( ImGui::RadioButton( node->m_name.c_str() , &(node->isSelected) ) ) {
+			m_selectedJoints.emplace_back(node);
+		}
+	}
+
+	for (SceneNode *child : node->children){
+		jointPickerGui(child);
+	}
 }
 
 //----------------------------------------------------------------------------------------
@@ -527,14 +547,17 @@ void A3::resetPosition(){
 }
 
 
-void A3::resetJoints(){
-
+void A3::resetJoints(SceneNode *root){
+	for (SceneNode *child : root->children){
+		resetJoints(child);
+	}
+	root->set_transform(root->get_inverse());
 }
 
 void A3::resetAll(){
 	resetOrientation();
 	resetPosition();
-	resetJoints();
+	resetJoints((SceneNode*)&m_rootNode);
 }
 
 //----------------------------------------------------------------------------------------
