@@ -481,7 +481,7 @@ void A3::draw() {
 
 	//m_view = m_translation * m_view;
 
-	m_view = m_rotation * m_translation * glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
+	m_view = m_translation * m_rotation * glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
 			vec3(0.0f, 1.0f, 0.0f));
 
 	glEnable( GL_DEPTH_TEST );
@@ -554,6 +554,8 @@ void A3::renderArcCircle() {
 		} else {
 			M = glm::scale( glm::mat4(), glm::vec3( 0.5, 0.5*aspect, 1.0 ) );
 		}
+
+		M = m_translation * M;
 		glUniformMatrix4fv( m_location, 1, GL_FALSE, value_ptr( M ) );
 		glDrawArrays( GL_LINE_LOOP, 0, CIRCLE_PTS );
 	m_shader_arcCircle.disable();
@@ -641,18 +643,23 @@ bool A3::mouseMoveEvent (
 		} 
 
 		if (rmb_down){
-			float w = m_windowWidth/2;
-			float h = m_windowHeight/2;
-			float d = std::max(w,h);
+			float w = m_framebufferWidth/2;
+			float h = m_framebufferHeight/2;
+			float d = std::min(w,h);
 			float vecX, vecY, vecZ;
+			
+			//cout << "xPos = " << xPos << " w = " << m_framebufferWidth/2 <<endl;
+			float aspect = (float)m_framebufferWidth/(float)m_framebufferHeight;
 
-			vec3 rotvec = vCalcRotVec((float)xPos - w, (float)yPos - h,
-						(float)m_mouseX - w, (float)m_mouseY - w,
+			vec3 rotvec = vCalcRotVec((xPos - w), (h - yPos),
+						(m_mouseX - w), (h - m_mouseY),
 						d);
-
 			mat4 rot = vAxisRotMatrix(rotvec[0], rotvec[1], rotvec[2]);
 
-			m_rotation = rot * m_rotation;
+
+			cout << rot << endl;
+
+			m_rotation =  rot * m_rotation;
 			/*m_rotateX += deltaX;
 			mat4 temp = m_rootNode->get_transform();
 			m_rootNode->set_transform(mat4());

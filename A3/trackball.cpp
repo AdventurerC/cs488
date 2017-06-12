@@ -96,6 +96,10 @@ vec3 vCalcRotVec(float fNewX, float fNewY,
    fVec[1] = fOldVecZ * fNewVecX - fNewVecZ * fOldVecX;
    fVec[2] = fOldVecX * fNewVecY - fNewVecX * fOldVecY;
 
+   fVec[0] *= 0.5;
+   fVec[1] *= 0.5;
+   fVec[2] *= 0.5;
+
    return fVec;
 }
 
