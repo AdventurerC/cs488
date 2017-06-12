@@ -21,6 +21,7 @@ class A3 : public CS488Window {
 public:
 	A3(const std::string & luaSceneFile);
 	virtual ~A3();
+	bool m_picking;
 
 protected:
 	virtual void init() override;
@@ -60,6 +61,7 @@ protected:
 	void resetAll();
 
 	void moveJoints(SceneNode *root, float x, float y);
+	void pick(SceneNode *node, unsigned int id);
 
 
 	glm::mat4 m_perpsective;
@@ -103,6 +105,8 @@ protected:
 	bool m_zbuffer;
 	bool m_backfaceCulling;
 	bool m_frontfaceCulling;
+
+	
 
 	float m_mouseX;
 	float m_mouseY;
