@@ -272,8 +272,8 @@ void A3::initPerspectiveMatrix()
 void A3::initViewMatrix() {
 	m_view = glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
 			vec3(0.0f, 1.0f, 0.0f));
-	cout << "initView:" <<endl;
-	cout << m_view << endl;
+	//cout << "initView:" <<endl;
+	//cout << m_view << endl;
 }
 
 //----------------------------------------------------------------------------------------
@@ -395,11 +395,11 @@ void A3::guiLogic()
 			
 		}
 
-		if( ImGui::Checkbox( "Z-buffer", &m_backfaceCulling) ) {
+		if( ImGui::Checkbox( "Backface Culling", &m_backfaceCulling) ) {
 			
 		}
 		
-		if( ImGui::Checkbox( "Z-buffer", &m_frontfaceCulling) ) {
+		if( ImGui::Checkbox( "Frontface Culling", &m_frontfaceCulling) ) {
 			
 		}
 
@@ -612,7 +612,7 @@ void A3::resetOrientation(){
 
 void A3::resetPosition(){
 	m_translation = mat4();
-	cout << m_view << endl;
+	//cout << m_view << endl;
 }
 
 
@@ -665,6 +665,8 @@ bool A3::mouseMoveEvent (
 ) {
 	bool eventHandled(false);
 
+	if (ImGui::IsMouseHoveringAnyWindow()) return eventHandled;
+
 	float deltaX = xPos - m_mouseX;
 	float deltaY = m_mouseY - yPos;
 	float modifier = 0.001;
@@ -693,7 +695,7 @@ bool A3::mouseMoveEvent (
 			mat4 rot = vAxisRotMatrix(rotvec[0], rotvec[1], rotvec[2]);
 
 
-			cout << rot << endl;
+			//cout << rot << endl;
 
 			m_rotation =  rot * m_rotation;
 			/*m_rotateX += deltaX;
@@ -748,6 +750,7 @@ bool A3::mouseButtonInputEvent (
 ) {
 	bool eventHandled(false);
 
+	if (ImGui::IsMouseHoveringAnyWindow()) return eventHandled;
 	// Fill in with event handling code...
 	if (actions == GLFW_PRESS){
 		if (button == GLFW_MOUSE_BUTTON_LEFT){
