@@ -24,3 +24,4 @@ void JointNode::set_joint_y(double min, double init, double max) {
 	m_joint_y.init = init;
 	m_joint_y.max = max;
 }
+

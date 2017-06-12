@@ -121,6 +121,13 @@ void SceneNode::translate(const glm::vec3& amount) {
 	trans = glm::translate(amount) * trans;
 }
 
+void SceneNode::selectChild(){
+	for(SceneNode * child : children) {
+		if (child->m_nodeType == NodeType::GeometryNode){
+			child->isSelected = this->isSelected;
+		}
+	}
+}
 
 //---------------------------------------------------------------------------------------
 int SceneNode::totalSceneNodes() const {

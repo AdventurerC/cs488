@@ -415,10 +415,12 @@ void A3::jointPickerGui(SceneNode *node){
 			if (node->isSelected) {
 				cout << "selected " << *node << endl;
 				m_selectedJoints.emplace_back(node);
+				node->selectChild();
 			} else {
 				auto it = std::find(m_selectedJoints.begin(), m_selectedJoints.end(), node);
 				if (it != m_selectedJoints.end()){
 					cout << "deselected " << *node << endl;
+					node->selectChild();
 					m_selectedJoints.erase(it);
 				}
 			}
@@ -455,15 +457,15 @@ static void updateShaderUniforms(
 
 		//-- Set Material values:
 		location = shader.getUniformLocation("material.kd");
-		vec3 kd = node.material.kd;
+		vec3 kd = node.isSelected ? glm::vec3(1.0f) : node.material.kd;
 		glUniform3fv(location, 1, value_ptr(kd));
 		CHECK_GL_ERRORS;
 		location = shader.getUniformLocation("material.ks");
-		vec3 ks = node.material.ks;
+		vec3 ks = node.isSelected ? glm::vec3(1.0f) : node.material.ks;
 		glUniform3fv(location, 1, value_ptr(ks));
 		CHECK_GL_ERRORS;
 		location = shader.getUniformLocation("material.shininess");
-		glUniform1f(location, node.material.shininess);
+		glUniform1f(location, node.isSelected ? 100.0f :node.material.shininess);
 		CHECK_GL_ERRORS;
 
 	}

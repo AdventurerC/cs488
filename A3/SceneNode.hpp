@@ -40,6 +40,8 @@ public:
     void scale(const glm::vec3& amount);
     void translate(const glm::vec3& amount);
 
+    void selectChild();
+
 
 	friend std::ostream & operator << (std::ostream & os, const SceneNode & node);
 
