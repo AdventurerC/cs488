@@ -62,6 +62,7 @@ protected:
 
 	void moveJoints(SceneNode *root, float x, float y);
 	void pick(SceneNode *node, unsigned int id);
+	void select(SceneNode *node);
 
 
 	glm::mat4 m_perpsective;

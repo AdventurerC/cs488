@@ -295,6 +295,7 @@ void A3::uploadCommonSceneUniforms() {
 
 		location = m_shader.getUniformLocation("picking");
 		glUniform1i( location, m_picking ? 1 : 0 );
+		CHECK_GL_ERRORS;
 
 		if (!m_picking){
 			//-- Set LightSource uniform for the scene:
@@ -471,6 +472,7 @@ static void updateShaderUniforms(
 		CHECK_GL_ERRORS;
 
 		if (picking){
+			//cout << "picking " << node << endl;
 			int idx = node.m_nodeId;
 			float r = float(idx&0xff) / 255.0f;
 			float g = float((idx>>8)&0xff) / 255.0f;
@@ -479,6 +481,15 @@ static void updateShaderUniforms(
 			location = shader.getUniformLocation("material.kd");
 			glUniform3f( location, r, g, b );
 			CHECK_GL_ERRORS;
+
+			location = shader.getUniformLocation("material.ks");
+			glUniform3f( location, r, g, b );
+			CHECK_GL_ERRORS;
+
+			location = shader.getUniformLocation("material.shininess");
+			glUniform1f(location, node.material.shininess);
+			CHECK_GL_ERRORS;
+		
 		} else {
 			//-- Set NormMatrix:
 			location = shader.getUniformLocation("NormalMatrix");
@@ -570,11 +581,6 @@ void A3::renderSceneGraph(const SceneNode & root) {
 
 void A3::renderNodes(SceneNode *root, bool picking){
 	//cout << *root << endl;
-	if (root->m_nodeType == NodeType::JointNode){
-		if (m_picking){
-
-		}
-	}
 
 	if (root->m_nodeType == NodeType::GeometryNode){
 		const GeometryNode * geometryNode = static_cast<const GeometryNode *>(root);
@@ -760,6 +766,20 @@ void A3::moveJoints(SceneNode *root, float x, float y){
 	}
 }
 
+void A3::select(SceneNode *node){
+	if (node->isSelected) {
+		cout << "selected " << *node << endl;
+		m_selectedJoints.emplace_back(node);
+	} else {
+		auto it = std::find(m_selectedJoints.begin(), m_selectedJoints.end(), node);
+		if (it != m_selectedJoints.end()){
+			cout << "deselected " << *node << endl;
+			m_selectedJoints.erase(it);
+		}
+	}
+
+}
+
 //picking code
 void A3::pick(SceneNode *node, unsigned int id){
 	//do picking in joint 
@@ -767,17 +787,20 @@ void A3::pick(SceneNode *node, unsigned int id){
 		if (node->m_nodeId == id){
 			node->isSelected = !(node->isSelected);
 			node->selectChild();
+			select(node);
 			return;
 		} else {
 			for (SceneNode* child : node->children){
 				if (child->m_nodeId == id){
 					//if child is to be selected, select parent joint as well
 					node->isSelected = !(node->isSelected);
-					child->isSelected = node->isSelected;
+					node->selectChild();
+					select(node);
 					return;
 				}	
 			}
 		}
+
 	} 
 
 	for (SceneNode* child : node->children){
@@ -812,7 +835,7 @@ bool A3::mouseButtonInputEvent (
 				glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 				glClearColor(0.35, 0.35, 0.35, 1.0);
 
-				renderNodes((SceneNode *) &(*m_rootNode));
+				draw();//renderNodes((SceneNode *) &(*m_rootNode));
 
 				CHECK_GL_ERRORS;
 
@@ -832,7 +855,7 @@ bool A3::mouseButtonInputEvent (
 
 				CHECK_GL_ERRORS;
 
-
+				m_picking = false;
 			} else {
 				lmb_down = true;
 			}
@@ -845,9 +868,6 @@ bool A3::mouseButtonInputEvent (
 
 	if (actions == GLFW_RELEASE){
 		if (button == GLFW_MOUSE_BUTTON_LEFT){
-			if (m_mode == JOINT) {
-				m_picking = false;
-			} 
 			lmb_down = false;
 			
 		} else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
