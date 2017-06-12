@@ -6,6 +6,7 @@ using namespace std;
 #include "cs488-framework/MathUtils.hpp"
 #include "GeometryNode.hpp"
 #include "JointNode.hpp"
+#include "trackball.hpp"
 
 #include <imgui/imgui.h>
 
@@ -21,6 +22,7 @@ using namespace glm;
 static bool show_gui = true;
 
 const size_t CIRCLE_PTS = 48;
+
 
 //----------------------------------------------------------------------------------------
 // Constructor
@@ -477,7 +479,7 @@ void A3::draw() {
 
 	//m_view = m_translation * m_view;
 
-	m_view = /*m_rotation **/ m_translation * glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
+	m_view = m_rotation * m_translation * glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
 			vec3(0.0f, 1.0f, 0.0f));
 
 	glEnable( GL_DEPTH_TEST );
@@ -559,12 +561,13 @@ void A3::renderArcCircle() {
 }
 
 void A3::resetOrientation(){
-	mat4 temp = m_rootNode->get_transform();
+	/*mat4 temp = m_rootNode->get_transform();
 	m_rootNode->set_transform(mat4());
 	m_rootNode->rotate('y', (-m_rotateX));
 	m_rootNode->set_transform(temp * m_rootNode->get_transform());
 
-	m_rotateX = 0;
+	m_rotateX = 0;*/
+	m_rotation = mat4();
 }
 
 void A3::resetPosition(){
@@ -636,11 +639,24 @@ bool A3::mouseMoveEvent (
 		} 
 
 		if (rmb_down){
-			m_rotateX += deltaX;
+			float w = m_windowWidth/2;
+			float h = m_windowHeight/2;
+			float d = std::max(w,h);
+			float vecX, vecY, vecZ;
+
+			vec3 rotvec = vCalcRotVec((float)xPos - w, (float)yPos - h,
+						(float)m_mouseX - w, (float)m_mouseY - w,
+						d);
+
+			mat4 rot = vAxisRotMatrix(rotvec[0], rotvec[1], rotvec[2]);
+
+			m_rotation = rot * m_rotation;
+			/*m_rotateX += deltaX;
 			mat4 temp = m_rootNode->get_transform();
 			m_rootNode->set_transform(mat4());
 			m_rootNode->rotate('y', (deltaX));
 			m_rootNode->set_transform(temp * m_rootNode->get_transform());
+			*/
 		}
 
 	} else if (m_mode == JOINT){
