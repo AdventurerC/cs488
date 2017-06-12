@@ -106,6 +106,8 @@ protected:
 
 	float m_mouseX;
 	float m_mouseY;
+	float m_rotateX;
+	float m_rotateY;
 
 	bool lmb_down;
 	bool mmb_down;

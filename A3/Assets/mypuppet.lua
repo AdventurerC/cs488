@@ -17,12 +17,6 @@ rootnode:add_child(torso)
 torso:set_material(white)
 torso:scale(0.5,1.0,0.5);
 
-head = gr.mesh('cube', 'head')
-torso:add_child(head)
-head:scale(1.0/0.5, 1.0, 1.0/0.5)
-head:scale(0.4, 0.4, 0.4)
-head:translate(0.0, 0.9, 0.0)
-head:set_material(red)
 
 neck = gr.mesh('sphere', 'neck')
 torso:add_child(neck)
@@ -32,7 +26,17 @@ neck:translate(0.0, 0.6, 0.0)
 neck:set_material(blue)
 
 neckJoint = gr.joint('neckJoint', {-30, 0.0, 30}, {-90, 0.0, -80})
+--neckJoint:scale(1.0/0.5, 1.0, 1.0/0.5)
+--neckJoint:scale(0.4, 0.4, 0.4)
+--neckJoint:translate(0.0, 0.9, 0.0)
 neck:add_child(neckJoint)
+
+head = gr.mesh('cube', 'head')
+neckJoint:add_child(head)
+head:scale(3, 1.5, 3)
+--head:scale(0.4, 0.4, 0.4)
+head:translate(0.0, 0.9, 0.0)
+head:set_material(red)
 
 ears = gr.mesh('sphere', 'ears')
 head:add_child(ears)
@@ -64,9 +68,9 @@ function genArm (which, name, elbowName, handName)
     arm = gr.mesh('cube', name)
     --torso:add_child(arm)
     arm:scale(1/0.5, 1.0, 1/0.5);
-    arm:scale(0.2, 0.1, 0.1)
+    arm:scale(1, 0.5, 0.5)
     arm:rotate('z', 50*which*-1);
-    arm:translate(which*0.8, 0.1, 0.0)
+    arm:translate(which*1, -0.3, 0.0)
     arm:set_material(red)
 
     arm2elbow = gr.joint(name..'-elbow', {0, 0, which*1.5}, {0, 0, which*1.5})
@@ -96,11 +100,12 @@ end
 leftArm = genArm(-1, 'leftArm', 'leftElbow', 'leftHand')
 rightArm = genArm(1, 'rightArm', 'rightElbow', 'rightHand')
 
-torso:add_child(leftArm)
-torso:add_child(rightArm)
+--torso:add_child(leftArm)
+--torso:add_child(rightArm)
 
 armJointL = gr.joint('armJointL', {-90, 0, -90}, {-10, 0, -10})
 leftShoulder:add_child(armJointL)
+armJointL:add_child(leftArm)
 
 rightShoulder = gr.mesh('sphere', 'rightShoulder')
 torso:add_child(rightShoulder)
@@ -110,7 +115,9 @@ rightShoulder:translate(0.4, 0.35, 0.0)
 rightShoulder:set_material(blue)
 
 armJointR = gr.joint('armJointR', {-90, 0, -90}, {-10, 0, -10})
-leftShoulder:add_child(armJointR)
+rightShoulder:add_child(armJointR)
+armJointR:add_child(rightArm)
+
 
 leftHip = gr.mesh('sphere', 'leftHip')
 torso:add_child(leftHip)

@@ -13,6 +13,9 @@ using namespace std;
 #include <glm/gtx/io.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <stack>
+#include <algorithm>
+
 using namespace glm;
 
 static bool show_gui = true;
@@ -42,7 +45,9 @@ A3::A3(const std::string & luaSceneFile)
 	  mmb_down(false),
 	  rmb_down(false),
 	  m_translation(mat4()),
-	  m_rotation(mat4())
+	  m_rotation(mat4()),
+	  m_rotateX(0),
+	  m_rotateY(0)
 {
 
 }
@@ -265,6 +270,8 @@ void A3::initPerspectiveMatrix()
 void A3::initViewMatrix() {
 	m_view = glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
 			vec3(0.0f, 1.0f, 0.0f));
+	cout << "initView:" <<endl;
+	cout << m_view << endl;
 }
 
 //----------------------------------------------------------------------------------------
@@ -352,7 +359,7 @@ void A3::guiLogic()
 		}
 
 		if( ImGui::Button( "Reset Joints" ) ) {
-			resetJoints((SceneNode*)&m_rootNode);
+			resetJoints((SceneNode*)&*m_rootNode);
 		}
 
 		if( ImGui::Button( "Reset All" ) ) {
@@ -389,8 +396,23 @@ void A3::guiLogic()
 
 	ImGui::Begin("Temp Joint Picker", &showDebugWindow, ImVec2(100,100), opacity,
 			windowFlags);
-		
-		jointPickerGui((SceneNode*)&m_rootNode);
+
+		jointPickerGui((SceneNode*) &(*m_rootNode));
+				
+		/*std::stack<SceneNode*> st;
+		SceneNode* current = (SceneNode*)&(*m_rootNode);
+		st.push(current);
+		//cout << *current <<endl;
+		while (!st.empty()){
+			current = st.top();
+			st.pop();
+			if (current == nullptr)
+				continue;
+			jointPickerGui(current);
+			for (SceneNode *child : current->children){
+				st.push(child);
+			}
+		}*/
 
 	ImGui::End();
 	
@@ -398,9 +420,20 @@ void A3::guiLogic()
 
 //makes a list of joints to pick in case no time for picking
 void A3::jointPickerGui(SceneNode *node){
+	//cout << *node <<endl;
+	if (node == nullptr) return;
 	if (node->m_nodeType == NodeType::JointNode) {
-		if( ImGui::RadioButton( node->m_name.c_str() , &(node->isSelected) ) ) {
-			m_selectedJoints.emplace_back(node);
+		if( ImGui::Checkbox( node->m_name.c_str() , &(node->isSelected))) {
+			if (node->isSelected) {
+				cout << "selected " << *node << endl;
+				m_selectedJoints.emplace_back(node);
+			} else {
+				auto it = std::find(m_selectedJoints.begin(), m_selectedJoints.end(), node);
+				if (it != m_selectedJoints.end()){
+					cout << "deselected " << *node << endl;
+					m_selectedJoints.erase(it);
+				}
+			}
 		}
 	}
 
@@ -456,7 +489,10 @@ static void updateShaderUniforms(
  */
 void A3::draw() {
 
-	m_view = m_translation * m_view;
+	//m_view = m_translation * m_view;
+
+	m_view = /*m_rotation **/ m_translation * m_rotation; /* * glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
+			vec3(0.0f, 1.0f, 0.0f));*/
 
 	glEnable( GL_DEPTH_TEST );
 	renderSceneGraph(*m_rootNode);
@@ -538,26 +574,47 @@ void A3::renderArcCircle() {
 
 void A3::resetOrientation(){
 	//m_view = glm::inverse(m_rotation) * m_view;
-	m_rootNode->set_transform(glm::inverse(m_rootNode->get_rotation()) * m_rootNode->get_transform());
+	mat4 temp = m_rootNode->get_transform();
+	m_rootNode->set_transform(mat4());
+	m_rootNode->rotate('y', (-m_rotateX));
+	m_rootNode->set_transform(temp * m_rootNode->get_transform());
+
+	m_rotateX = 0;
+	/*m_rotation = glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
+			vec3(0.0f, 1.0f, 0.0f));*/
 }
 
 void A3::resetPosition(){
-	m_view = glm::inverse(m_translation) * m_view;
+	//m_view = glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
+			//vec3(0.0f, 1.0f, 0.0f));
+	//m_view = glm::inverse(m_translation) * m_view;
+	m_translation = mat4();
+	cout << m_view << endl;
 	//m_rootNode->set_transform(glm::inverse(m_rootNode->get_translation()) * m_rootNode->get_transform());
 }
 
 
-void A3::resetJoints(SceneNode *root){
+void A3::resetJoints(SceneNode *root){	
+
+	if (root->m_nodeType == NodeType::JointNode){
+		//cout << *root << endl;
+		//cout << root->get_transform() << endl;
+		//cout << "inverse:" << endl;
+		//cout << glm::inverse(root->get_transform()) << endl;
+		//root->set_transform(glm::inverse(root->get_rotation()) * glm::inverse(root->get_translation()) * root->get_transform());
+		root->set_transform(mat4());
+		cout << "reset:" << endl;
+		cout << root->get_transform() << endl;
+	}
 	for (SceneNode *child : root->children){
 		resetJoints(child);
 	}
-	root->set_transform(root->get_inverse());
 }
 
 void A3::resetAll(){
 	resetOrientation();
 	resetPosition();
-	resetJoints((SceneNode*)&m_rootNode);
+	resetJoints((SceneNode*)&*m_rootNode);
 }
 
 //----------------------------------------------------------------------------------------
@@ -594,16 +651,35 @@ bool A3::mouseMoveEvent (
 	bool eventHandled(false);
 
 	float deltaX = xPos - m_mouseX;
-	float deltaY = yPos - m_mouseY;
-	float modifier = 0.1;
+	float deltaY = m_mouseY - yPos;
+	float modifier = 0.001;
 
 	if (m_mode == POSITION){
 		if (lmb_down){
-			m_translation = glm::translate(m_translation, vec3(modifier*deltaX, modifier*deltaY, 0));
-		} else if (mmb_down){
+			mat4 _trans = glm::translate(m_translation, vec3(modifier*deltaX, modifier*deltaY, 0));
+			m_translation = _trans;
+			//m_view = _trans * mat4();
+			//cout << m_translation << endl;			
+			//cout << m_view << endl;
+		} 
+		if (mmb_down){
 			m_translation = glm::translate(m_translation, vec3(0, 0, modifier*deltaY));
-		} else if (rmb_down){
-			m_rootNode->rotate('y', glm::radians(deltaX));
+			//m_view = m_translation * mat4();
+		} 
+
+		if (rmb_down){
+			m_rotateX += deltaX;
+			mat4 temp = m_rootNode->get_transform();
+			m_rootNode->set_transform(mat4());
+			m_rootNode->rotate('y', (deltaX));
+			m_rootNode->set_transform(temp * m_rootNode->get_transform());
+			/*float multiplier = std::copysign(1, m_rotateX);
+			m_rotation = lookAt(vec3(multiplier*cos(radians(deltaX)) + cos(radians(m_rotateX)), 0, multiplier*sin(radians(deltaX)) + sin(radians(m_rotateX))), 
+				vec3(0,0,-1),
+				vec3(0.0f, 1.0f, 0.0f));
+			m_rotateX += deltaX;
+			cout << m_rotation << endl;
+			cout << m_rotateX;*/
 		}
 
 	} else if (m_mode == JOINT){
@@ -631,12 +707,21 @@ void A3::moveJoints(SceneNode *root, float x, float y){
 		}
 		moveJoints(child);
 	}*/
+
+	//cout << "moving joints" << endl;
+
+	/*for (int i = 0; i < m_selectedJoints.size(); i++){
+		cout << *(m_selectedJoints[i]) << endl;
+	}*/
+	
+
 	if (mmb_down){
 		std::vector<SceneNode*>::iterator it = m_selectedJoints.begin();
 		for (it; it != m_selectedJoints.end(); ++it){
+			//cout << **it << endl;
 			if ((*it)->m_name != "neckJoint"){
-				(*it)->rotate('x', glm::radians(x));
-				(*it)->rotate('y', glm::radians(y));
+				(*it)->rotate('x', x);
+				(*it)->rotate('y', y);
 			}
 		}
 	}
@@ -644,9 +729,10 @@ void A3::moveJoints(SceneNode *root, float x, float y){
 	if (rmb_down){
 		std::vector<SceneNode*>::iterator it = m_selectedJoints.begin();
 		for (it; it != m_selectedJoints.end(); ++it){
+			//cout << *it << endl;
 			if ((*it)->m_name == "neckJoint"){
 				//it->rotate('x', glm::radians(x));
-				(*it)->rotate('y', glm::radians(y));
+				(*it)->rotate('y', y);
 			}
 		}
 	}

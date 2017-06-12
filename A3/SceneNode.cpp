@@ -8,6 +8,7 @@ using namespace std;
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/gtx/io.hpp>
 
 using namespace glm;
 
@@ -105,6 +106,8 @@ void SceneNode::rotate(char axis, float angle) {
 	mat4 rot_matrix = glm::rotate(degreesToRadians(angle), rot_axis);
 	rot = rot_matrix * rot;
 	trans = rot_matrix * trans;
+
+	//cout << trans << endl;
 }
 
 //---------------------------------------------------------------------------------------
