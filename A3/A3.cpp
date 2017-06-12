@@ -465,7 +465,7 @@ static void updateShaderUniforms(
 		glUniform3fv(location, 1, value_ptr(ks));
 		CHECK_GL_ERRORS;
 		location = shader.getUniformLocation("material.shininess");
-		glUniform1f(location, node.isSelected ? 100.0f :node.material.shininess);
+		glUniform1f(location, node.isSelected ? 0.0f :node.material.shininess);
 		CHECK_GL_ERRORS;
 
 	}
@@ -530,6 +530,7 @@ void A3::renderNodes(SceneNode *root, bool picking){
 		//-- Now render the mesh:
 		m_shader.enable();
 		glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
+
 		m_shader.disable();
 	}
 	for (SceneNode *child : root->children){
