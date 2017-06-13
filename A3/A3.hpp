@@ -19,18 +19,26 @@ struct LightSource {
 
 //since all you do to joints is rotate, extremely lazy implementation
 class Command {
-	SceneNode* _node;
+public:
+	std::vector<SceneNode*> _nodes;
+	std::vector<glm::mat4> _mats;
 	float _rotateX;
 	float _rotateY;
+	float _neckY;
 
-public:
-	Command(SceneNode* node, float rotateX, float rotateY) : 
-		_node(node), _rotateX(rotateX), _rotateY(rotateY) { }
+	Command() : _rotateX(0.0), _rotateY(0.0), _neckY(0.0) { }
 
 	void execute(int direction){
 		direction = std::copysign(1, direction);
-		_node->rotate('x', direction*_rotateX);
-		_node->rotate('y', direction*_rotateY);
+		//idk how to undo rotate on 2 DOF on the head so have to work with entire matrix
+		for (int i = 0; i < _nodes.size(); i++){
+			if (direction < 0){
+				_nodes[i]->set_transform( glm::inverse(_mats[i]) * _nodes[i]->get_transform());
+			} else {
+				_nodes[i]->set_transform( _mats[i] * _nodes[i]->get_transform());
+			}
+		}
+		
 	}
 };
 
@@ -131,6 +139,13 @@ protected:
 	float m_mouseY;
 	float m_rotateX;
 	float m_rotateY;
+
+	float m_jointRotateX;
+	float m_jointRotateY;
+
+	Command* m_curCmd;
+	Command* m_neckCmd;
+	bool cmd_started;
 
 	bool lmb_down;
 	bool mmb_down;

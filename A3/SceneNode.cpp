@@ -24,6 +24,7 @@ SceneNode::SceneNode(const std::string& name)
 	trans(mat4()),
 	rot(mat4()),
 	transl(mat4()),
+	undo_rot(mat4()),
 	isSelected(false),
 	m_nodeId(nodeInstanceCount++)
 {
@@ -105,6 +106,8 @@ void SceneNode::rotate(char axis, float angle) {
 	}
 	mat4 rot_matrix = glm::rotate(degreesToRadians(angle), rot_axis);
 	rot = rot_matrix * rot;
+	undo_rot = rot_matrix * undo_rot;
+	//cout << rot_matrix << endl;
 	trans = rot_matrix * trans;
 
 	//cout << trans << endl;
@@ -119,6 +122,14 @@ void SceneNode::scale(const glm::vec3 & amount) {
 void SceneNode::translate(const glm::vec3& amount) {
 	transl = glm::translate(amount) * transl;
 	trans = glm::translate(amount) * trans;
+}
+
+void SceneNode::start_undo(){
+	undo_rot = mat4();
+}
+
+mat4& SceneNode::end_undo(){
+	return undo_rot;
 }
 
 void SceneNode::selectChild(){

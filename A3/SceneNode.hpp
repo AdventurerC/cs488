@@ -39,6 +39,8 @@ public:
     void rotate(char axis, float angle);
     void scale(const glm::vec3& amount);
     void translate(const glm::vec3& amount);
+    void start_undo();
+    glm::mat4& end_undo();
 
     void selectChild();
 
@@ -52,6 +54,8 @@ public:
     glm::mat4 rot;
     glm::mat4 transl;
     glm::mat4 invtrans;
+
+    glm::mat4 undo_rot;
     
     std::list<SceneNode*> children;
 

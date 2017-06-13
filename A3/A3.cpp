@@ -50,7 +50,9 @@ A3::A3(const std::string & luaSceneFile)
 	  m_rotation(mat4()),
 	  m_rotateX(0),
 	  m_rotateY(0),
-	  m_picking(false)
+	  m_picking(false),
+	  m_jointRotateX(0),
+	  m_jointRotateY(0)
 {
 
 }
@@ -384,11 +386,11 @@ void A3::guiLogic()
 	ImGui::Begin("Edit", &showDebugWindow, ImVec2(100,100), opacity,
 			windowFlags);
 		if( ImGui::Button( "Undo" ) ) {
-			
+			undo();
 		}
 
 		if( ImGui::Button( "Redo" ) ) {
-			
+			redo();
 		}
 
 	ImGui::End();
@@ -737,28 +739,19 @@ bool A3::mouseMoveEvent (
 void A3::moveJoints(SceneNode *root, float x, float y){
 	if (mmb_down){
 		std::vector<SceneNode*>::iterator it = m_selectedJoints.begin();
+		m_curCmd->_rotateX += x;
+		//m_curCmd->_rotateY += y;
 		for (it; it != m_selectedJoints.end(); ++it){
-			//cout << **it << endl;
-			if ((*it)->m_name != "neckJoint"){
 				(*it)->rotate('x', x);
-				(*it)->rotate('y', y);
-
-				m_redoStack.clear(); //gets rid of redo stack since this is latest command
-				
-				m_undoStack.emplace_back(new Command((*it), x, y));
-			}
 		}
 	}
 
 	if (rmb_down){
+		m_curCmd->_neckY += y;
 		std::vector<SceneNode*>::iterator it = m_selectedJoints.begin();
 		for (it; it != m_selectedJoints.end(); ++it){
 			if ((*it)->m_name == "neckJoint"){
 				(*it)->rotate('y', y);
-
-				m_redoStack.clear(); //gets rid of redo stack since this is latest command
-				
-				m_undoStack.emplace_back(new Command ((*it), 0, y));
 			}
 		}
 	}
@@ -878,19 +871,51 @@ bool A3::mouseButtonInputEvent (
 			}
 		} else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
 			mmb_down = true;
+			if (!cmd_started && m_mode == JOINT) { 
+				cmd_started = true;
+				m_curCmd = new Command();
+				for (int i = 0; i < m_selectedJoints.size(); i++){
+					m_selectedJoints[i]->start_undo();
+					m_curCmd->_nodes.push_back(m_selectedJoints[i]);
+				}
+				
+			}
 		} else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
 			rmb_down = true;
+			if (!cmd_started && m_mode == JOINT) { 
+				cmd_started = true;
+				m_curCmd = new Command();
+				for (int i = 0; i < m_selectedJoints.size(); i++){
+					m_selectedJoints[i]->start_undo();
+					m_curCmd->_nodes.push_back(m_selectedJoints[i]);
+				}
+			}
 		}
 	}
 
 	if (actions == GLFW_RELEASE){
 		if (button == GLFW_MOUSE_BUTTON_LEFT){
 			lmb_down = false;
-			
 		} else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
 			mmb_down = false;
+			if (!rmb_down && cmd_started && m_mode == JOINT){
+				cmd_started = false;
+				//push rotation matrices for each selected joint onto undo cmd
+				for (int i = 0; i < m_selectedJoints.size(); i++){
+					m_curCmd->_mats.push_back(m_selectedJoints[i]->end_undo());
+				}
+				m_undoStack.push_back(m_curCmd);
+			}
 		} else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
 			rmb_down = false;
+			if (!mmb_down && cmd_started && m_mode == JOINT){
+				cmd_started = false;
+				//push rotation matrices for each selected joint onto undo cmd
+				for (int i = 0; i < m_selectedJoints.size(); i++){
+					m_curCmd->_mats.push_back(m_selectedJoints[i]->end_undo());
+				}
+				m_undoStack.push_back(m_curCmd);
+			}
 		}
 	}
 
