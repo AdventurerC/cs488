@@ -368,6 +368,9 @@ void A3::guiLogic()
 
 		if( ImGui::Button( "Reset Joints" ) ) {
 			resetJoints((SceneNode*)&*m_rootNode);
+			m_selectedJoints.clear();
+			m_undoStack.clear();
+			m_redoStack.clear();
 		}
 
 		if( ImGui::Button( "Reset All" ) ) {
@@ -628,26 +631,20 @@ void A3::renderArcCircle() {
 }
 
 void A3::resetOrientation(){
-	/*mat4 temp = m_rootNode->get_transform();
-	m_rootNode->set_transform(mat4());
-	m_rootNode->rotate('y', (-m_rotateX));
-	m_rootNode->set_transform(temp * m_rootNode->get_transform());
-
-	m_rotateX = 0;*/
 	m_rotation = mat4();
 }
 
 void A3::resetPosition(){
 	m_translation = mat4();
-	//cout << m_view << endl;
 }
 
-
+//reset& deselects joints, have to manually clear selection vector
 void A3::resetJoints(SceneNode *root){	
 
 	if (root->m_nodeType == NodeType::JointNode){
 		root->set_transform(mat4());
 	}
+	root->isSelected = false;
 	for (SceneNode *child : root->children){
 		resetJoints(child);
 	}
@@ -657,6 +654,9 @@ void A3::resetAll(){
 	resetOrientation();
 	resetPosition();
 	resetJoints((SceneNode*)&*m_rootNode);
+	m_selectedJoints.clear();
+	m_undoStack.clear();
+	m_redoStack.clear();
 }
 
 //----------------------------------------------------------------------------------------
@@ -721,16 +721,8 @@ bool A3::mouseMoveEvent (
 						d);
 			mat4 rot = vAxisRotMatrix(rotvec[0], rotvec[1], rotvec[2]);
 
-
-			//cout << rot << endl;
-
 			m_rotation =  rot * m_rotation;
-			/*m_rotateX += deltaX;
-			mat4 temp = m_rootNode->get_transform();
-			m_rootNode->set_transform(mat4());
-			m_rootNode->rotate('y', (deltaX));
-			m_rootNode->set_transform(temp * m_rootNode->get_transform());
-			*/
+
 		}
 
 	} else if (m_mode == JOINT){
@@ -750,6 +742,10 @@ void A3::moveJoints(SceneNode *root, float x, float y){
 			if ((*it)->m_name != "neckJoint"){
 				(*it)->rotate('x', x);
 				(*it)->rotate('y', y);
+
+				m_redoStack.clear(); //gets rid of redo stack since this is latest command
+				
+				m_undoStack.emplace_back(new Command((*it), x, y));
 			}
 		}
 	}
@@ -757,10 +753,12 @@ void A3::moveJoints(SceneNode *root, float x, float y){
 	if (rmb_down){
 		std::vector<SceneNode*>::iterator it = m_selectedJoints.begin();
 		for (it; it != m_selectedJoints.end(); ++it){
-			//cout << *it << endl;
 			if ((*it)->m_name == "neckJoint"){
-				//it->rotate('x', glm::radians(x));
 				(*it)->rotate('y', y);
+
+				m_redoStack.clear(); //gets rid of redo stack since this is latest command
+				
+				m_undoStack.emplace_back(new Command ((*it), 0, y));
 			}
 		}
 	}
@@ -777,6 +775,25 @@ void A3::select(SceneNode *node){
 			m_selectedJoints.erase(it);
 		}
 	}
+
+}
+
+void A3::undo(){
+	if (m_undoStack.empty()) return;
+
+	Command* cmd = m_undoStack.back();
+	m_undoStack.pop_back();
+	cmd->execute(-1);
+	m_redoStack.emplace_back(cmd);
+}
+
+void A3::redo(){
+	if (m_redoStack.empty()) return;
+
+	Command* cmd = m_redoStack.back();
+	m_redoStack.pop_back();
+	cmd->execute(1);
+	m_undoStack.emplace_back(cmd);
 
 }
 

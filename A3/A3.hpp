@@ -10,12 +10,29 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include <vector>
+#include <cmath>
 
 struct LightSource {
 	glm::vec3 position;
 	glm::vec3 rgbIntensity;
 };
 
+//since all you do to joints is rotate, extremely lazy implementation
+class Command {
+	SceneNode* _node;
+	float _rotateX;
+	float _rotateY;
+
+public:
+	Command(SceneNode* node, float rotateX, float rotateY) : 
+		_node(node), _rotateX(rotateX), _rotateY(rotateY) { }
+
+	void execute(int direction){
+		direction = std::copysign(1, direction);
+		_node->rotate('x', direction*_rotateX);
+		_node->rotate('y', direction*_rotateY);
+	}
+};
 
 class A3 : public CS488Window {
 public:
@@ -64,6 +81,9 @@ protected:
 	void pick(SceneNode *node, unsigned int id);
 	void select(SceneNode *node);
 
+	void undo();
+	void redo();
+
 
 	glm::mat4 m_perpsective;
 	glm::mat4 m_view;
@@ -107,8 +127,6 @@ protected:
 	bool m_backfaceCulling;
 	bool m_frontfaceCulling;
 
-	
-
 	float m_mouseX;
 	float m_mouseY;
 	float m_rotateX;
@@ -119,4 +137,6 @@ protected:
 	bool rmb_down;
 
 	std::vector<SceneNode*> m_selectedJoints;
+	std::vector<Command*> m_undoStack;
+	std::vector<Command*> m_redoStack;
 };
