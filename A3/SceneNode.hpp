@@ -28,6 +28,7 @@ public:
     const glm::mat4& get_inverse() const;
     const glm::mat4& get_translation() const;
     const glm::mat4& get_rotation() const;
+    const glm::mat4& get_scale() const;
     
     void set_transform(const glm::mat4& m);
     
@@ -53,6 +54,7 @@ public:
     glm::mat4 trans;
     glm::mat4 rot;
     glm::mat4 transl;
+    glm::mat4 scale_mat;
     glm::mat4 invtrans;
 
     glm::mat4 undo_rot;
