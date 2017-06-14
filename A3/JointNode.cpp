@@ -62,6 +62,7 @@ void JointNode::rotate(char axis, float angle) {
 	mat4 rot_matrix = glm::rotate(degreesToRadians(angle), rot_axis);
 	rot = rot_matrix * rot;
 	undo_rot = rot_matrix * undo_rot;
+	mat4 tempscale = scale_mat;
 	trans = rot_matrix * trans;
 
 }
@@ -74,10 +75,5 @@ void JointNode::rotate_to(char axis, float angle) {
 void JointNode::resetJoint(){
 	cur_y = m_joint_y.init;
 	cur_x = m_joint_x.init;
-	/*double deltaX = m_joint_x.init - cur_x;
-	double deltaY = m_joint_y.init - cur_y;
-
-	rotate('x', deltaX);
-	rotate('y', deltaY);*/
 
 }
