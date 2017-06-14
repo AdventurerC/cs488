@@ -1,0 +1,15 @@
+--COMPILATION--
+default is ok:
+premake4 gmake
+make
+
+--RUN--
+to show puppet:
+./A3 Assets/puppet.lua
+(default)
+
+--MANUAL--
+Tested on gl14
+picking is implemented and works, but picking menu left in for convenience
+puppet limbs distort during movement due to bad scaling
+Menu windows might be on top of each other during first run
