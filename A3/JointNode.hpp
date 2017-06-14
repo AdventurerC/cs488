@@ -15,6 +15,12 @@ public:
 		double min, init, max;
 	};
 
+	void rotate(char axis, float angle);
+	void rotate_to(char axis, float angle);
+	void resetJoint();
 
 	JointRange m_joint_x, m_joint_y;
+
+	double cur_x;
+	double cur_y;
 };

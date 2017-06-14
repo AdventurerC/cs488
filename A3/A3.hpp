@@ -82,7 +82,8 @@ protected:
 
 	void resetOrientation();
 	void resetPosition();
-	void resetJoints(SceneNode *root);
+	void resetJoints();
+	void deselectJoints(SceneNode *root);
 	void resetAll();
 
 	void moveJoints(SceneNode *root, float x, float y);

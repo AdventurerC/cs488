@@ -275,8 +275,6 @@ void A3::initPerspectiveMatrix()
 void A3::initViewMatrix() {
 	m_view = glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
 			vec3(0.0f, 1.0f, 0.0f));
-	//cout << "initView:" <<endl;
-	//cout << m_view << endl;
 }
 
 //----------------------------------------------------------------------------------------
@@ -369,10 +367,7 @@ void A3::guiLogic()
 		}
 
 		if( ImGui::Button( "Reset Joints" ) ) {
-			resetJoints((SceneNode*)&*m_rootNode);
-			m_selectedJoints.clear();
-			m_undoStack.clear();
-			m_redoStack.clear();
+			resetJoints();
 		}
 
 		if( ImGui::Button( "Reset All" ) ) {
@@ -436,7 +431,6 @@ void A3::guiLogic()
 
 //makes a list of joints to pick in case no time for picking
 void A3::jointPickerGui(SceneNode *node){
-	//cout << *node <<endl;
 	if (node == nullptr) return;
 	if (node->m_nodeType == NodeType::JointNode) {
 		if( ImGui::Checkbox( node->m_name.c_str() , &(node->isSelected))) {
@@ -528,8 +522,6 @@ static void updateShaderUniforms(
  */
 void A3::draw() {
 
-	//m_view = m_translation * m_view;
-
 	m_view = m_translation * m_rotation * glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
 			vec3(0.0f, 1.0f, 0.0f));
 
@@ -585,7 +577,6 @@ void A3::renderSceneGraph(const SceneNode & root) {
 }
 
 void A3::renderNodes(SceneNode *root, bool picking){
-	//cout << *root << endl;
 
 	if (root->m_nodeType == NodeType::GeometryNode){
 		const GeometryNode * geometryNode = static_cast<const GeometryNode *>(root);
@@ -601,7 +592,6 @@ void A3::renderNodes(SceneNode *root, bool picking){
 		m_shader.disable();
 	}
 	for (SceneNode *child : root->children){
-		//cout << " ";
 		child->set_transform(root->get_transform() * child->get_transform());
 		renderNodes(child);
 		child->set_transform(glm::inverse(root->get_transform()) * child->get_transform());
@@ -641,24 +631,34 @@ void A3::resetPosition(){
 }
 
 //reset& deselects joints, have to manually clear selection vector
-void A3::resetJoints(SceneNode *root){	
-
-	if (root->m_nodeType == NodeType::JointNode){
-		root->set_transform(mat4());
+void A3::resetJoints(){	
+	while(!m_undoStack.empty()){
+		Command* cmd = m_undoStack.back();
+		m_undoStack.pop_back();
+		cmd->execute(-1);
 	}
+	std::vector<SceneNode*>::iterator it = m_selectedJoints.begin();
+	for (it; it != m_selectedJoints.end(); ++it){
+		JointNode * jointNode = static_cast<JointNode *>(*it);
+		jointNode->resetJoint();
+	}
+	deselectJoints((SceneNode*)&*m_rootNode);
+	m_selectedJoints.clear();
+	m_undoStack.clear();
+	m_redoStack.clear();
+}
+
+void A3::deselectJoints(SceneNode *root){	
 	root->isSelected = false;
 	for (SceneNode *child : root->children){
-		resetJoints(child);
+		deselectJoints(child);
 	}
 }
 
 void A3::resetAll(){
 	resetOrientation();
 	resetPosition();
-	resetJoints((SceneNode*)&*m_rootNode);
-	m_selectedJoints.clear();
-	m_undoStack.clear();
-	m_redoStack.clear();
+	resetJoints();
 }
 
 //----------------------------------------------------------------------------------------
@@ -715,7 +715,6 @@ bool A3::mouseMoveEvent (
 			float d = std::min(w,h);
 			float vecX, vecY, vecZ;
 			
-			//cout << "xPos = " << xPos << " w = " << m_framebufferWidth/2 <<endl;
 			float aspect = (float)m_framebufferWidth/(float)m_framebufferHeight;
 
 			vec3 rotvec = vCalcRotVec((xPos - w), (h - yPos),
@@ -739,19 +738,28 @@ bool A3::mouseMoveEvent (
 void A3::moveJoints(SceneNode *root, float x, float y){
 	if (mmb_down){
 		std::vector<SceneNode*>::iterator it = m_selectedJoints.begin();
-		m_curCmd->_rotateX += x;
-		//m_curCmd->_rotateY += y;
 		for (it; it != m_selectedJoints.end(); ++it){
-				(*it)->rotate('x', x);
+			JointNode * jointNode = static_cast<JointNode *>(*it);
+			if((*it)->m_name == "leftElbow-hand" 
+				|| (*it)->m_name == "rightElbow-hand"
+				|| (*it)->m_name ==  "leftArm-elbow"
+				|| (*it)->m_name ==  "rightArm-elbow"){
+				
+				jointNode->rotate('y', x);
+			} else {
+				jointNode->rotate('x', x);
+			}
+			
 		}
 	}
 
 	if (rmb_down){
-		m_curCmd->_neckY += y;
+		//m_curCmd->_neckY += y;
 		std::vector<SceneNode*>::iterator it = m_selectedJoints.begin();
 		for (it; it != m_selectedJoints.end(); ++it){
 			if ((*it)->m_name == "neckJoint"){
-				(*it)->rotate('y', y);
+				JointNode * jointNode = static_cast<JointNode *>(*it);
+				jointNode->rotate('y', y);
 			}
 		}
 	}
@@ -845,7 +853,7 @@ bool A3::mouseButtonInputEvent (
 				glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 				glClearColor(0.35, 0.35, 0.35, 1.0);
 
-				draw();//renderNodes((SceneNode *) &(*m_rootNode));
+				draw();
 
 				CHECK_GL_ERRORS;
 
@@ -967,6 +975,32 @@ bool A3::keyInputEvent (
 			eventHandled = true;
 		} else if (key == GLFW_KEY_Q) {
 			glfwSetWindowShouldClose(m_window, GL_TRUE);
+		} else if (key == GLFW_KEY_O){
+			resetOrientation();
+		} else if (key == GLFW_KEY_I){
+			resetPosition();
+		} else if (key == GLFW_KEY_N){
+			resetJoints();
+		} else if (key == GLFW_KEY_A){
+			resetAll();
+		} else if (key == GLFW_KEY_U){
+			undo();
+		} else if (key == GLFW_KEY_R){
+			redo();
+		} else if (key == GLFW_KEY_C){
+			m_drawCircle = !m_drawCircle;
+		} else if (key == GLFW_KEY_Z){
+			m_zbuffer = !m_zbuffer;
+		} else if (key == GLFW_KEY_B){
+			m_backfaceCulling = !m_backfaceCulling;
+		} else if (key == GLFW_KEY_F){
+			m_frontfaceCulling = !m_frontfaceCulling;
+		} else if (key == GLFW_KEY_P){
+			m_mode = POSITION;
+			tempMode = 0;
+		} else if (key == GLFW_KEY_J){
+			m_mode = JOINT;
+			tempMode = 1;
 		}
 	}
 	// Fill in with event handling code...

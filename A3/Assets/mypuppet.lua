@@ -14,7 +14,7 @@ white = gr.material({1.0, 1.0, 1.0}, {0.1, 0.1, 0.1}, 10)
 
 torso = gr.mesh('cube', 'torso')
 rootnode:add_child(torso)
-torso:set_material(white)
+torso:set_material(green)
 torso:scale(0.5,1.0,0.5);
 
 
@@ -25,7 +25,7 @@ neck:scale(0.15, 0.3, 0.15)
 neck:translate(0.0, 0.6, 0.0)
 neck:set_material(blue)
 
-neckJoint = gr.joint('neckJoint', {-30, 0.0, 30}, {-90, 0.0, -80})
+neckJoint = gr.joint('neckJoint', {-30, 0.0, 30}, {-90, 0.0, 90})
 --neckJoint:scale(1.0/0.5, 1.0, 1.0/0.5)
 --neckJoint:scale(0.4, 0.4, 0.4)
 --neckJoint:translate(0.0, 0.9, 0.0)
@@ -73,7 +73,7 @@ function genArm (which, name, elbowName, handName)
     arm:translate(which*1, -0.3, 0.0)
     arm:set_material(red)
 
-    arm2elbow = gr.joint(name..'-elbow', {0, 0, which*1.5}, {0, 0, which*1.5})
+    arm2elbow = gr.joint(name..'-elbow', {-45, 0, 45}, {-45, 0, 45})
     arm:add_child(arm2elbow)
     
     elbow = gr.mesh('cube', elbowName)
@@ -84,7 +84,7 @@ function genArm (which, name, elbowName, handName)
     elbow:translate(which*0.8, 0.0, 0.1)
     elbow:set_material(red)
 
-    elbow2hand = gr.joint(elbowName..'-hand', {0, 0, which*1.5}, {0, 0, which*1.5})
+    elbow2hand = gr.joint(elbowName..'-hand', {-45, 0, 45}, {-45, 0, 45})
     elbow:add_child(elbow2hand)
     elbow2hand:translate(which*0.8,0.5, 0.2)
 
@@ -104,7 +104,7 @@ rightArm = genArm(1, 'rightArm', 'rightElbow', 'rightHand')
 --torso:add_child(leftArm)
 --torso:add_child(rightArm)
 
-armJointL = gr.joint('armJointL', {-90, 0, -90}, {-10, 0, -10})
+armJointL = gr.joint('armJointL', {-90, 0, 90}, {-10, 0, 10})
 leftShoulder:add_child(armJointL)
 armJointL:add_child(leftArm)
 
@@ -115,7 +115,7 @@ rightShoulder:scale(0.2, 0.2, 0.2)
 rightShoulder:translate(0.4, 0.35, 0.0)
 rightShoulder:set_material(blue)
 
-armJointR = gr.joint('armJointR', {-90, 0, -90}, {-10, 0, -10})
+armJointR = gr.joint('armJointR', {-90, 0, 90}, {-10, 0, 10})
 rightShoulder:add_child(armJointR)
 armJointR:add_child(rightArm)
 
@@ -127,7 +127,7 @@ leftHip:scale(0.21, 0.21, 0.21)
 leftHip:translate(-0.38, -0.5, 0.0)
 leftHip:set_material(blue)
 
-leftHipJoint = gr.joint('leftHipJoint', {0, 0, -1.5}, {0, 0, -1.5})
+leftHipJoint = gr.joint('leftHipJoint', {-90, 0, 90}, {-10, 0, 10})
 leftHip:add_child(leftHipJoint)
 
 rightHip = gr.mesh('sphere', 'rightHip')
@@ -138,7 +138,7 @@ rightHip:translate(0.38, -0.5, 0.0)
 rightHip:set_material(blue)
 
 --rightHipJoint
-rightHipJoint = gr.joint('rightHipJoint', {0, 0, 1.5}, {0, 0, 1.5})
+rightHipJoint = gr.joint('rightHipJoint', {-90, 0, 90}, {-10, 0, 10})
 rightHip:add_child(rightHipJoint)
 
 leftLeg = gr.mesh('cube', 'leftLeg')
@@ -148,7 +148,7 @@ leftLeg:translate(0,-1.5,0)
 leftLeg:set_material(red)
 
 --leftKneeJoint
-leftKneeJoint = gr.joint('leftKneeJoint', {0, 0, -1.5}, {0, 0, 0})
+leftKneeJoint = gr.joint('leftKneeJoint', {-90, 0, 90}, {-10, 0, 10})
 leftLeg:add_child(leftKneeJoint)
 leftKneeJoint:translate(0, -1, 0)
 
@@ -159,7 +159,7 @@ rightLeg:translate(0,-1.5,0)
 rightLeg:set_material(red)
 
 --rightKneeJoint
-rightKneeJoint = gr.joint('rightKneeJoint', {0, 0, 1.5}, {0, 0, 0})
+rightKneeJoint = gr.joint('rightKneeJoint', {-90, 0, 90}, {-10, 0, 10})
 rightLeg:add_child(rightKneeJoint)
 rightKneeJoint:translate(0,-1,0)
 
@@ -176,11 +176,11 @@ rightKneeJoint:add_child(rightLeg2)
 rightLeg2:set_material(red)
 
 --add feet
-rightAnkle = gr.joint('rightAnkle', {0, 0, 1}, {0,0,1})
+rightAnkle = gr.joint('rightAnkle', {-90, 0, 90}, {-10, 0, 10})
 rightLeg2:add_child(rightAnkle);
 rightAnkle:translate(0,-0.5,0)
 
-leftAnkle = gr.joint('leftAnkle', {0, 0, 1}, {0,0,1})
+leftAnkle = gr.joint('leftAnkle', {-90, 0, 90}, {-10, 0, 10})
 leftLeg2:add_child(leftAnkle);
 leftAnkle:translate(0,-0.5,0)
 
