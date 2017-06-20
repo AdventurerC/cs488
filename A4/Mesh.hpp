@@ -25,6 +25,7 @@ struct Triangle
 class Mesh : public Primitive {
 public:
   Mesh( const std::string& fname );
+  virtual Intersection intersect(Ray* ray);
   
 private:
 	std::vector<glm::vec3> m_vertices;

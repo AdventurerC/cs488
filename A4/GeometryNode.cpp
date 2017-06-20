@@ -25,3 +25,4 @@ void GeometryNode::setMaterial( Material *mat )
 
 	m_material = mat;
 }
+

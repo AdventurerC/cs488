@@ -7,5 +7,17 @@ PhongMaterial::PhongMaterial(
 	, m_shininess(shininess)
 {}
 
+glm::vec3 PhongMaterial::kd() const{
+	return m_kd;
+}
+
+glm::vec3 PhongMaterial::ks() const{
+	return m_ks;
+}
+
+double PhongMaterial::shininess() const{
+	return m_shininess;
+}
+
 PhongMaterial::~PhongMaterial()
-{}
+{}	

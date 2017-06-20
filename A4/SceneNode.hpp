@@ -14,6 +14,25 @@ enum class NodeType {
 	JointNode
 };
 
+class Ray {
+public:
+	glm::vec3 _dir;
+	glm::vec3 _orig;
+	Ray(glm::vec3 orig, glm::vec3 dir) : _orig(orig), _dir(dir) { }
+	Ray() : _orig(glm::vec3()), _dir(glm::vec3()){ }
+};
+
+class Intersection {
+public:
+	glm::vec3 _point;
+	glm::vec3 _normal;
+	Material *_material;
+	double _t;
+	bool _hit;
+	Intersection() : _hit(false), _t(std::numeric_limits<double>::infinity()){ }
+
+};
+
 class SceneNode {
 public:
     SceneNode(const std::string & name);

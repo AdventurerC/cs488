@@ -23,3 +23,12 @@ void A4_Render(
 		const glm::vec3 & ambient,
 		const std::list<Light *> & lights
 );
+
+Intersection intersect(SceneNode *root, Ray *ray);
+
+glm::vec3 rayColor(Ray* r, Intersection &inter, 
+	const glm::vec3 & ambient, const std::list<Light *> & lights, SceneNode *root,
+	/*const glm::vec3 & bg,*/
+	int &maxHits);
+
+void printHier(SceneNode *root);
