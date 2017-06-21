@@ -8,6 +8,7 @@ class Primitive {
 public:
   virtual ~Primitive();
   virtual Intersection intersect(Ray* ray) = 0;
+  virtual Intersection intersect_bounding(Ray* ray) = 0;
 };
 
 class Sphere : public Primitive {
@@ -15,6 +16,7 @@ public:
   Sphere();
   virtual ~Sphere();
   virtual Intersection intersect(Ray* ray);
+  virtual Intersection intersect_bounding(Ray* ray);
 private:
   Primitive* _primitive;
 };
@@ -24,6 +26,7 @@ public:
   Cube();
   virtual ~Cube();
   virtual Intersection intersect(Ray* ray);
+  virtual Intersection intersect_bounding(Ray* ray);
 private:
   Primitive* _primitive;
 };
@@ -36,6 +39,7 @@ public:
   }
   virtual ~NonhierSphere();
   virtual Intersection intersect(Ray* ray);
+  virtual Intersection intersect_bounding(Ray* ray);
 
 
 private:
@@ -49,6 +53,7 @@ public:
   
   virtual ~NonhierBox();
   virtual Intersection intersect(Ray* ray);
+  virtual Intersection intersect_bounding(Ray* ray);
 
 private:
   glm::vec3 m_pos;

@@ -6,9 +6,10 @@
 // #include "cs488-framework/ObjFileDecoder.hpp"
 #include "Mesh.hpp"
 
-Mesh::Mesh( const std::string& fname )
+Mesh::Mesh( const std::string& fname)
 	: m_vertices()
 	, m_faces()
+	, m_renderSphere(false)
 {
 	std::string code;
 	double vx, vy, vz;
@@ -28,11 +29,63 @@ Mesh::Mesh( const std::string& fname )
 
 	std::cout << "faces: " << m_faces.size() << std::endl;
 	std::cout << "vertices: " << m_vertices.size() << std::endl;
+
+	initBoundingSphere();
 }
 
+//implementation of Ritter's bounding sphere (https://en.wikipedia.org/wiki/Bounding_sphere)
+void Mesh::initBoundingSphere(){
+
+	if (m_vertices.size() < 2) {
+		bounding_sphere = nullptr;
+	}
+	glm::vec3 a = m_vertices[0];
+	glm::vec3 b = m_vertices[1];
+
+	//find b which has largest distance from a
+	for (int i = 2; i < m_vertices.size(); i++){
+		double d = glm::length(a-b); //radius
+		glm::vec3 c = m_vertices[i];
+
+		if (glm::length(a-c) > d){
+			b = c;
+		}
+	}
+
+	//find c which has largest distance from b
+	glm::vec3 c = m_vertices[0];
+	for (auto v : m_vertices){
+		double d = glm::length(c-b);
+		double d2 = glm::length(v-b);
+
+		if (d2 > d){
+			c = v;
+		}
+	}
+
+	//if all points in m_vertices are in sphere, get sphere. Else let p be point outside, construct
+	//new sphere covering previous sphere + point p
+	double r = glm::length(c-b)/2;
+	glm::vec3 center = (b + c)/2;
+	for (auto v : m_vertices){
+		if (glm::length(v-center) > r) {
+			r = glm::length(v-center);
+		}
+	}
+
+	bounding_sphere = new NonhierSphere(center, r);
+}
+
+//ray-triangle intersection using Cramer's rule from the notes
 //a - v1 = beta(v2 - v1) + gamma(v3 - v1) - t(b-a) 
 Intersection Mesh::intersect(Ray* ray){
     Intersection intersection;
+
+	if (bounding_sphere != nullptr){
+		Intersection bounding_inter = bounding_sphere->intersect(ray);
+
+		if (!bounding_inter._hit) return intersection;
+	}
 
 	for (Triangle face : m_faces ){
 		glm::dvec3 p_0 = m_vertices[face.v1];
@@ -103,6 +156,10 @@ Intersection Mesh::intersect(Ray* ray){
 	
 
     return intersection;
+}
+
+Intersection Mesh::intersect_bounding(Ray *ray){
+	return bounding_sphere->intersect(ray);
 }
 
 std::ostream& operator<<(std::ostream& out, const Mesh& mesh)

@@ -26,10 +26,15 @@ class Mesh : public Primitive {
 public:
   Mesh( const std::string& fname );
   virtual Intersection intersect(Ray* ray);
+  virtual Intersection intersect_bounding(Ray* ray);
   
 private:
+	void initBoundingSphere();
 	std::vector<glm::vec3> m_vertices;
 	std::vector<Triangle> m_faces;
+	Primitive* bounding_sphere;
+
+	bool m_renderSphere;
 
     friend std::ostream& operator<<(std::ostream& out, const Mesh& mesh);
 };

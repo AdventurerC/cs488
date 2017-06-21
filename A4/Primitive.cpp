@@ -13,6 +13,10 @@ Sphere::~Sphere()
 {
 }
 
+Intersection Sphere::intersect_bounding(Ray *ray){
+	return intersect(ray);
+}
+
 Intersection Sphere::intersect(Ray* ray){
     return _primitive->intersect(ray);
 }
@@ -25,6 +29,10 @@ Cube::~Cube()
 {
 }
 
+Intersection Cube::intersect_bounding(Ray *ray){
+	return intersect(ray);
+}
+
 Intersection Cube::intersect(Ray* ray){
     return _primitive->intersect(ray);
 }
@@ -32,6 +40,10 @@ Intersection Cube::intersect(Ray* ray){
 
 NonhierSphere::~NonhierSphere()
 {
+}
+
+Intersection NonhierSphere::intersect_bounding(Ray *ray){
+	return intersect(ray);
 }
 
 //(P-c)(P-c) = R^2
@@ -132,6 +144,10 @@ NonhierBox::NonhierBox(const glm::vec3& pos, double size)
 
 NonhierBox::~NonhierBox()
 {
+}
+
+Intersection NonhierBox::intersect_bounding(Ray *ray){
+	return intersect(ray);
 }
 
 Intersection NonhierBox::intersect(Ray* ray){

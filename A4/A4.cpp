@@ -6,6 +6,8 @@
 
 #define EPSILON 0.0001
 
+#define RENDER_BOUNDING false
+
 void A4_Render(
 		// What to render
 		SceneNode * root,
@@ -94,8 +96,9 @@ void A4_Render(
 			// Red: increasing from top to bottom
 			// Green: increasing from left to right
 			// Blue: in lower-left and upper-right corners
-			glm::vec3 color((double)y / h, (double)x / w, ((y < h/2 && x < w/2)
-							|| (y >= h/2 && x >= w/2)) ? 1.0 : 0.0);
+			/*glm::vec3 color((double)y / h, (double)x / w, ((y < h/2 && x < w/2)
+							|| (y >= h/2 && x >= w/2)) ? 1.0 : 0.0);*/
+			glm::vec3 color = getBg(x, y, w, h);
 
 			if (inter._hit){
 				const PhongMaterial * phong_m = static_cast<const PhongMaterial *>(inter._material);
@@ -125,15 +128,14 @@ Intersection intersect(SceneNode *root, Ray *ray) {
 	if (root->m_nodeType == NodeType::GeometryNode){
 		const GeometryNode * geometryNode = static_cast<const GeometryNode *>(root);
 		//test intersection with actual primitive
-		intersection = geometryNode->m_primitive->intersect(&r);
+		intersection = (RENDER_BOUNDING ? geometryNode->m_primitive->intersect_bounding(&r) 
+									: geometryNode->m_primitive->intersect(&r));
 		material = geometryNode->m_material;
 	}
 
 	for (SceneNode *child : root->children){
-		//glm::mat4 inv = root->get_inverse();
-		//child->set_transform(root->get_transform() * child->get_transform());
+
 		Intersection i = intersect(child, &r);
-		//child->set_transform(inv * child->get_transform());
 
 		if (i._t < EPSILON) continue;
 
@@ -179,7 +181,7 @@ glm::vec3 rayColor(Ray* r, Intersection &inter,
 	glm::dvec3 col = phong_m->kd() * ambient;
 	glm::dvec3 normal = glm::normalize(glm::dvec3(inter._normal));
 
-	//lambert
+	//implementation based off of A3 fragment shader
 	for (Light *light : lights){
 		glm::dvec3 diffuse(0.0f);
 		glm::dvec3 specular(0.0f);
@@ -196,27 +198,27 @@ glm::vec3 rayColor(Ray* r, Intersection &inter,
 		//if shadow ray hits something, don't do anything
 		if (shadow_inter._hit && glm::length(shadow_inter._t * shadow._dir) < glm::length(shadow_dir)) continue;
 		
+		//L - 2N(L*N)
 		glm::dvec3 reflected_ray = light_dir - 2*glm::dot(light_dir, normal)*normal; 
 		double l_n = glm::dot(normal, light_dir); //L*N
 		if (l_n < 0) l_n = 0.0;
 		if (glm::length(phong_m->kd()) != 0){
 			diffuse = l_n*phong_m->kd();// * light->colour;
 		}
-
-		//L - 2N(L*N)
 		
 		//Ray reflected(glm::dvec3(inter._point) + 0.001*reflected_ray, reflected_ray);
 		//reflected_ray = glm::normalize(reflected_ray);
 
-		double r_v = abs(glm::dot(reflected_ray, raydir));//
+		//double r_v = abs(glm::dot(reflected_ray, raydir));//
+
 		if (glm::length(phong_m->ks()) > 0 && maxHits > 0){
 		//if (l_n > 0.0) {
-			/*glm::dvec3 v = glm::normalize(-inter._point);
-			glm::dvec3 l = light_dir;
+			glm::dvec3 v = glm::normalize(-inter._point);
+			glm::dvec3 l = shadow_dir;
 			double n_h = std::max(glm::dot(normal, glm::normalize(v + l)), 0.0);
 			
-			specular = phong_m->ks() * pow(n_h, phong_m->shininess());*/
-			if (l_n != 0)
+			specular = phong_m->ks() * pow(n_h, phong_m->shininess());
+			/*if (l_n != 0)
 				specular = (pow(r_v,phong_m->shininess()))*phong_m->ks();// * light->colour;
 			/*specular = pow(ks,phong_m->shininess() )*phong_m->ks() *
 				rayColor(&reflected, inter, ambient, lights, root, --maxHits);*/
@@ -238,4 +240,29 @@ void printHier(SceneNode *root){
 	for (SceneNode *child : root->children){
 		printHier(child);
 	}
+}
+
+//generates a black - blue gradient night sky with random stars
+glm::vec3 getBg(int x, int y, int w, int h){
+	//default from starter code
+	/*return glm::vec3((double)y / h, (double)x / w, ((y < h/2 && x < w/2)
+							|| (y >= h/2 && x >= w/2)) ? 1.0 : 0.0);*/
+	
+	//dark at top, light at bottom;
+	double r = (double)y/(double)h;
+	double g = (double)y/(double)h;
+	double b = (double)y/(double)h;
+
+	r *= 0.1;
+	g *= 0.1;
+
+	int rand = std::rand() % 100;
+
+	if (rand == 0) {
+		rand = std::rand() % 20 + 1;
+		glm::dvec3 col(r, g, b);
+		return col + glm::dvec3(1.0)/(double)rand;
+	}
+
+	return glm::vec3(r, g, b);
 }

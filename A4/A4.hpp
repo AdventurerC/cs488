@@ -32,3 +32,5 @@ glm::vec3 rayColor(Ray* r, Intersection &inter,
 	int &maxHits);
 
 void printHier(SceneNode *root);
+
+glm::vec3 getBg(int x, int y, int w, int h);

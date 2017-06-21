@@ -1,0 +1,24 @@
+--COMPILATION--
+default is ok:
+premake4 gmake
+make
+
+--RUN--
+./A4 {filename.lua}
+place the A4 executable in the Assets folder before running, as the lua scripts assume the .obj files are in the current folder
+
+--MANUAL--
+Tested on gl14
+
+BACKGROUND -- a black to blue gradient with randomly generated 1px stars (night sky)
+
+For rendering of bounding box, see nonhier-bb.png
+
+sample scene located in sample.lua (rendered into sample.png)
+- tests instancing with the 3 cows in the same way as macho-cows.lua
+- ring of orange spheres is generated hierarchically:
+    - first sphere is the closest one to the viewer 
+    - each sphere is a child of the previous one, going counter-clockwise
+- light source from below at (0, -400, 400)
+
+No extra features implemented, but the other 9 objectives should be 
