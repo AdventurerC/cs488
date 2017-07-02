@@ -273,8 +273,11 @@ void Project::initPerspectiveMatrix()
 
 //----------------------------------------------------------------------------------------
 void Project::initViewMatrix() {
-	m_view = glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
-			vec3(0.0f, 1.0f, 0.0f));
+	m_view = glm::lookAt( 
+		glm::vec3( 0.0f, float(DIM)*2.0*M_SQRT1_2, float(DIM)*2.0*M_SQRT1_2 ),
+		glm::vec3( 0.0f, 0.0f, 0.0f ),
+		glm::vec3( 0.0f, 1.0f, 0.0f ) );/*glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
+			vec3(0.0f, 1.0f, 0.0f));*/
 }
 
 //----------------------------------------------------------------------------------------
