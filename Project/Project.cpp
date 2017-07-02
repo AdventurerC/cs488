@@ -23,6 +23,8 @@ static bool show_gui = true;
 
 const size_t CIRCLE_PTS = 48;
 
+static const size_t DIM = 8;
+
 
 //----------------------------------------------------------------------------------------
 // Constructor
@@ -525,8 +527,10 @@ static void updateShaderUniforms(
  */
 void Project::draw() {
 
-	m_view = m_translation * m_rotation * glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
-			vec3(0.0f, 1.0f, 0.0f));
+	m_view = m_translation * m_rotation * glm::lookAt( 
+		glm::vec3( 0.0f, float(DIM)*2.0*M_SQRT1_2, float(DIM)*2.0*M_SQRT1_2 ),
+		glm::vec3( 0.0f, 0.0f, 0.0f ),
+		glm::vec3( 0.0f, 1.0f, 0.0f ) );
 
 	if (m_zbuffer)
 		glEnable( GL_DEPTH_TEST );

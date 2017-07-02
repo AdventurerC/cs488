@@ -10,16 +10,16 @@ rootNode = gr.node('root')
 for i = 1,5 do
     cube = gr.mesh('cube', 'Lcube'..tostring(i))
     cube:scale(1.0, 1.0, 1.0)
-    cube:translate(-0.5, 0.0, 0.0)
-    cube:set_material(gr.material({0.9, 0.9, 0.9}, {0.8, 0.8, 0.8}, 10.0))
+    cube:translate(-1.5, 0.0, 7.0 - i - i*0.1)
+    cube:set_material(gr.material({1.0, 1.0, 1.0}, {1.0, 1.0, 1.0}, 100.0))
     rootNode:add_child(cube)
 end
 
 for i = 1,5 do
     cube = gr.mesh('cube', 'Rcube'..tostring(i))
     cube:scale(1.0, 1.0, 1.0)
-    cube:translate(0.5, 0.0, 0.0)
-    cube:set_material(gr.material({0.9, 0.9, 0.9}, {0.8, 0.8, 0.8}, 10.0))
+    cube:translate(1.5, 0.0, 7.0 - i - i*0.1)
+    cube:set_material(gr.material({1.0, 1.0, 1.0}, {1.0, 1.0, 1.0}, 100.0))
     rootNode:add_child(cube)
 end
 
