@@ -131,15 +131,16 @@ protected:
 
 	int tempMode;
 	Mode m_mode;
-	bool m_drawCircle;
 	bool m_zbuffer;
 	bool m_backfaceCulling;
 	bool m_frontfaceCulling;
 
 	float m_mouseX;
 	float m_mouseY;
-	float m_rotateX;
-	float m_rotateY;
+	float m_playerX;
+	float m_playerY;
+	float m_shotX;
+	float m_shotY;
 
 	float m_jointRotateX;
 	float m_jointRotateY;

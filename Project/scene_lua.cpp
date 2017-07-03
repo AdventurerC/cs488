@@ -147,7 +147,9 @@ int gr_mesh_cmd(lua_State* L)
 
 	const char* meshId = luaL_checkstring(L, 1);
 	const char* name = luaL_checkstring(L, 2);
-	data->node = new GeometryNode(meshId, name);
+  double hitwidth = luaL_checknumber(L, 3);
+  double hitheight = luaL_checknumber(L, 4);
+	data->node = new GeometryNode(meshId, name, hitwidth, hitheight);
 
 	luaL_getmetatable(L, "gr.node");
 	lua_setmetatable(L, -2);

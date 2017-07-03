@@ -41,7 +41,6 @@ Project::Project(const std::string & luaSceneFile)
 	  m_mouseY(0.0),
 	  tempMode(0),
 	  m_mode(Mode::POSITION),
-	  m_drawCircle(false),
 	  m_zbuffer(true),
 	  m_backfaceCulling(false),
 	  m_frontfaceCulling(false),
@@ -50,11 +49,10 @@ Project::Project(const std::string & luaSceneFile)
 	  rmb_down(false),
 	  m_translation(mat4()),
 	  m_rotation(mat4()),
-	  m_rotateX(0),
-	  m_rotateY(0),
-	  m_picking(false),
-	  m_jointRotateX(0),
-	  m_jointRotateY(0)
+	  m_shotX(0),
+	  m_shotY(0),
+	  m_playerX(0),
+	  m_playerY(0)
 {
 
 }
@@ -400,9 +398,6 @@ void Project::guiLogic()
 	ImGui::Begin("Options", &showDebugWindow, ImVec2(100,100), opacity,
 			windowFlags);
 			
-		if( ImGui::Checkbox( "Circle", &m_drawCircle) ) {
-			
-		}
 
 		if( ImGui::Checkbox( "Z-buffer", &m_zbuffer) ) {
 			
@@ -416,23 +411,9 @@ void Project::guiLogic()
 			
 		}
 
-
-		if( ImGui::RadioButton( "Position/Orientation", &tempMode, 0 ) ) {
-			m_mode = POSITION;
-		}
-
-		if( ImGui::RadioButton( "Joints", &tempMode, 1 ) ) {
-			m_mode = JOINT;
-		}
 	ImGui::End();
 
-	ImGui::Begin("Temp Joint Picker", &showDebugWindow, ImVec2(100,100), opacity,
-			windowFlags);
-
-		jointPickerGui((SceneNode*) &(*m_rootNode));
-			
-
-	ImGui::End();
+	
 	
 }
 
@@ -556,8 +537,6 @@ void Project::draw() {
 	if (m_backfaceCulling || m_frontfaceCulling){
 		glDisable(GL_CULL_FACE);
 	}
-	if (m_drawCircle)
-		renderArcCircle();
 }
 
 //----------------------------------------------------------------------------------------
@@ -883,21 +862,13 @@ bool Project::keyInputEvent (
 			undo();
 		} else if (key == GLFW_KEY_R){
 			redo();
-		} else if (key == GLFW_KEY_C){
-			m_drawCircle = !m_drawCircle;
 		} else if (key == GLFW_KEY_Z){
 			m_zbuffer = !m_zbuffer;
 		} else if (key == GLFW_KEY_B){
 			m_backfaceCulling = !m_backfaceCulling;
 		} else if (key == GLFW_KEY_F){
 			m_frontfaceCulling = !m_frontfaceCulling;
-		} else if (key == GLFW_KEY_P){
-			m_mode = POSITION;
-			tempMode = 0;
-		} else if (key == GLFW_KEY_J){
-			m_mode = JOINT;
-			tempMode = 1;
-		}
+		} 
 	}
 	// Fill in with event handling code...
 
