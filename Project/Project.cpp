@@ -90,7 +90,9 @@ void Project::init()
 	unique_ptr<MeshConsolidator> meshConsolidator (new MeshConsolidator{
 			getAssetFilePath("cube.obj"),
 			getAssetFilePath("sphere.obj"),
-			getAssetFilePath("suzanne.obj")
+			getAssetFilePath("suzanne.obj"),
+			getAssetFilePath("plane.obj"),
+			getAssetFilePath("player.obj")
 	});
 
 
