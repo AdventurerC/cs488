@@ -4,7 +4,7 @@ using namespace std;
 
 #include "cs488-framework/GlErrorCheck.hpp"
 #include "cs488-framework/MathUtils.hpp"
-#include "GeometryNode.hpp"
+
 #include "JointNode.hpp"
 #include "trackball.hpp"
 
@@ -52,7 +52,8 @@ Project::Project(const std::string & luaSceneFile)
 	  m_shotX(0),
 	  m_shotY(0),
 	  m_playerX(0),
-	  m_playerY(0)
+	  m_playerY(0),
+	  m_playerNode(nullptr)
 {
 
 }
@@ -108,7 +109,7 @@ void Project::init()
 
 	initLightSources();
 
-
+	findPlayerNode((SceneNode *) &m_rootNode);
 	// Exiting the current scope calls delete automatically on meshConsolidator freeing
 	// all vertex data resources.  This is fine since we already copied this data to
 	// VBOs on the GPU.  We have no use for storing vertex data on the CPU side beyond
@@ -587,6 +588,17 @@ void Project::renderNodes(SceneNode *root, bool picking){
 }
 
 //----------------------------------------------------------------------------------------
+void Project::findPlayerNode(SceneNode *root){
+	if (root->m_nodeType == NodeType::GeometryNode && root->m_name == "player"){
+		m_playerNode = static_cast<GeometryNode *>(root);;
+		return;
+	}
+	for (SceneNode *child : root->children){
+		findPlayerNode(child);
+	}
+}
+
+//----------------------------------------------------------------------------------------
 // Draw the trackball circle.
 void Project::renderArcCircle() {
 	glBindVertexArray(m_vao_arcCircle);
@@ -688,7 +700,12 @@ bool Project::mouseMoveEvent (
 	float deltaY = m_mouseY - yPos;
 	float modifier = 0.001;
 
-	
+	if (mmb_down){
+		m_shotX += deltaX;
+		m_shotY += deltaY;
+		
+		rotateShot(deltaX, deltaY);
+	}
 
 	m_mouseX = xPos;
 	m_mouseY = yPos;
@@ -758,33 +775,15 @@ void Project::redo(){
 
 }
 
-//picking code
-void Project::pick(SceneNode *node, unsigned int id){
-	//do picking in joint 
-	if (node->m_nodeType == NodeType::JointNode){
-		if (node->m_nodeId == id){
-			node->isSelected = !(node->isSelected);
-			node->selectChild();
-			select(node);
-			return;
-		} else {
-			for (SceneNode* child : node->children){
-				if (child->m_nodeId == id){
-					//if child is to be selected, select parent joint as well
-					node->isSelected = !(node->isSelected);
-					node->selectChild();
-					select(node);
-					return;
-				}	
-			}
-		}
 
-	} 
+void Project::movePlayer(double x, double z){
+	dvec3 transl(x, 0.0, z);
+	m_playerNode->translate(transl);
+}
 
-	for (SceneNode* child : node->children){
-		pick(child, id);	
-	}
-
+void Project::rotateShot(double x, double z){
+	m_playerNode->rotate('x', x);
+	m_playerNode->rotate('z', z);
 }
 
 //----------------------------------------------------------------------------------------
@@ -800,7 +799,19 @@ bool Project::mouseButtonInputEvent (
 
 	if (ImGui::IsMouseHoveringAnyWindow()) return eventHandled;
 	// Fill in with event handling code...
-	
+	if (actions == GLFW_PRESS){
+		if (button == GLFW_MOUSE_BUTTON_MIDDLE){
+			mmb_down = true;
+			eventHandled = true;
+		}
+	}
+
+	if (actions == GLFW_RELEASE){
+		if (button == GLFW_MOUSE_BUTTON_MIDDLE){
+			mmb_down = false;
+			eventHandled = true;
+		}
+	}
 
 	return eventHandled;
 }

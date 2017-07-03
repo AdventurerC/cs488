@@ -74,7 +74,7 @@ plane:translate(0.0, -0.5, -5.0)
 plane:set_material(gr.material({1.0, 1.0, 1.0}, {0.1, 0.1, 0.1}, 10))
 rootNode:add_child(plane)
 
-player = gr.mesh('player', 'pl', 0.5,1.0)
+player = gr.mesh('player', 'player', 0.5,1.0)
 player:scale(1.0, 1.0, 1.0)
 player:translate(0.2, 0.5, 7.6)
 player:set_material(gr.material({0.1, 0.1, 0.1}, {0.1,0.1,0.1}, 10))

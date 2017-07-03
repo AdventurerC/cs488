@@ -6,6 +6,7 @@
 #include "cs488-framework/MeshConsolidator.hpp"
 
 #include "SceneNode.hpp"
+#include "GeometryNode.hpp"
 
 #include <glm/glm.hpp>
 #include <memory>
@@ -71,6 +72,7 @@ protected:
 	void mapVboDataToVertexShaderInputLocations();
 	void initViewMatrix();
 	void initLightSources();
+	void findPlayerNode(SceneNode *root);
 
 	void initPerspectiveMatrix();
 	void uploadCommonSceneUniforms();
@@ -87,12 +89,13 @@ protected:
 	void resetAll();
 
 	void moveJoints(SceneNode *root, float x, float y);
-	void pick(SceneNode *node, unsigned int id);
 	void select(SceneNode *node);
 
 	void undo();
 	void redo();
 
+	void movePlayer(double x, double z);
+	void rotateShot(double x, double z);
 
 	glm::mat4 m_perpsective;
 	glm::mat4 m_view;
@@ -123,6 +126,8 @@ protected:
 	std::string m_luaSceneFile;
 
 	std::shared_ptr<SceneNode> m_rootNode;
+
+	GeometryNode* m_playerNode;
 
 	enum Mode {
 		POSITION,
