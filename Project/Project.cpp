@@ -109,7 +109,12 @@ void Project::init()
 
 	initLightSources();
 
-	findPlayerNode((SceneNode *) &m_rootNode);
+	findPlayerNode((SceneNode*)&*m_rootNode);
+
+	findPlaneNode((SceneNode*)&*m_rootNode);
+	/*if (m_playerNode != nullptr){
+		cout << "Player found" << endl;
+	}*/
 	// Exiting the current scope calls delete automatically on meshConsolidator freeing
 	// all vertex data resources.  This is fine since we already copied this data to
 	// VBOs on the GPU.  We have no use for storing vertex data on the CPU side beyond
@@ -590,7 +595,18 @@ void Project::renderNodes(SceneNode *root, bool picking){
 //----------------------------------------------------------------------------------------
 void Project::findPlayerNode(SceneNode *root){
 	if (root->m_nodeType == NodeType::GeometryNode && root->m_name == "player"){
-		m_playerNode = static_cast<GeometryNode *>(root);;
+		m_playerNode = static_cast<GeometryNode *>(root);
+		return;
+	}
+	for (SceneNode *child : root->children){
+		findPlayerNode(child);
+	}
+}
+
+//----------------------------------------------------------------------------------------
+void Project::findPlaneNode(SceneNode *root){
+	if (root->m_nodeType == NodeType::GeometryNode && root->m_name == "plane"){
+		m_plane = static_cast<GeometryNode *>(root);
 		return;
 	}
 	for (SceneNode *child : root->children){
@@ -696,15 +712,15 @@ bool Project::mouseMoveEvent (
 
 	if (ImGui::IsMouseHoveringAnyWindow()) return eventHandled;
 
-	float deltaX = xPos - m_mouseX;
-	float deltaY = m_mouseY - yPos;
-	float modifier = 0.001;
+	float deltaX = -(xPos - m_mouseX);
+	float deltaY = yPos - m_mouseY;
+	float modifier = 0.5;
 
 	if (mmb_down){
 		m_shotX += deltaX;
 		m_shotY += deltaY;
 		
-		rotateShot(deltaX, deltaY);
+		rotateShot(modifier*deltaX);
 	}
 
 	m_mouseX = xPos;
@@ -781,9 +797,12 @@ void Project::movePlayer(double x, double z){
 	m_playerNode->translate(transl);
 }
 
-void Project::rotateShot(double x, double z){
-	m_playerNode->rotate('x', x);
-	m_playerNode->rotate('z', z);
+void Project::rotateShot(double x){
+	mat4 temp = m_playerNode->get_transform();
+	m_playerNode->set_transform(mat4());
+	m_playerNode->rotate('y', x);
+	//m_playerNode->rotate('z', z);
+	m_playerNode->set_transform(temp * m_playerNode->get_transform());
 }
 
 //----------------------------------------------------------------------------------------
@@ -855,24 +874,15 @@ bool Project::keyInputEvent (
 ) {
 	bool eventHandled(false);
 
+	double moveX = 0;
+	double moveZ = 0;
+
 	if( action == GLFW_PRESS ) {
 		if( key == GLFW_KEY_M ) {
 			show_gui = !show_gui;
 			eventHandled = true;
 		} else if (key == GLFW_KEY_Q) {
 			glfwSetWindowShouldClose(m_window, GL_TRUE);
-		} else if (key == GLFW_KEY_O){
-			resetOrientation();
-		} else if (key == GLFW_KEY_I){
-			resetPosition();
-		} else if (key == GLFW_KEY_N){
-			resetJoints();
-		} else if (key == GLFW_KEY_A){
-			resetAll();
-		} else if (key == GLFW_KEY_U){
-			undo();
-		} else if (key == GLFW_KEY_R){
-			redo();
 		} else if (key == GLFW_KEY_Z){
 			m_zbuffer = !m_zbuffer;
 		} else if (key == GLFW_KEY_B){
@@ -880,6 +890,38 @@ bool Project::keyInputEvent (
 		} else if (key == GLFW_KEY_F){
 			m_frontfaceCulling = !m_frontfaceCulling;
 		} 
+
+		if (key == GLFW_KEY_W){
+			moveZ -= 0.3;
+		} else if (key == GLFW_KEY_S){
+			moveZ += 0.3;
+		} 
+		if (key == GLFW_KEY_A){
+			moveX -= 0.3;
+		} else if (key == GLFW_KEY_D){
+			moveX += 0.3;
+		}
+
+		if (moveX != 0 || moveZ != 0){
+			movePlayer(moveX, moveZ);
+		}
+	}
+
+	else if (action == GLFW_REPEAT){
+		if (key == GLFW_KEY_W){
+			moveZ -= 0.3;
+		} else if (key == GLFW_KEY_S){
+			moveZ += 0.3;
+		} 
+		if (key == GLFW_KEY_A){
+			moveX -= 0.3;
+		} else if (key == GLFW_KEY_D){
+			moveX += 0.3;
+		}
+
+		if (moveX != 0 || moveZ != 0){
+			movePlayer(moveX, moveZ);
+		}
 	}
 	// Fill in with event handling code...
 

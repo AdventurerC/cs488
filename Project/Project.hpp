@@ -73,6 +73,7 @@ protected:
 	void initViewMatrix();
 	void initLightSources();
 	void findPlayerNode(SceneNode *root);
+	void findPlaneNode(SceneNode *root);
 
 	void initPerspectiveMatrix();
 	void uploadCommonSceneUniforms();
@@ -95,7 +96,7 @@ protected:
 	void redo();
 
 	void movePlayer(double x, double z);
-	void rotateShot(double x, double z);
+	void rotateShot(double x);
 
 	glm::mat4 m_perpsective;
 	glm::mat4 m_view;
@@ -128,6 +129,7 @@ protected:
 	std::shared_ptr<SceneNode> m_rootNode;
 
 	GeometryNode* m_playerNode;
+	GeometryNode* m_plane;
 
 	enum Mode {
 		POSITION,
