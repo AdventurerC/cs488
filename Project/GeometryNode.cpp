@@ -31,6 +31,7 @@ GeometryNode::GeometryNode(
 	m_nodeType = NodeType::GeometryNode;
 	hitbox->_width = hitwidth;
 	hitbox->_height = hitheight;
+	hitbox->_depth = hitdepth;
 
 	std::string file = "Assets/" + meshId + ".obj";//ccheating here, assuming file name is Assets/meshId.obj
 	std::ifstream in(file.c_str());

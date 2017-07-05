@@ -17,6 +17,8 @@ using namespace std;
 #include <stack>
 #include <algorithm>
 
+#define RENDER_HITBOX true
+
 using namespace glm;
 
 static bool show_gui = true;
@@ -573,7 +575,7 @@ void Project::renderSceneGraph(const SceneNode & root) {
 void Project::renderNodes(SceneNode *root, bool picking){
 
 	if (root->m_nodeType == NodeType::GeometryNode){
-		const GeometryNode * geometryNode = static_cast<const GeometryNode *>(root);
+		GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
 
 		updateShaderUniforms(m_shader, *geometryNode, m_view, m_picking);
 
@@ -584,6 +586,8 @@ void Project::renderNodes(SceneNode *root, bool picking){
 		glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
 
 		m_shader.disable();
+
+		if (RENDER_HITBOX) renderHitbox(geometryNode);
 	}
 	for (SceneNode *child : root->children){
 		child->set_transform(root->get_transform() * child->get_transform());
@@ -597,7 +601,7 @@ void Project::renderHitbox(GeometryNode *node){
 	m_shader.enable();
 	GLint location = m_shader.getUniformLocation("ModelView");
 	mat4 scale_mat = glm::scale(mat4(), vec3(node->hitbox->_width,node->hitbox->_height, node->hitbox->_depth)); //* mat4();
-	mat4 modelView = m_view * scale_mat * node->trans; 
+	mat4 modelView = m_view * node->trans * scale_mat; 
 	glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
 	CHECK_GL_ERRORS;
 

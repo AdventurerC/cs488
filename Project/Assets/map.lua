@@ -68,7 +68,7 @@ for i = 1,18 do
 end
 
 
-plane = gr.mesh('plane', 'plane',12, 0.1, 20)
+plane = gr.mesh('plane', 'plane',2.0, 0.1, 2.0)
 plane:scale(12, 1.0, 20)
 plane:translate(0.0, -0.5, -5.0)
 plane:set_material(gr.material({1.0, 1.0, 1.0}, {0.1, 0.1, 0.1}, 10))
@@ -86,7 +86,7 @@ enemy1:translate(5, 0.2, -15)
 enemy1:set_material(gr.material({0.2, 0.2, 0.2}, {0.1,0.1,0.1}, 10))
 rootNode:add_child(enemy1)
 
-enemy2 = gr.mesh('sphere', 'e2',0.7,0.7,0.7)
+enemy2 = gr.mesh('sphere', 'e2',1.0, 1.0, 1.0)
 enemy2:scale(0.7, 0.7, 0.7)
 enemy2:translate(-5, 0.2, -15)
 enemy2:set_material(gr.material({0.2, 0.2, 0.2}, {0.1,0.1,0.1}, 10))
