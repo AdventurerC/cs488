@@ -79,7 +79,7 @@ protected:
 	void uploadCommonSceneUniforms();
 	void renderSceneGraph(const SceneNode &node);
 	void renderNodes(SceneNode *root, bool picking = false);
-	void renderArcCircle();
+	void renderHitbox(GeometryNode *node);
 
 	void jointPickerGui(SceneNode *node);
 

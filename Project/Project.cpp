@@ -592,6 +592,44 @@ void Project::renderNodes(SceneNode *root, bool picking){
 	}
 }
 
+
+void Project::renderHitbox(GeometryNode *node){
+	m_shader.enable();
+	GLint location = m_shader.getUniformLocation("ModelView");
+	mat4 scale_mat = glm::scale(mat4(), vec3(node->hitbox->_width,node->hitbox->_height, node->hitbox->_depth)); //* mat4();
+	mat4 modelView = m_view * scale_mat * node->trans; 
+	glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
+	CHECK_GL_ERRORS;
+
+		//-- Set NormMatrix:
+	location = m_shader.getUniformLocation("NormalMatrix");
+	mat3 normalMatrix = glm::transpose(glm::inverse(mat3(modelView)));
+	glUniformMatrix3fv(location, 1, GL_FALSE, value_ptr(normalMatrix));
+	CHECK_GL_ERRORS;
+
+	//-- Set Material values:
+	location = m_shader.getUniformLocation("material.kd");
+	vec3 kd = glm::vec3(0.6f, 1.0f, 0.8f);
+	glUniform3fv(location, 1, value_ptr(kd));
+	CHECK_GL_ERRORS;
+	
+	location = m_shader.getUniformLocation("material.ks");
+	vec3 ks = glm::vec3(0.6f, 1.0f, 0.8f);
+	glUniform3fv(location, 1, value_ptr(ks));
+	CHECK_GL_ERRORS;
+	location = m_shader.getUniformLocation("material.shininess");
+	glUniform1f(location, 0.0f);
+	CHECK_GL_ERRORS;
+	
+	m_shader.disable();
+
+	BatchInfo hitbox = m_batchInfoMap["cube"];
+
+	m_shader.enable();
+	glDrawArrays(GL_LINES, hitbox.startIndex, hitbox.numIndices);
+	m_shader.disable();
+}
+
 //----------------------------------------------------------------------------------------
 void Project::findPlayerNode(SceneNode *root){
 	if (root->m_nodeType == NodeType::GeometryNode && root->m_name == "player"){
@@ -614,29 +652,6 @@ void Project::findPlaneNode(SceneNode *root){
 	}
 }
 
-//----------------------------------------------------------------------------------------
-// Draw the trackball circle.
-void Project::renderArcCircle() {
-	glBindVertexArray(m_vao_arcCircle);
-
-	m_shader_arcCircle.enable();
-		GLint m_location = m_shader_arcCircle.getUniformLocation( "M" );
-		float aspect = float(m_framebufferWidth)/float(m_framebufferHeight);
-		glm::mat4 M;
-		if( aspect > 1.0 ) {
-			M = glm::scale( glm::mat4(), glm::vec3( 0.5/aspect, 0.5, 1.0 ) );
-		} else {
-			M = glm::scale( glm::mat4(), glm::vec3( 0.5, 0.5*aspect, 1.0 ) );
-		}
-
-		M = m_translation * M;
-		glUniformMatrix4fv( m_location, 1, GL_FALSE, value_ptr( M ) );
-		glDrawArrays( GL_LINE_LOOP, 0, CIRCLE_PTS );
-	m_shader_arcCircle.disable();
-
-	glBindVertexArray(0);
-	CHECK_GL_ERRORS;
-}
 
 void Project::resetOrientation(){
 	m_rotation = mat4();
