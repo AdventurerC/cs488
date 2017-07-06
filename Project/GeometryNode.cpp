@@ -29,9 +29,10 @@ GeometryNode::GeometryNode(
 	  m_faces()
 {
 	m_nodeType = NodeType::GeometryNode;
-	hitbox->_width = hitwidth;
-	hitbox->_height = hitheight;
-	hitbox->_depth = hitdepth;
+	hitbox->_maxXYZ = dvec3(hitwidth, hitheight, hitdepth);
+	//hitbox->_width = hitwidth;
+	//hitbox->_height = hitheight;
+	//hitbox->_depth = hitdepth;
 
 	std::string file = "Assets/" + meshId + ".obj";//ccheating here, assuming file name is Assets/meshId.obj
 	std::ifstream in(file.c_str());
@@ -77,11 +78,48 @@ GeometryNode::GeometryNode(
 
 void GeometryNode::translate(const glm::vec3& amount) {
 	set_transform( glm::translate(amount) * trans );
-	hitbox->_pos = glm::translate(amount) * hitbox->_pos;
+	//hitbox->_pos = glm::translate(amount) * hitbox->_pos;
 }
 
+void GeometryNode::scale(const glm::vec3 & amount) {
+	set_transform( glm::scale(amount) * trans );
+	//hitbox->_maxXYZ = glm::scale(amount) * hitbox->_maxXYZ;
+}
+
+
+//kill these later, implement collision in CollisionTree.cpp
 bool GeometryNode::collide3D(GeometryNode* other) {
 	Hitbox* otherHitbox = other->hitbox;
+	bool hit(false);
+
+	//Left-Right
+	if (hitbox->x() <= otherHitbox->x1()){
+		hit = true;
+	} 
+
+	//Right-Left
+	if (hitbox->x1() >= otherHitbox->x()){
+		hit = true;
+	}
+
+	//Top-Bottom
+	if (hitbox->z1() <= otherHitbox->z()){
+		hit = true;
+	}
+
+	//bottom-Top
+	if (hitbox->z() >= otherHitbox->z1()){
+		hit = true;
+	}
+
+	if (hitbox->y() <= otherHitbox->y1()){
+		hit = true;
+	} 
+
+	if (hitbox->y1() <= otherHitbox->y()){
+		hit = true;
+	} 
+
 
 	return false;
 }

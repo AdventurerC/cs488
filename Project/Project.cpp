@@ -588,6 +588,10 @@ void Project::renderNodes(SceneNode *root, bool picking){
 		m_shader.disable();
 
 		if (RENDER_HITBOX) renderHitbox(geometryNode);
+
+		/*if (geometryNode->m_name == "player") {
+			cout << "player: " << geometryNode->_hitbox->pos << endl;
+		}*/
 	}
 	for (SceneNode *child : root->children){
 		child->set_transform(root->get_transform() * child->get_transform());
@@ -600,7 +604,7 @@ void Project::renderNodes(SceneNode *root, bool picking){
 void Project::renderHitbox(GeometryNode *node){
 	m_shader.enable();
 	GLint location = m_shader.getUniformLocation("ModelView");
-	mat4 scale_mat = glm::scale(mat4(), vec3(node->hitbox->_width,node->hitbox->_height, node->hitbox->_depth)); //* mat4();
+	mat4 scale_mat = glm::scale(mat4(), vec3(node->hitbox->_maxXYZ)); //* mat4();
 	mat4 modelView = m_view * node->trans * scale_mat; 
 	glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
 	CHECK_GL_ERRORS;

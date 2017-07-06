@@ -7,6 +7,7 @@
 
 #include "SceneNode.hpp"
 #include "GeometryNode.hpp"
+#include "CollisionTree.hpp"
 
 #include <glm/glm.hpp>
 #include <memory>
