@@ -6,13 +6,13 @@
 //rectangular hitbox
 class Hitbox{
 public:
-	glm::dvec4 _pos;
+	glm::dvec3 _pos;
 	glm::dvec3 _maxXYZ;
 	//double _width;
 	//double _height;
 	//double _depth;
 
-	Hitbox() : _pos(glm::dvec4(0, 0, 0, 1)), 
+	Hitbox() : _pos(glm::dvec3(0.0f)), 
 		_maxXYZ(glm::dvec3(1.0f)){ }
 	double x(){ return _pos[0] - _maxXYZ.x/2.0; }
 	double z(){ return _pos[2] + _maxXYZ.z/2.0; }

@@ -10,27 +10,37 @@ struct Bounds{
 
     Bounds(glm::dvec3 origin, glm::dvec3 maxXYZ) : _origin(origin), _maxXYZ(maxXYZ) {}
     Bounds() : _origin(glm::dvec3(0.0f)), _maxXYZ(glm::dvec3(0.0f)) {}
+
+    double x(){ return _origin.x - _maxXYZ.x/2.0; }
+	double z(){ return _origin.z - _maxXYZ.z/2.0; }
+	double y(){ return _origin.y - _maxXYZ.y/2.0; }
+
+	double x1(){ return _origin.x + _maxXYZ.x/2.0; }
+	double z1(){ return _origin.z + _maxXYZ.z/2.0; }
+	double y1(){ return _origin.y + _maxXYZ.y/2.0; }
 };
 
 class CollisionTreeNode {
 public:
     CollisionTreeNode(Bounds bounds);
     int level;
-    std::vector<GeometryNode*> _geometryList;
     Bounds _bounds;
     // q2 | q1
     // -------
     // q3 | q4
-    std::vector<CollisionTreeNode* > _children; //size 4
+     //size 4
     //CollisionTreeNode* q1;
     //CollisionTreeNode* q2;
     //CollisionTreeNode* q3;
     //CollisionTreeNode* q4;
 
     bool intersect(CollisionTreeNode* other);
-    bool intersectGeometry(GeometryNode* other);
-    int findQuadrant(Bounds bounds);
+    bool intersectGeometry(GeometryNode* other, bool checkY = false);
+    int findQuadrant(Bounds other);
     void construct(SceneNode* root);
     void insert(GeometryNode* node);
     void makeChildren();
+private:
+    std::vector<CollisionTreeNode* > _children;
+    std::vector<GeometryNode*> _geometryList;
 };

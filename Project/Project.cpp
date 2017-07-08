@@ -114,6 +114,9 @@ void Project::init()
 	findPlayerNode((SceneNode*)&*m_rootNode);
 
 	findPlaneNode((SceneNode*)&*m_rootNode);
+
+	Bounds bounds(m_plane->hitbox->_pos, m_plane->hitbox->_maxXYZ);
+	m_collisionTree = new CollisionTreeNode(bounds);
 	/*if (m_playerNode != nullptr){
 		cout << "Player found" << endl;
 	}*/

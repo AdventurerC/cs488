@@ -131,6 +131,7 @@ protected:
 
 	GeometryNode* m_playerNode;
 	GeometryNode* m_plane;
+	CollisionTreeNode* m_collisionTree;
 
 	enum Mode {
 		POSITION,
