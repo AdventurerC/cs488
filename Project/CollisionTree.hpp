@@ -22,7 +22,7 @@ struct Bounds{
 
 class CollisionTreeNode {
 public:
-    CollisionTreeNode(Bounds bounds);
+    CollisionTreeNode(Bounds bounds, int curDepth);
     int level;
     Bounds _bounds;
     // q2 | q1
@@ -36,11 +36,14 @@ public:
 
     bool intersect(CollisionTreeNode* other);
     bool intersectGeometry(GeometryNode* other, bool checkY = false);
+    void collideGeometry(GeometryNode* other, std::vector<GeometryNode*> &collisions, std::vector<glm::vec3> &axis, bool checkY = false);
     int findQuadrant(Bounds other);
     void construct(SceneNode* root);
     void insert(GeometryNode* node);
     void makeChildren();
+    bool collide2Geo(GeometryNode* node, GeometryNode* other, glm::vec3 &axis, bool checkY = false);
 private:
+    int _depth;
     std::vector<CollisionTreeNode* > _children;
     std::vector<GeometryNode*> _geometryList;
 };

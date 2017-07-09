@@ -37,8 +37,8 @@ public:
 	void translate(const glm::vec3& amount);
 	void scale(const glm::vec3& amount);
 
-	bool collide3D(GeometryNode* other);
-	bool collide2D(GeometryNode* other); //
+	bool collide3D(GeometryNode* other, glm::vec3 &axis);
+	bool collide2D(GeometryNode* other, glm::vec3 &axis); //
 
 	Material material;
 

@@ -12,12 +12,13 @@ using namespace std;
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
+#include <glm/ext.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <stack>
 #include <algorithm>
 
-#define RENDER_HITBOX true
+#define RENDER_HITBOX false
 
 using namespace glm;
 
@@ -113,10 +114,19 @@ void Project::init()
 
 	findPlayerNode((SceneNode*)&*m_rootNode);
 
+	if (m_playerNode != nullptr){
+		cout << "Player found" << endl;
+	}
+
 	findPlaneNode((SceneNode*)&*m_rootNode);
 
+	if (m_plane != nullptr){
+		cout << "Plane found" << endl;
+	}
+
 	Bounds bounds(m_plane->hitbox->_pos, m_plane->hitbox->_maxXYZ);
-	m_collisionTree = new CollisionTreeNode(bounds);
+	m_collisionTree = new CollisionTreeNode(bounds, 0);
+	m_collisionTree->construct((SceneNode*)&*m_rootNode);
 	/*if (m_playerNode != nullptr){
 		cout << "Player found" << endl;
 	}*/
@@ -659,7 +669,7 @@ void Project::findPlaneNode(SceneNode *root){
 		return;
 	}
 	for (SceneNode *child : root->children){
-		findPlayerNode(child);
+		findPlaneNode(child);
 	}
 }
 
@@ -821,6 +831,25 @@ void Project::redo(){
 void Project::movePlayer(double x, double z){
 	dvec3 transl(x, 0.0, z);
 	m_playerNode->translate(transl);
+	std::vector<GeometryNode*> collisions;
+	std::vector<vec3> axis;
+	m_collisionTree->collideGeometry(m_playerNode, collisions, axis, false);
+	bool adjust(false);
+	dvec3 transl_back(0.0);
+	cout << "collisions: " << collisions.size() << endl;
+	for (int i = 0; i < collisions.size(); i++){
+		GeometryNode* collision = collisions[i];
+//		cout << collision->m_name << endl;
+		if (collision == m_plane || collision == m_playerNode) continue;
+		adjust = true;
+		transl_back.x += axis[i].x * x;
+		transl_back.z += axis[i].z * z;
+	}
+
+	if (adjust){
+		//cout << glm::to_string(transl_back) << endl;
+		m_playerNode->translate(dvec3(-x, 0.0, -z));
+	}
 }
 
 void Project::rotateShot(double x){

@@ -29,6 +29,7 @@ GeometryNode::GeometryNode(
 	  m_faces()
 {
 	m_nodeType = NodeType::GeometryNode;
+	hitbox->_pos = dvec3(0.0);
 	hitbox->_maxXYZ = dvec3(hitwidth, hitheight, hitdepth);
 	//hitbox->_width = hitwidth;
 	//hitbox->_height = hitheight;
@@ -88,35 +89,41 @@ void GeometryNode::scale(const glm::vec3 & amount) {
 
 
 //kill these later, implement collision in CollisionTree.cpp
-bool GeometryNode::collide3D(GeometryNode* other) {
+bool GeometryNode::collide3D(GeometryNode* other, glm::vec3 &axis) {
 	Hitbox* otherHitbox = other->hitbox;
 	bool hit(false);
 
 	//Left-Right
 	if (hitbox->x() <= otherHitbox->x1()){
+		axis.x = 1;
 		hit = true;
 	} 
 
 	//Right-Left
 	if (hitbox->x1() >= otherHitbox->x()){
+		axis.x = -1;
 		hit = true;
 	}
 
 	//Top-Bottom
 	if (hitbox->z1() <= otherHitbox->z()){
+		axis.z = 1;
 		hit = true;
 	}
 
 	//bottom-Top
 	if (hitbox->z() >= otherHitbox->z1()){
+		axis.z = -1;
 		hit = true;
 	}
 
 	if (hitbox->y() <= otherHitbox->y1()){
+		axis.y = 1;
 		hit = true;
 	} 
 
 	if (hitbox->y1() <= otherHitbox->y()){
+		axis.y = -1;
 		hit = true;
 	} 
 
@@ -124,27 +131,31 @@ bool GeometryNode::collide3D(GeometryNode* other) {
 	return false;
 }
 
-bool GeometryNode::collide2D(GeometryNode* other) {
+bool GeometryNode::collide2D(GeometryNode* other, glm::vec3 &axis) {
 	Hitbox* otherHitbox = other->hitbox;
 	bool hit(false);
 
 	//Left-Right
 	if (hitbox->x() <= otherHitbox->x1()){
+		axis.x = 1;
 		hit = true;
 	} 
 
 	//Right-Left
 	if (hitbox->x1() >= otherHitbox->x()){
+		axis.x = -1;
 		hit = true;
 	}
 
 	//Top-Bottom
 	if (hitbox->z1() <= otherHitbox->z()){
+		axis.z = 1;
 		hit = true;
 	}
 
 	//bottom-Top
 	if (hitbox->z() >= otherHitbox->z1()){
+		axis.z = -1;
 		hit = true;
 	}
 
