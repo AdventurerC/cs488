@@ -75,6 +75,7 @@ protected:
 	void initLightSources();
 	void findPlayerNode(SceneNode *root);
 	void findPlaneNode(SceneNode *root);
+	void findEnemyNodes(SceneNode *root);
 
 	void initPerspectiveMatrix();
 	void uploadCommonSceneUniforms();
@@ -131,6 +132,8 @@ protected:
 
 	GeometryNode* m_playerNode;
 	GeometryNode* m_plane;
+	GeometryNode* m_enemy1;
+	GeometryNode* m_enemy2;
 	CollisionTreeNode* m_collisionTree;
 
 	enum Mode {

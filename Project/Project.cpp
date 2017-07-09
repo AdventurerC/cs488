@@ -6,7 +6,6 @@ using namespace std;
 #include "cs488-framework/MathUtils.hpp"
 
 #include "JointNode.hpp"
-#include "trackball.hpp"
 
 #include <imgui/imgui.h>
 
@@ -123,6 +122,8 @@ void Project::init()
 	if (m_plane != nullptr){
 		cout << "Plane found" << endl;
 	}
+
+	findEnemyNodes((SceneNode*)&*m_rootNode);
 
 	Bounds bounds(m_plane->hitbox->_pos, m_plane->hitbox->_maxXYZ);
 	m_collisionTree = new CollisionTreeNode(bounds, 0);
@@ -438,31 +439,6 @@ void Project::guiLogic()
 	
 }
 
-//makes a list of joints to pick in case no time for picking
-void Project::jointPickerGui(SceneNode *node){
-	if (node == nullptr) return;
-	if (node->m_nodeType == NodeType::JointNode) {
-		if( ImGui::Checkbox( node->m_name.c_str() , &(node->isSelected))) {
-			if (node->isSelected) {
-				cout << "selected " << *node << endl;
-				m_selectedJoints.emplace_back(node);
-				node->selectChild();
-			} else {
-				auto it = std::find(m_selectedJoints.begin(), m_selectedJoints.end(), node);
-				if (it != m_selectedJoints.end()){
-					cout << "deselected " << *node << endl;
-					node->selectChild();
-					m_selectedJoints.erase(it);
-				}
-			}
-		}
-	}
-
-	for (SceneNode *child : node->children){
-		jointPickerGui(child);
-	}
-}
-
 //----------------------------------------------------------------------------------------
 // Update mesh specific shader uniforms:
 static void updateShaderUniforms(
@@ -670,6 +646,20 @@ void Project::findPlaneNode(SceneNode *root){
 	}
 	for (SceneNode *child : root->children){
 		findPlaneNode(child);
+	}
+}
+
+//----------------------------------------------------------------------------------------
+void Project::findEnemyNodes(SceneNode *root){
+	if (root->m_nodeType == NodeType::GeometryNode && root->m_name == "e1"){
+		m_enemy1 = static_cast<GeometryNode *>(root);
+	} else if (root->m_nodeType == NodeType::GeometryNode && root->m_name == "e2"){
+		m_enemy2 = static_cast<GeometryNode *>(root);
+	}
+
+	if (m_enemy1 != nullptr && m_enemy2 != nullptr) return;
+	for (SceneNode *child : root->children){
+		findEnemyNodes(child);
 	}
 }
 

@@ -28,11 +28,6 @@ public:
     // q2 | q1
     // -------
     // q3 | q4
-     //size 4
-    //CollisionTreeNode* q1;
-    //CollisionTreeNode* q2;
-    //CollisionTreeNode* q3;
-    //CollisionTreeNode* q4;
 
     bool intersect(CollisionTreeNode* other);
     bool intersectGeometry(GeometryNode* other, bool checkY = false);

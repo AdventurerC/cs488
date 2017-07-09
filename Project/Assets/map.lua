@@ -6,6 +6,18 @@
 -- Create the top level root node named 'root'.
 rootNode = gr.node('root')
 
+
+bcube = gr.mesh('cube', 'bcube', 1, 1,1)
+bcube:scale(1.0, 1.0, 1.0)
+bcube:translate(-0.5, 0.0, 10.0)
+bcube:set_material(gr.material({1.0, 1.0, 1.0}, {1.0, 1.0, 1.0}, 100.0))
+rootNode:add_child(bcube)
+
+bcube = gr.mesh('cube', 'bcube', 1, 1,1)
+bcube:scale(1.0, 1.0, 1.0)
+bcube:translate(0.5, 0.0, 9.0)
+bcube:set_material(gr.material({1.0, 1.0, 1.0}, {1.0, 1.0, 1.0}, 100.0))
+rootNode:add_child(bcube)
 -- | |
 for i = 1,7 do
     cube = gr.mesh('cube', 'Lcube'..tostring(i), 1, 1,1)
@@ -67,6 +79,17 @@ for i = 1,18 do
     rootNode:add_child(cube)
 end
 
+obstacle = gr.mesh('cube', 'obstacle', 1, 1,1)
+obstacle:scale(1.0, 1.0, 1.0)
+obstacle:translate(-2, 0.0, -5)
+obstacle:set_material(gr.material({1.0, 1.0, 1.0}, {1.0, 1.0, 1.0}, 100.0))
+rootNode:add_child(obstacle)
+
+obstacle2 = gr.mesh('cube', 'obstacle', 1, 1,1)
+obstacle2:scale(1.0, 1.0, 1.0)
+obstacle2:translate(2, 0.0, -5)
+obstacle2:set_material(gr.material({1.0, 1.0, 1.0}, {1.0, 1.0, 1.0}, 100.0))
+rootNode:add_child(obstacle2)
 
 plane = gr.mesh('plane', 'plane',2.0, 0.1, 2.0)
 plane:scale(12, 1.0, 20)
@@ -76,7 +99,7 @@ rootNode:add_child(plane)
 
 player = gr.mesh('player', 'player', 0.5, 0.1, 1.0)
 player:scale(1.0, 1.0, 1.0)
-player:translate(0.2, 0.5, 7.6)
+player:translate(0.2, 0.3, 7.6)
 player:set_material(gr.material({0.1, 0.1, 0.1}, {0.1,0.1,0.1}, 10))
 rootNode:add_child(player)
 

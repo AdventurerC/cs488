@@ -129,51 +129,11 @@ bool CollisionTreeNode::intersectGeometry(GeometryNode* other, bool checkY){
         yHit = _bounds.y() < nodeBounds.y1() && _bounds.y1() > nodeBounds.y();
     }
 
-    /*if (checkY && !yHit){
-        yHit = _bounds.y1() > nodeBounds.y() && _bounds.y() < nodeBounds.y1();
-
-    }*/
-
     if (_bounds.x() < nodeBounds.x1() && _bounds.x1() > nodeBounds.x() &&
         _bounds.z() < nodeBounds.z1() && _bounds.z1() > nodeBounds.z()){
         return checkY ? yHit*true : true;
     }
 
-    /*if (nodeBounds.x() < _bounds.x1() && _bounds.x() > nodeBounds.x1() && _bounds.z1() < nodeBounds.z() && _bounds.z() > nodeBounds.z1() ){
-        return checkY ? yHit*true : true;
-    }*/
-
-    /*if (nodeBounds.x1() > _bounds.x() && _bounds.x1() < nodeBounds.x() && _bounds.z() > nodeBounds.z1() && _bounds.z1() < nodeBounds.z() ){
-        hit = checkY ? yHit*true : true;
-    }*/
-
-
-	/*if (nodeBounds.x() <= _bounds.x1()){
-		return true;
-	} 
-
-	if (nodeBounds.x1() >= _bounds.x()){
-		return true;
-	}
-
-	if (nodeBounds.z1() <= _bounds.z()){
-		return true;
-	}
-
-	if (nodeBounds.z() >= _bounds.z1()){
-		return true;
-	}
-
-    if (checkY){
-
-        if (nodeBounds.y() <= _bounds.y1()){
-            return true;
-        } 
-
-        if (nodeBounds.y1() <= _bounds.y()){
-            return true;
-        } 
-    }*/
 
     return false;
     
@@ -224,10 +184,6 @@ bool CollisionTreeNode::collide2Geo(GeometryNode* node, GeometryNode* other, glm
         yHit = nodeBounds.y() < otherBounds.y1() && nodeBounds.y1() > otherBounds.y();
     }
 
-    /*if (checkY && !yHit){
-        yHit = _bounds.y1() > nodeBounds.y() && _bounds.y() < nodeBounds.y1();
-
-    }*/
 
     if (nodeBounds.x() < otherBounds.x1() && nodeBounds.x1() > otherBounds.x() &&
         nodeBounds.z() < otherBounds.z1() && nodeBounds.z1() > otherBounds.z()){
@@ -235,23 +191,6 @@ bool CollisionTreeNode::collide2Geo(GeometryNode* node, GeometryNode* other, glm
         nodeBounds.z() << "<" << otherBounds.z1() << "&&" << nodeBounds.z1() << ">" << otherBounds.z() << std::endl;
         hit = checkY ? yHit*true : true;
     }
-
-    /*if (checkY){
-        yHit = nodeBounds.y() < otherBounds.y1() && nodeBounds.y1() > otherBounds.y();
-    }*/
-
-    /*if (checkY && !yHit){
-        yHit = nodeBounds.y1() > otherBounds.y() && nodeBounds.y() < otherBounds.y1();
-
-    }*/
-/*
-    if (otherBounds.x() < nodeBounds.x1() && nodeBounds.x() > otherBounds.x1() && nodeBounds.z1() < otherBounds.z() && nodeBounds.z() > otherBounds.z1() ){
-        hit = checkY ? yHit*true : true;
-    }
-
-    if (otherBounds.x1() > nodeBounds.x() && nodeBounds.x1() < otherBounds.x() && nodeBounds.z() > otherBounds.z1() && nodeBounds.z1() < otherBounds.z() ){
-        hit = checkY ? yHit*true : true;
-    }*/
 
     if(!hit) return false;
 
