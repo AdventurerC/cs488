@@ -6,10 +6,7 @@
 -- Create the top level root node named 'root'.
 rootNode = gr.node('root')
 
-blue = gr.material({0.7, 0.6, 1}, {0.5, 0.4, 0.8}, 25)
-white = gr.material({1.0, 1.0, 1.0}, {1.0, 1.0, 1.0}, 100.0)
-black = gr.material({0.2, 0.2, 0.2}, {0.1,0.1,0.1}, 10)
-orange = gr.material({1.0, 0.6, 0.1}, {0.5, 0.7, 0.5}, 10)
+<<<<<<< HEAD
 
 bcube = gr.mesh('cube', 'bcube', 1, 1,1)
 bcube:scale(1.0, 1.0, 1.0)
@@ -22,7 +19,11 @@ bcube:scale(1.0, 1.0, 1.0)
 bcube:translate(0.5, 0.0, 9.0)
 bcube:set_material(gr.material({1.0, 1.0, 1.0}, {1.0, 1.0, 1.0}, 100.0))
 rootNode:add_child(bcube)
-
+=======
+blue = gr.material({0.7, 0.6, 1}, {0.5, 0.4, 0.8}, 25)
+white = gr.material({1.0, 1.0, 1.0}, {1.0, 1.0, 1.0}, 100.0)
+black = gr.material({0.2, 0.2, 0.2}, {0.1,0.1,0.1}, 10)
+>>>>>>> 17568f7bee4dfd6e60cc70b11354a944260f9146
 -- | |
 for i = 1,7 do
     cube = gr.mesh('cube', 'Lcube'..tostring(i), 1, 1,1)
@@ -104,39 +105,38 @@ rootNode:add_child(plane)
 
 player = gr.mesh('player', 'player', 0.5, 0.1, 1.0)
 player:scale(1.0, 1.0, 1.0)
+<<<<<<< HEAD
 player:translate(0.2, 0.3, 7.6)
-player:set_material(black)
+player:set_material(gr.material({0.1, 0.1, 0.1}, {0.1,0.1,0.1}, 10))
+=======
+player:translate(0.2, 0.5, 7.6)
+player:set_material(white)
+>>>>>>> 17568f7bee4dfd6e60cc70b11354a944260f9146
 rootNode:add_child(player)
 
-enemy1 = gr.mesh('sphere', 'e1', 0.9, 0.9, 0.9)
+enemy1 = gr.mesh('sphere', 'e1', 0.7,0.7,0.7)
 enemy1:scale(0.7,0.7,0.7)
 enemy1:translate(5, 0.2, -15)
 enemy1:set_material(black)
 rootNode:add_child(enemy1)
 
-enemy2 = gr.mesh('sphere', 'e2',0.9, 0.9, 0.9)
+enemy2 = gr.mesh('sphere', 'e2',1.0, 1.0, 1.0)
 enemy2:scale(0.7, 0.7, 0.7)
 enemy2:translate(-5, 0.2, -15)
 enemy2:set_material(black)
 rootNode:add_child(enemy2)
 
-t1 = gr.mesh('cube', 't1', 1, 1,1)
-t1:scale(1.0, 1.0, 1.0)
-t1:translate(-5, 0.2, -3)
-t1:set_material(blue)
-rootNode:add_child(t1)
+tsphere = gr.mesh('sphere', 'tsphere', 2.0, 2.0, 2.0)
+tsphere:scale(2.0, 2.0, 2.0)
+tsphere:translate(-5, 0.2, -3)
+tsphere:set_material(blue)
+rootNode:add_child(tsphere)
 
-r1 = gr.mesh('cube', 'r1', 1, 1,1)
-r1:scale(1.0, 1.0, 1.0)
-r1:translate(5, 0.2, -3)
-r1:set_material(white)
-rootNode:add_child(r1)
-
-t1 = gr.mesh('sphere', 't2', 1.5, 1.5,1.5)
-t1:scale(1.5, 1.5, 1.5)
-t1:translate(5, 3, 3)
-t1:set_material(orange)
-rootNode:add_child(t1)
+tsphere2 = gr.mesh('sphere', 'tsphere2', 2.0, 2.0, 2.0)
+tsphere2:scale(2.0, 2.0, 2.0)
+tsphere2:translate(-5, 0.2, -3)
+tsphere2:set_material(blue)
+rootNode:add_child(tsphere2)
 
 -- Return the root with all of it's childern.  The SceneNode Project::m_rootNode will be set
 -- equal to the return value from this Lua script.

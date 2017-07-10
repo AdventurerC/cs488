@@ -76,12 +76,14 @@ protected:
 	void findPlayerNode(SceneNode *root);
 	void findPlaneNode(SceneNode *root);
 	void findEnemyNodes(SceneNode *root);
+	void findSpecialObjects(SceneNode *root);
 
 	void initPerspectiveMatrix();
 	void uploadCommonSceneUniforms();
 	void renderSceneGraph(const SceneNode &node);
 	void renderNodes(SceneNode *root, bool picking = false);
 	void renderHitbox(GeometryNode *node);
+	void renderTransparentObjects(SceneNode *root);
 
 	void jointPickerGui(SceneNode *node);
 
@@ -134,6 +136,8 @@ protected:
 	GeometryNode* m_plane;
 	GeometryNode* m_enemy1;
 	GeometryNode* m_enemy2;
+	GeometryNode* m_transparentNode;
+	GeometryNode* m_reflectNode;
 	CollisionTreeNode* m_collisionTree;
 
 	enum Mode {
@@ -146,6 +150,7 @@ protected:
 	bool m_zbuffer;
 	bool m_backfaceCulling;
 	bool m_frontfaceCulling;
+	bool m_useAlpha;
 
 	float m_mouseX;
 	float m_mouseY;

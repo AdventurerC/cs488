@@ -46,6 +46,7 @@ Project::Project(const std::string & luaSceneFile)
 	  m_zbuffer(true),
 	  m_backfaceCulling(false),
 	  m_frontfaceCulling(false),
+	  m_useAlpha(false),
 	  lmb_down(false),
 	  mmb_down(false),
 	  rmb_down(false),
@@ -124,6 +125,8 @@ void Project::init()
 	}
 
 	findEnemyNodes((SceneNode*)&*m_rootNode);
+
+	findSpecialObjects((SceneNode*)&*m_rootNode);
 
 	Bounds bounds(m_plane->hitbox->_pos, m_plane->hitbox->_maxXYZ);
 	m_collisionTree = new CollisionTreeNode(bounds, 0);
@@ -454,27 +457,6 @@ static void updateShaderUniforms(
 		mat4 modelView = viewMatrix * node.trans;
 		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
 		CHECK_GL_ERRORS;
-
-		if (picking){
-			//cout << "picking " << node << endl;
-			int idx = node.m_nodeId;
-			float r = float(idx&0xff) / 255.0f;
-			float g = float((idx>>8)&0xff) / 255.0f;
-			float b = float((idx>>16)&0xff) / 255.0f;
-
-			location = shader.getUniformLocation("material.kd");
-			glUniform3f( location, r, g, b );
-			CHECK_GL_ERRORS;
-
-			location = shader.getUniformLocation("material.ks");
-			glUniform3f( location, r, g, b );
-			CHECK_GL_ERRORS;
-
-			location = shader.getUniformLocation("material.shininess");
-			glUniform1f(location, node.material.shininess);
-			CHECK_GL_ERRORS;
-		
-		} else {
 			//-- Set NormMatrix:
 			location = shader.getUniformLocation("NormalMatrix");
 			mat3 normalMatrix = glm::transpose(glm::inverse(mat3(modelView)));
@@ -494,9 +476,10 @@ static void updateShaderUniforms(
 			location = shader.getUniformLocation("material.shininess");
 			glUniform1f(location, node.isSelected ? 0.0f :node.material.shininess);
 			CHECK_GL_ERRORS;
+			location = shader.getUniformLocation("material.alpha");
+			glUniform1f(location, node.material.alpha);
 		}
 
-	}
 	shader.disable();
 
 }
@@ -527,6 +510,11 @@ void Project::draw() {
 	}
 
 	renderSceneGraph(*m_rootNode);
+
+	glBindVertexArray(m_vao_meshData);
+	renderTransparentObjects((SceneNode *) &*m_rootNode);
+	glBindVertexArray(0);
+	CHECK_GL_ERRORS;
 
 	if (m_zbuffer)
 		glDisable( GL_DEPTH_TEST );
@@ -566,17 +554,20 @@ void Project::renderNodes(SceneNode *root, bool picking){
 	if (root->m_nodeType == NodeType::GeometryNode){
 		GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
 
-		updateShaderUniforms(m_shader, *geometryNode, m_view, m_picking);
 
-		BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
+		if (!geometryNode->isTransparent()){
+			updateShaderUniforms(m_shader, *geometryNode, m_view, m_picking);
 
-		//-- Now render the mesh:
-		m_shader.enable();
-		glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
+			BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
 
-		m_shader.disable();
+			//-- Now render the mesh:
+			m_shader.enable();
+			glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
 
-		if (RENDER_HITBOX) renderHitbox(geometryNode);
+			m_shader.disable();
+
+			if (RENDER_HITBOX) renderHitbox(geometryNode);
+		} 
 
 		/*if (geometryNode->m_name == "player") {
 			cout << "player: " << geometryNode->_hitbox->pos << endl;
@@ -589,6 +580,39 @@ void Project::renderNodes(SceneNode *root, bool picking){
 	}
 }
 
+void Project::renderTransparentObjects(SceneNode *root){
+
+	if (root->m_nodeType == NodeType::GeometryNode){
+		GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
+
+		if (geometryNode->isTransparent()){
+			glEnable(GL_BLEND);
+
+			glBlendFunc(GL_SRC_COLOR, GL_DST_ALPHA);
+			glBlendEquation(GL_FUNC_ADD);
+
+			updateShaderUniforms(m_shader, *geometryNode, m_view, m_picking);
+
+			BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
+
+			//-- Now render the mesh:
+			m_shader.enable();
+			glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
+
+			m_shader.disable();
+
+			glDisable(GL_BLEND);
+
+			if (RENDER_HITBOX) renderHitbox(geometryNode);
+		}
+
+	}
+	for (SceneNode *child : root->children){
+		child->set_transform(root->get_transform() * child->get_transform());
+		renderTransparentObjects(child);
+		child->set_transform(glm::inverse(root->get_transform()) * child->get_transform());
+	}
+}
 
 void Project::renderHitbox(GeometryNode *node){
 	m_shader.enable();
@@ -660,6 +684,24 @@ void Project::findEnemyNodes(SceneNode *root){
 	if (m_enemy1 != nullptr && m_enemy2 != nullptr) return;
 	for (SceneNode *child : root->children){
 		findEnemyNodes(child);
+	}
+}
+
+//----------------------------------------------------------------------------------------
+void Project::findSpecialObjects(SceneNode *root){
+	if (root->m_nodeType == NodeType::GeometryNode && root->m_name == "t1"){
+		m_transparentNode = static_cast<GeometryNode *>(root);
+		m_transparentNode->setTransparency(0.3f);
+	} else if (root->m_nodeType == NodeType::GeometryNode && root->m_name.size() == 2 && root->m_name[0] == 't'){
+		GeometryNode* node = static_cast<GeometryNode *>(root);
+		node->setTransparency(0.3f);
+	} else if (root->m_nodeType == NodeType::GeometryNode && root->m_name == "r1"){
+		m_reflectNode = static_cast<GeometryNode *>(root);
+	}
+
+	if (m_transparentNode != nullptr && m_reflectNode != nullptr) return;
+	for (SceneNode *child : root->children){
+		findSpecialObjects(child);
 	}
 }
 

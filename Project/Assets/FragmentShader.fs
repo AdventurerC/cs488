@@ -18,6 +18,7 @@ struct Material {
     vec3 kd;
     vec3 ks;
     float shininess;
+    float alpha;
 };
 uniform Material material;
 

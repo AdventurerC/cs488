@@ -36,9 +36,11 @@ public:
 
 	void translate(const glm::vec3& amount);
 	void scale(const glm::vec3& amount);
+	void setTransparency(float alpha);
+	bool isTransparent();
 
-	bool collide3D(GeometryNode* other, glm::vec3 &axis);
-	bool collide2D(GeometryNode* other, glm::vec3 &axis); //
+	//bool collide3D(GeometryNode* other, glm::vec3 &axis);
+	//bool collide2D(GeometryNode* other, glm::vec3 &axis); //
 
 	Material material;
 
