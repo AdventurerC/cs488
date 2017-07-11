@@ -80,12 +80,14 @@ protected:
 
 	void initPerspectiveMatrix();
 	void uploadCommonSceneUniforms();
-	void renderSceneGraph(const SceneNode &node);
-	void renderNodes(SceneNode *root, bool picking = false);
+	void renderSceneGraph(const SceneNode &node, bool inReflectionMode = false);
+	void renderNodes(SceneNode *root, bool inReflectionMode = false);
 	void renderHitbox(GeometryNode *node);
 	void renderTransparentObjects(SceneNode *root);
 	void getShadowMap(SceneNode* root);
 	void getNodeShadows(SceneNode* root);
+	void drawReflection(SceneNode* root);
+	void drawPlane();
 
 	void jointPickerGui(SceneNode *node);
 
@@ -101,12 +103,13 @@ protected:
 	void undo();
 	void redo();
 
-	void movePlayer(double x, double z);
+	void movePlayer(double x, double z, bool adjusting = false);
 	void rotateShot(double x);
 
 	glm::mat4 m_perpsective;
 	glm::mat4 m_view;
 	glm::mat4 m_shadowView;
+	glm::mat4 m_reflectedView;
 	glm::mat4 m_ortho_shadowView;
 	glm::mat4 m_translation;
 	glm::mat4 m_rotation;
@@ -126,6 +129,7 @@ protected:
 	ShaderProgram m_shader_shadow;
 
 	bool m_doShadowMapping;
+	bool m_drawReflection;
 
 	//-- GL resources for trackball circle geometry:
 	GLuint m_vbo_arcCircle;

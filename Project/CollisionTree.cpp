@@ -194,57 +194,6 @@ bool CollisionTreeNode::collide2Geo(GeometryNode* node, GeometryNode* other, glm
 
     if(!hit) return false;
 
-    /*if (otherBounds.x() < nodeBounds.x1()){
-        std::cout << "{" << "axis: x" << std::endl;
-        std::cout << node->m_name << ": " << nodeBounds.x1() << std::endl;
-        std::cout << other->m_name << ": " << otherBounds.x() << std::endl;
-        axis.x = 1;
-        //hit = true;
-    } 
-
-    if (otherBounds.x1() > nodeBounds.x()){
-        std::cout << "{" << "axis: x" << std::endl;
-        std::cout << node->m_name << ": " << nodeBounds.x() << std::endl;
-        std::cout << other->m_name << ": " << otherBounds.x1() << std::endl;
-        axis.x = -1;
-        //hit = true;
-    }
-
-    if (otherBounds.z1() < nodeBounds.z()){
-        std::cout << "{" << "axis: z" << std::endl;
-        std::cout << node->m_name << ": " << nodeBounds.z() << std::endl;
-        std::cout << other->m_name << ": " << otherBounds.z1() << std::endl;
-        axis.z = -1;
-        //hit = true;
-    }
-
-    if (otherBounds.z() > nodeBounds.z1()){
-        std::cout << "{" << "axis: z" << std::endl;
-        std::cout << node->m_name << ": " << nodeBounds.z1() << std::endl;
-        std::cout << other->m_name << ": " << otherBounds.z() << std::endl;
-        axis.z = 1;
-        //hit = true;
-    }
-
-    if (checkY){
-
-        if (otherBounds.y() < nodeBounds.y1()){
-            axis.y = 1;
-            //hit = true;
-        } 
-
-        if (otherBounds.y1() < nodeBounds.y()){
-            axis.y = -1;
-            //hit = true;
-        } 
-    }*/
-
-    /*if (hit){
-        std::cout << "{" << node->m_name << ":" << glm::to_string(nodeBounds._origin) << glm::to_string(nodeBounds._maxXYZ) << std::endl;
-        std::cout << other->m_name << ":" << glm::to_string(otherBounds._origin) << glm::to_string(otherBounds._maxXYZ) << "}" << std::endl;
-
-    }*/
-
     return hit;
 
 }

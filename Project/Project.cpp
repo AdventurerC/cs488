@@ -16,6 +16,7 @@ using namespace std;
 
 #include <stack>
 #include <algorithm>
+#include <limits>
 
 #define RENDER_HITBOX false
 
@@ -59,8 +60,10 @@ Project::Project(const std::string & luaSceneFile)
 	  m_playerNode(nullptr),
 	  m_framebuffer(0),
 	  m_shadowMap(0),
-	  m_shadowView(0),
-	  m_doShadowMapping(false)
+	  m_shadowView(mat4()),
+	  m_doShadowMapping(false),
+	  m_drawReflection(true),
+	  m_reflectedView(mat4())
 {
 
 }
@@ -79,7 +82,7 @@ Project::~Project()
 void Project::init()
 {
 	// Set the background colour.
-	glClearColor(0.35, 0.35, 0.35, 1.0);
+	glClearColor(0.1, 0.1, 0.1, 1.0);
 
 	createShaderProgram();
 
@@ -309,11 +312,14 @@ void Project::initPerspectiveMatrix()
 
 //----------------------------------------------------------------------------------------
 void Project::initViewMatrix() {
+	vec3 lookFrom = glm::vec3( 0.0f, float(DIM)*2.0*M_SQRT1_2, float(DIM)*2.0*M_SQRT1_2 );
 	m_view = glm::lookAt( 
-		glm::vec3( 0.0f, float(DIM)*2.0*M_SQRT1_2, float(DIM)*2.0*M_SQRT1_2 ),
+		lookFrom,
 		glm::vec3( 0.0f, 0.0f, 0.0f ),
 		glm::vec3( 0.0f, 1.0f, 0.0f ) );/*glm::lookAt(vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, -1.0f),
 			vec3(0.0f, 1.0f, 0.0f));*/
+	//vec3 reflectedLF = glm::reflect(, glm::normalize(vec3(0.0, 1.0, 0.0)));
+	//vec3 reflectedLF = glm::vec3( 0.0f, -0.5-float(DIM)*2.0*M_SQRT1_2, 5.0-float(DIM)*2.0*M_SQRT1_2 );
 }
 
 //----------------------------------------------------------------------------------------
@@ -323,7 +329,7 @@ void Project::initLightSources() {
 	m_light.rgbIntensity = vec3(0.8f); // White light
 	m_shadowView = glm::lookAt( 
 		m_light.position,
-		glm::vec3( 0.0f, 0.0f, 0.0f ),
+		glm::vec3( 0.0f, -0.5f, -5.0f ),
 		glm::vec3( 0.0f, 1.0f, 0.0f ) );
 }
 
@@ -445,7 +451,11 @@ void Project::guiLogic()
 			
 		}
 		
-		if( ImGui::Checkbox( "Frontface Culling", &m_frontfaceCulling) ) {
+		if( ImGui::Checkbox( "Draw Reflections" , &m_drawReflection) ) {
+			
+		}
+
+		if( ImGui::Checkbox( "Draw Shadows", &m_doShadowMapping) ) {
 			
 		}
 
@@ -460,7 +470,9 @@ void Project::guiLogic()
 static void updateShaderUniforms(
 		const ShaderProgram & shader,
 		const GeometryNode & node,
-		const glm::mat4 & viewMatrix, bool shadow
+		const glm::mat4 & viewMatrix, 
+		bool shadow, 
+		bool inReflectionMode = false
 ) {
 
 	shader.enable();
@@ -472,7 +484,7 @@ static void updateShaderUniforms(
 		CHECK_GL_ERRORS;
 
 		GLuint draw_shadows = shader.getUniformLocation("drawShadows");
-		glUniform1f(draw_shadows, shadow);
+		glUniform1f(draw_shadows, shadow && !inReflectionMode);
 		CHECK_GL_ERRORS;
 
 		if(!shadow){
@@ -485,11 +497,11 @@ static void updateShaderUniforms(
 
 			//-- Set Material values:
 			location = shader.getUniformLocation("material.kd");
-			vec3 kd = node.isSelected ? glm::vec3(1.0f) : node.material.kd;
+			vec3 kd = inReflectionMode ? 0.5*node.material.kd : node.material.kd;
 			glUniform3fv(location, 1, value_ptr(kd));
 			CHECK_GL_ERRORS;
 			location = shader.getUniformLocation("material.ks");
-			vec3 ks = node.isSelected ? glm::vec3(1.0f) : node.material.ks;
+			vec3 ks = inReflectionMode ? 0.5*node.material.ks : node.material.ks;
 			glUniform3fv(location, 1, value_ptr(ks));
 			CHECK_GL_ERRORS;
 			location = shader.getUniformLocation("material.shininess");
@@ -629,7 +641,11 @@ void Project::draw() {
 		m_depthBias = biasMatrix*m_ortho_shadowView;
 	}
 
-	renderSceneGraph(*m_rootNode);
+	if (m_drawReflection){
+		drawReflection((SceneNode *) &*m_rootNode);
+	}
+
+	renderSceneGraph(*m_rootNode, false);
 
 	glBindVertexArray(m_vao_meshData);
 	renderTransparentObjects((SceneNode *) &*m_rootNode);
@@ -645,7 +661,7 @@ void Project::draw() {
 }
 
 //----------------------------------------------------------------------------------------
-void Project::renderSceneGraph(const SceneNode & root) {
+void Project::renderSceneGraph(const SceneNode & root, bool inReflectionMode) {
 
 	// Bind the VAO once here, and reuse for all GeometryNode rendering below.
 	glBindVertexArray(m_vao_meshData);
@@ -663,58 +679,128 @@ void Project::renderSceneGraph(const SceneNode & root) {
 	// could put a set of mutually recursive functions in this class, which
 	// walk down the tree from nodes of different types.
 
-	renderNodes((SceneNode *) &root);
+	if (m_drawReflection && inReflectionMode){
+		drawPlane();
+	} 
+
+	renderNodes((SceneNode *) &root, inReflectionMode);
 
 	glBindVertexArray(0);
 	CHECK_GL_ERRORS;
 }
 
-void Project::renderNodes(SceneNode *root, bool picking){
+//cheating hierarchy since plane doesn't have any parent transformations
+//----------------------------------------------------------------------------------------
+void Project::drawPlane(){
+
+	if (m_drawReflection){
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	glStencilMask(0xFF);
+	glDepthMask(GL_FALSE);
+	glClear(GL_STENCIL_BUFFER_BIT);
+	}
+
+	updateShaderUniforms(m_shader, *m_plane, 
+					m_view, m_doShadowMapping);
+
+	if (m_doShadowMapping){
+		m_shader.enable();
+		GLuint DepthBiasID = m_shader.getUniformLocation("depthBiasMVP");
+		GLuint ShadowMapID = m_shader.getUniformLocation("shadowMap");
+
+				//GLuint TextureID = glGetUniformLocation(programID, "textureSampler");
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, m_shadowMap);
+		glUniform1i(ShadowMapID, 1);
+		CHECK_GL_ERRORS;
+
+		mat4 depthBias_times_model = m_depthBias*m_plane->trans;
+		glUniformMatrix4fv(DepthBiasID, 1, GL_FALSE, value_ptr(depthBias_times_model));
+		CHECK_GL_ERRORS;
+		m_shader.disable();
+	}
+
+	BatchInfo batchInfo = m_batchInfoMap[m_plane->meshId];
+
+	//-- Now render the mesh:
+	m_shader.enable();
+	glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
+
+	m_shader.disable();
+}
+
+void Project::renderNodes(SceneNode *root, bool inReflectionMode){
+
+	//cout << "inReflectionMode: " << inReflectionMode << endl;
 
 	if (root->m_nodeType == NodeType::GeometryNode){
 		GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
 
-		if (!geometryNode->isTransparent()){
-			updateShaderUniforms(m_shader, *geometryNode, m_view, m_doShadowMapping);
+		if (!(m_drawReflection && geometryNode == m_plane)){
+
+			if(inReflectionMode && m_drawReflection){
+				glStencilFunc(GL_EQUAL, 1, 0xFF); //pass if stencil value 1
+				glStencilMask(0x00); //don't write to stencil buffer
+				glDepthMask(GL_TRUE);
+			}
+
+			updateShaderUniforms(m_shader, *geometryNode, 
+					m_view, m_doShadowMapping, inReflectionMode);
 
 			if (m_doShadowMapping){
-			m_shader.enable();
-			GLuint DepthBiasID = m_shader.getUniformLocation("depthBiasMVP");
-			GLuint ShadowMapID = m_shader.getUniformLocation("shadowMap");
+				m_shader.enable();
+				GLuint DepthBiasID = m_shader.getUniformLocation("depthBiasMVP");
+				GLuint ShadowMapID = m_shader.getUniformLocation("shadowMap");
 
-			//GLuint TextureID = glGetUniformLocation(programID, "textureSampler");
+				//GLuint TextureID = glGetUniformLocation(programID, "textureSampler");
 
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, m_shadowMap);
-			glUniform1i(ShadowMapID, 1);
-			CHECK_GL_ERRORS;
+				glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_2D, m_shadowMap);
+				glUniform1i(ShadowMapID, 1);
+				CHECK_GL_ERRORS;
 
-			mat4 depthBias_times_model = m_depthBias*geometryNode->trans;
-			glUniformMatrix4fv(DepthBiasID, 1, GL_FALSE, value_ptr(depthBias_times_model));
-			CHECK_GL_ERRORS;
-			m_shader.disable();
+				mat4 depthBias_times_model = m_depthBias*geometryNode->trans;
+				glUniformMatrix4fv(DepthBiasID, 1, GL_FALSE, value_ptr(depthBias_times_model));
+				CHECK_GL_ERRORS;
+				m_shader.disable();
 			}
 
 
-			BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
+			if (!(!inReflectionMode && geometryNode->isTransparent())){
+				BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
 
-			//-- Now render the mesh:
-			m_shader.enable();
-			glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
+				//-- Now render the mesh:
+				m_shader.enable();
+				glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
 
-			m_shader.disable();
+				m_shader.disable();
+			}
 
-			if (RENDER_HITBOX) renderHitbox(geometryNode);
+			if (RENDER_HITBOX && !inReflectionMode) renderHitbox(geometryNode);
 		} 
 
 		/*if (geometryNode->m_name == "player") {
 			cout << "player: " << geometryNode->_hitbox->pos << endl;
 		}*/
 	}
+
 	for (SceneNode *child : root->children){
+
+		if (inReflectionMode && m_drawReflection){
+			child->translate(vec3(0, 1, 0));
+			child->scale(vec3(1, -1, 1));
+		}
 		child->set_transform(root->get_transform() * child->get_transform());
-		renderNodes(child);
+		renderNodes(child, inReflectionMode);
+		if (inReflectionMode && m_drawReflection){
+			child->scale(vec3(1, -1, 1));
+			child->translate(vec3(0, -1, 0));
+			
+		}
 		child->set_transform(glm::inverse(root->get_transform()) * child->get_transform());
+
 	}
 }
 
@@ -787,6 +873,18 @@ void Project::renderHitbox(GeometryNode *node){
 	m_shader.enable();
 	glDrawArrays(GL_LINES, hitbox.startIndex, hitbox.numIndices);
 	m_shader.disable();
+}
+
+//----------------------------------------------------------------------------------------
+void Project::drawReflection(SceneNode* root){
+	if (!m_drawReflection) return;
+
+	glEnable(GL_STENCIL_TEST);
+
+	renderSceneGraph(*root, true);
+
+	glDisable(GL_STENCIL_TEST);
+	
 }
 
 //----------------------------------------------------------------------------------------
@@ -998,27 +1096,43 @@ void Project::redo(){
 }
 
 
-void Project::movePlayer(double x, double z){
+void Project::movePlayer(double x, double z, bool adjusting){
 	dvec3 transl(x, 0.0, z);
 	m_playerNode->translate(transl);
 	std::vector<GeometryNode*> collisions;
 	std::vector<vec3> axis;
 	m_collisionTree->collideGeometry(m_playerNode, collisions, axis, false);
 	bool adjust(false);
-	dvec3 transl_back(0.0);
-	cout << "collisions: " << collisions.size() << endl;
+	//cout << "collisions: " << collisions.size() << endl;
 	for (int i = 0; i < collisions.size(); i++){
 		GeometryNode* collision = collisions[i];
 //		cout << collision->m_name << endl;
 		if (collision == m_plane || collision == m_playerNode) continue;
 		adjust = true;
-		transl_back.x += axis[i].x * x;
-		transl_back.z += axis[i].z * z;
 	}
 
 	if (adjust){
 		//cout << glm::to_string(transl_back) << endl;
-		m_playerNode->translate(dvec3(-x, 0.0, -z));
+		double backx = 0;
+		double backz = 0;
+		if (abs(x) > std::numeric_limits<double>::epsilon()){
+			backx = std::copysign(0.1, adjusting ? x : -x);
+		}
+		if (abs(z) > std::numeric_limits<double>::epsilon()){
+			backz = std::copysign(0.1, adjusting ? z : -z);
+		}
+		
+		/*while (adjust){
+
+			m_playerNode->translate(dvec3(, 0.0, -z));
+			
+			collisions.clear();
+			axis.clear();
+			m_collisionTree->collideGeometry(m_playerNode, collisions, axis, false);
+
+		}*/
+
+		movePlayer(backx, backz, true);
 	}
 }
 
