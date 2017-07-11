@@ -59,6 +59,6 @@ void main() {
     if( picking ) {
 		fragColour = vec4(material.kd, 1.0);
     } else { 
-	    fragColour = vec4(phongModel(fs_in.position_ES, fs_in.normal_ES), 1.0);
+	    fragColour = vec4(phongModel(fs_in.position_ES, fs_in.normal_ES), material.alpha);
     }
 }

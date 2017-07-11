@@ -84,6 +84,8 @@ protected:
 	void renderNodes(SceneNode *root, bool picking = false);
 	void renderHitbox(GeometryNode *node);
 	void renderTransparentObjects(SceneNode *root);
+	void getShadowMap(SceneNode* root);
+	void getNodeShadows(SceneNode* root);
 
 	void jointPickerGui(SceneNode *node);
 
@@ -104,6 +106,8 @@ protected:
 
 	glm::mat4 m_perpsective;
 	glm::mat4 m_view;
+	glm::mat4 m_shadowView;
+	glm::mat4 m_ortho_shadowView;
 	glm::mat4 m_translation;
 	glm::mat4 m_rotation;
 
@@ -116,6 +120,9 @@ protected:
 	GLint m_positionAttribLocation;
 	GLint m_normalAttribLocation;
 	ShaderProgram m_shader;
+	GLuint m_framebuffer;
+	GLuint m_shadowMap;
+	ShaderProgram m_shader_shadow;
 
 	//-- GL resources for trackball circle geometry:
 	GLuint m_vbo_arcCircle;

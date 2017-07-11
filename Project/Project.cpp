@@ -56,7 +56,10 @@ Project::Project(const std::string & luaSceneFile)
 	  m_shotY(0),
 	  m_playerX(0),
 	  m_playerY(0),
-	  m_playerNode(nullptr)
+	  m_playerNode(nullptr),
+	  m_framebuffer(0),
+	  m_shadowMap(0),
+	  m_shadowView(0)
 {
 
 }
@@ -168,6 +171,11 @@ void Project::createShaderProgram()
 	m_shader_arcCircle.attachVertexShader( getAssetFilePath("arc_VertexShader.vs").c_str() );
 	m_shader_arcCircle.attachFragmentShader( getAssetFilePath("arc_FragmentShader.fs").c_str() );
 	m_shader_arcCircle.link();
+
+	m_shader_shadow.generateProgramObject();
+	m_shader_shadow.attachVertexShader( getAssetFilePath("shadow_VertexShader.vs").c_str() );
+	m_shader_shadow.attachFragmentShader( getAssetFilePath("shadow_FragmentShader.fs").c_str() );
+	m_shader_shadow.link();
 }
 
 //----------------------------------------------------------------------------------------
@@ -312,6 +320,10 @@ void Project::initLightSources() {
 	// World-space position
 	m_light.position = vec3(-2.0f, 5.0f, 0.5f);
 	m_light.rgbIntensity = vec3(0.8f); // White light
+	m_shadowView = glm::lookAt( 
+		m_light.position,
+		glm::vec3( 0.0f, 0.0f, 0.0f ),
+		glm::vec3( 0.0f, 1.0f, 0.0f ) );
 }
 
 //----------------------------------------------------------------------------------------
@@ -447,7 +459,7 @@ void Project::guiLogic()
 static void updateShaderUniforms(
 		const ShaderProgram & shader,
 		const GeometryNode & node,
-		const glm::mat4 & viewMatrix, bool picking
+		const glm::mat4 & viewMatrix, bool shadow
 ) {
 
 	shader.enable();
@@ -457,6 +469,7 @@ static void updateShaderUniforms(
 		mat4 modelView = viewMatrix * node.trans;
 		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
 		CHECK_GL_ERRORS;
+		if(!shadow){
 			//-- Set NormMatrix:
 			location = shader.getUniformLocation("NormalMatrix");
 			mat3 normalMatrix = glm::transpose(glm::inverse(mat3(modelView)));
@@ -478,10 +491,67 @@ static void updateShaderUniforms(
 			CHECK_GL_ERRORS;
 			location = shader.getUniformLocation("material.alpha");
 			glUniform1f(location, node.material.alpha);
+		
 		}
+	}
 
 	shader.disable();
 
+}
+
+//----------------------------------------------------------------------------------------
+void Project::getShadowMap(SceneNode* root){
+	glGenFramebuffers(1, &m_framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
+	CHECK_GL_ERRORS;
+
+	glGenTextures(1, &m_shadowMap);
+	glBindTexture(GL_TEXTURE_2D, m_shadowMap);
+	CHECK_GL_ERRORS;	
+	
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, 1024, 1024, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	CHECK_GL_ERRORS;
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_shadowMap, 0);
+	CHECK_GL_ERRORS;
+	glDrawBuffer(GL_NONE);
+	CHECK_GL_ERRORS;
+	/*if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		return false;*/
+
+	mat4 ortho_mat = glm::ortho<float>(-12, 12, -10, 10, -25, 15); //glm::perspective(degreesToRadians(60.0f), aspect, 0.1f, 100.0f);
+	//m_shadowView already set
+	m_ortho_shadowView = ortho_mat * m_shadowView * mat4(1.0);
+	getNodeShadows(root);
+
+}
+
+//----------------------------------------------------------------------------------------
+void Project::getNodeShadows(SceneNode* root){
+	if (root->m_nodeType == NodeType::GeometryNode){
+		GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
+		updateShaderUniforms(m_shader_shadow, *geometryNode, m_ortho_shadowView, true);
+
+		BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
+
+			//-- Now render the mesh:
+		m_shader_shadow.enable();
+		glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
+
+		m_shader_shadow.disable();
+
+	}
+	for (SceneNode *child : root->children){
+		child->set_transform(root->get_transform() * child->get_transform());
+		getNodeShadows(child);
+		child->set_transform(glm::inverse(root->get_transform()) * child->get_transform());
+	}
 }
 
 //----------------------------------------------------------------------------------------
@@ -494,6 +564,8 @@ void Project::draw() {
 		glm::vec3( 0.0f, float(DIM)*2.0*M_SQRT1_2, float(DIM)*2.0*M_SQRT1_2 ),
 		glm::vec3( 0.0f, 0.0f, 0.0f ),
 		glm::vec3( 0.0f, 1.0f, 0.0f ) );
+
+	getNodeShadows((SceneNode *) &*m_rootNode);	
 
 	if (m_zbuffer)
 		glEnable( GL_DEPTH_TEST );
