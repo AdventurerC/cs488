@@ -59,7 +59,8 @@ Project::Project(const std::string & luaSceneFile)
 	  m_playerNode(nullptr),
 	  m_framebuffer(0),
 	  m_shadowMap(0),
-	  m_shadowView(0)
+	  m_shadowView(0),
+	  m_doShadowMapping(false)
 {
 
 }
@@ -469,6 +470,11 @@ static void updateShaderUniforms(
 		mat4 modelView = viewMatrix * node.trans;
 		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
 		CHECK_GL_ERRORS;
+
+		GLuint draw_shadows = shader.getUniformLocation("drawShadows");
+		glUniform1f(draw_shadows, shadow);
+		CHECK_GL_ERRORS;
+
 		if(!shadow){
 			//-- Set NormMatrix:
 			location = shader.getUniformLocation("NormalMatrix");
@@ -501,6 +507,7 @@ static void updateShaderUniforms(
 
 //----------------------------------------------------------------------------------------
 void Project::getShadowMap(SceneNode* root){
+
 	glGenFramebuffers(1, &m_framebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
 	CHECK_GL_ERRORS;
@@ -510,6 +517,8 @@ void Project::getShadowMap(SceneNode* root){
 	CHECK_GL_ERRORS;	
 	
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, 1024, 1024, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+	//CHECK_GL_ERRORS;
+	CHECK_GL_ERRORS;
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -518,25 +527,48 @@ void Project::getShadowMap(SceneNode* root){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 	CHECK_GL_ERRORS;
+	glBindTexture(GL_TEXTURE_2D, 0);
+
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_shadowMap, 0);
 	CHECK_GL_ERRORS;
 	glDrawBuffer(GL_NONE);
 	CHECK_GL_ERRORS;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);  
 	/*if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		return false;*/
 
-	mat4 ortho_mat = glm::ortho<float>(-12, 12, -10, 10, -25, 15); //glm::perspective(degreesToRadians(60.0f), aspect, 0.1f, 100.0f);
+	mat4 ortho_mat = glm::ortho<float>(-12, 12, -20, 20, -25, 25); //glm::perspective(degreesToRadians(60.0f), aspect, 0.1f, 100.0f);
 	//m_shadowView already set
-	m_ortho_shadowView = ortho_mat * m_shadowView * mat4(1.0);
+	m_ortho_shadowView = ortho_mat * m_shadowView;// * mat4(1.0);
+	//cout << "generating shadows" << endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
+	glViewport(0,0,1024,1024);
+	glClear(GL_DEPTH_BUFFER_BIT);
+	//glClear(GL_DEPTH_BUFFER_BIT);
+	glBindVertexArray(m_vao_meshData);
 	getNodeShadows(root);
-
+	
+	glBindVertexArray(0);
+	CHECK_GL_ERRORS;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	CHECK_GL_ERRORS;
+	//glViewport(0,0,1024,1024);
+	glViewport(0,0, m_windowWidth, m_windowHeight);
 }
 
 //----------------------------------------------------------------------------------------
 void Project::getNodeShadows(SceneNode* root){
 	if (root->m_nodeType == NodeType::GeometryNode){
 		GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
-		updateShaderUniforms(m_shader_shadow, *geometryNode, m_ortho_shadowView, true);
+		if (geometryNode != m_plane)
+		{
+		//updateShaderUniforms(m_shader_shadow, *geometryNode, m_ortho_shadowView, true);
+		m_shader_shadow.enable();
+		GLint location = m_shader_shadow.getUniformLocation("ModelView");
+		mat4 modelView = m_ortho_shadowView * geometryNode->trans;
+		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
+		CHECK_GL_ERRORS;
+		m_shader_shadow.disable();
 
 		BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
 
@@ -545,6 +577,7 @@ void Project::getNodeShadows(SceneNode* root){
 		glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
 
 		m_shader_shadow.disable();
+		}
 
 	}
 	for (SceneNode *child : root->children){
@@ -563,9 +596,9 @@ void Project::draw() {
 	m_view = m_translation * m_rotation * glm::lookAt( 
 		glm::vec3( 0.0f, float(DIM)*2.0*M_SQRT1_2, float(DIM)*2.0*M_SQRT1_2 ),
 		glm::vec3( 0.0f, 0.0f, 0.0f ),
-		glm::vec3( 0.0f, 1.0f, 0.0f ) );
+		glm::vec3( 0.0f, 1.0f, 0.0f ) );	
 
-	getNodeShadows((SceneNode *) &*m_rootNode);	
+	//getShadowMap((SceneNode *) &*m_rootNode);
 
 	if (m_zbuffer)
 		glEnable( GL_DEPTH_TEST );
@@ -579,6 +612,21 @@ void Project::draw() {
 		} else if (m_frontfaceCulling){
 			glCullFace(GL_FRONT);
 		}
+	}
+
+	if (m_doShadowMapping){
+		getShadowMap((SceneNode *) &*m_rootNode);
+
+		//glBindTexture(GL_TEXTURE_CUBE_MAP, m_shadowMap);
+		//CHECK_GL_ERRORS;
+		glm::mat4 biasMatrix(
+				0.5, 0.0, 0.0, 0.0, 
+				0.0, 0.5, 0.0, 0.0,
+				0.0, 0.0, 0.5, 0.0,
+				0.5, 0.5, 0.5, 1.0
+		);
+
+		m_depthBias = biasMatrix*m_ortho_shadowView;
 	}
 
 	renderSceneGraph(*m_rootNode);
@@ -626,9 +674,27 @@ void Project::renderNodes(SceneNode *root, bool picking){
 	if (root->m_nodeType == NodeType::GeometryNode){
 		GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
 
-
 		if (!geometryNode->isTransparent()){
-			updateShaderUniforms(m_shader, *geometryNode, m_view, m_picking);
+			updateShaderUniforms(m_shader, *geometryNode, m_view, m_doShadowMapping);
+
+			if (m_doShadowMapping){
+			m_shader.enable();
+			GLuint DepthBiasID = m_shader.getUniformLocation("depthBiasMVP");
+			GLuint ShadowMapID = m_shader.getUniformLocation("shadowMap");
+
+			//GLuint TextureID = glGetUniformLocation(programID, "textureSampler");
+
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, m_shadowMap);
+			glUniform1i(ShadowMapID, 1);
+			CHECK_GL_ERRORS;
+
+			mat4 depthBias_times_model = m_depthBias*geometryNode->trans;
+			glUniformMatrix4fv(DepthBiasID, 1, GL_FALSE, value_ptr(depthBias_times_model));
+			CHECK_GL_ERRORS;
+			m_shader.disable();
+			}
+
 
 			BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
 

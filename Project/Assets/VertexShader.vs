@@ -23,6 +23,9 @@ out VsOutFsIn {
 	LightSource light;
 } vs_out;
 
+out vec4 ShadowCoord;
+
+uniform mat4 depthBiasMVP;
 
 void main() {
 	vec4 pos4 = vec4(position, 1.0);
@@ -32,6 +35,8 @@ void main() {
 	vs_out.normal_ES = normalize(NormalMatrix * normal);
 
 	vs_out.light = light;
+
+	ShadowCoord =  (depthBiasMVP * pos4);//* vec4(position,1);
 
 	gl_Position = Perspective * ModelView * vec4(position, 1.0);
 }

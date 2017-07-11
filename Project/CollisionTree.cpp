@@ -187,8 +187,8 @@ bool CollisionTreeNode::collide2Geo(GeometryNode* node, GeometryNode* other, glm
 
     if (nodeBounds.x() < otherBounds.x1() && nodeBounds.x1() > otherBounds.x() &&
         nodeBounds.z() < otherBounds.z1() && nodeBounds.z1() > otherBounds.z()){
-        std::cout << nodeBounds.x() << "<" << otherBounds.x1() << "&&" << nodeBounds.x1() << ">" << otherBounds.x() << "&&" <<
-        nodeBounds.z() << "<" << otherBounds.z1() << "&&" << nodeBounds.z1() << ">" << otherBounds.z() << std::endl;
+        //std::cout << nodeBounds.x() << "<" << otherBounds.x1() << "&&" << nodeBounds.x1() << ">" << otherBounds.x() << "&&" <<
+        //nodeBounds.z() << "<" << otherBounds.z1() << "&&" << nodeBounds.z1() << ">" << otherBounds.z() << std::endl;
         hit = checkY ? yHit*true : true;
     }
 
@@ -239,11 +239,11 @@ bool CollisionTreeNode::collide2Geo(GeometryNode* node, GeometryNode* other, glm
         } 
     }*/
 
-    if (hit){
+    /*if (hit){
         std::cout << "{" << node->m_name << ":" << glm::to_string(nodeBounds._origin) << glm::to_string(nodeBounds._maxXYZ) << std::endl;
         std::cout << other->m_name << ":" << glm::to_string(otherBounds._origin) << glm::to_string(otherBounds._maxXYZ) << "}" << std::endl;
 
-    }
+    }*/
 
     return hit;
 

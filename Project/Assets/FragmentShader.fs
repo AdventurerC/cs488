@@ -11,6 +11,8 @@ in VsOutFsIn {
 	LightSource light;
 } fs_in;
 
+in vec2 UV;
+in vec4 ShadowCoord;
 
 out vec4 fragColour;
 
@@ -24,8 +26,13 @@ uniform Material material;
 
 uniform bool picking;
 
+uniform bool drawShadows;
+
 // Ambient light intensity for each RGB component.
 uniform vec3 ambientIntensity;
+
+uniform sampler2D textureSampler;
+uniform sampler2DShadow shadowMap; 
 
 
 vec3 phongModel(vec3 fragPosition, vec3 fragNormal) {
@@ -52,7 +59,11 @@ vec3 phongModel(vec3 fragPosition, vec3 fragNormal) {
         specular = material.ks * pow(n_dot_h, material.shininess);
     }
 
-    return ambientIntensity + light.rgbIntensity * (diffuse + specular);
+    float visibility = drawShadows ? texture( shadowMap, vec3(ShadowCoord.xy, (ShadowCoord.z)/ShadowCoord.w) ) : 1.0f;
+
+    //float shadowDepth = texture(gl_FragCoord.xy).r;
+
+    return  ambientIntensity + visibility * light.rgbIntensity * (diffuse + specular);
 }
 
 void main() {

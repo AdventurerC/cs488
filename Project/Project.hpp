@@ -110,6 +110,7 @@ protected:
 	glm::mat4 m_ortho_shadowView;
 	glm::mat4 m_translation;
 	glm::mat4 m_rotation;
+	glm::mat4 m_depthBias;
 
 	LightSource m_light;
 
@@ -123,6 +124,8 @@ protected:
 	GLuint m_framebuffer;
 	GLuint m_shadowMap;
 	ShaderProgram m_shader_shadow;
+
+	bool m_doShadowMapping;
 
 	//-- GL resources for trackball circle geometry:
 	GLuint m_vbo_arcCircle;
