@@ -59,7 +59,13 @@ vec3 phongModel(vec3 fragPosition, vec3 fragNormal) {
         specular = material.ks * pow(n_dot_h, material.shininess);
     }
 
-    float visibility = drawShadows ? texture( shadowMap, vec3(ShadowCoord.xy, (ShadowCoord.z)/ShadowCoord.w) ) : 1.0f;
+    float bias = 0.005;
+
+    float visibility = 1.0f;
+
+    if (drawShadows){
+        visibility = texture( shadowMap, vec3(ShadowCoord.xy, (ShadowCoord.z-bias)/ShadowCoord.w) );
+    }
 
     //float shadowDepth = texture(gl_FragCoord.xy).r;
 

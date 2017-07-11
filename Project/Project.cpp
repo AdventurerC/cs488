@@ -471,7 +471,7 @@ static void updateShaderUniforms(
 		const ShaderProgram & shader,
 		const GeometryNode & node,
 		const glm::mat4 & viewMatrix, 
-		bool shadow, 
+		bool shadow, bool gettingShadows,
 		bool inReflectionMode = false
 ) {
 
@@ -487,7 +487,7 @@ static void updateShaderUniforms(
 		glUniform1f(draw_shadows, shadow && !inReflectionMode);
 		CHECK_GL_ERRORS;
 
-		if(!shadow){
+		if(!gettingShadows){
 			//-- Set NormMatrix:
 			location = shader.getUniformLocation("NormalMatrix");
 			mat3 normalMatrix = glm::transpose(glm::inverse(mat3(modelView)));
@@ -702,7 +702,7 @@ void Project::drawPlane(){
 	}
 
 	updateShaderUniforms(m_shader, *m_plane, 
-					m_view, m_doShadowMapping);
+					m_view, m_doShadowMapping, false);
 
 	if (m_doShadowMapping){
 		m_shader.enable();
@@ -747,7 +747,7 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 			}
 
 			updateShaderUniforms(m_shader, *geometryNode, 
-					m_view, m_doShadowMapping, inReflectionMode);
+					m_view, m_doShadowMapping, false, inReflectionMode);
 
 			if (m_doShadowMapping){
 				m_shader.enable();
@@ -815,7 +815,7 @@ void Project::renderTransparentObjects(SceneNode *root){
 			glBlendFunc(GL_SRC_COLOR, GL_DST_ALPHA);
 			glBlendEquation(GL_FUNC_ADD);
 
-			updateShaderUniforms(m_shader, *geometryNode, m_view, m_picking);
+			updateShaderUniforms(m_shader, *geometryNode, m_view, m_doShadowMapping, false);
 
 			BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
 
