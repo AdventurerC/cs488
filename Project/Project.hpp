@@ -8,6 +8,7 @@
 #include "SceneNode.hpp"
 #include "GeometryNode.hpp"
 #include "CollisionTree.hpp"
+#include "Texture.hpp"
 
 #include <glm/glm.hpp>
 #include <memory>

@@ -133,6 +133,13 @@ r1:translate(5, 0.0, -3)
 r1:set_material(white)
 rootNode:add_child(r1)
 
+bg = gr.mesh('plane', 'bg',2.0, 0.1, 2.0)
+bg:scale(20, 1.0, 20)
+bg:translate(0.0, 0.0, -20)
+bg:rotate(90, 0.0, 0.0)
+bg:set_material(white)
+rootNode:add_child(bg)
+
 --t1 = gr.mesh('sphere', 't2', 1.5, 1.5,1.5)
 --t1:scale(1.5, 1.5, 1.5)
 --t1:translate(5, 3, 3)

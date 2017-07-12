@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Material.hpp"
+#include "Texture.hpp"
 
 #include <glm/glm.hpp>
 

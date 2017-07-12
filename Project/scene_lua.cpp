@@ -43,6 +43,7 @@
 #include "lua488.hpp"
 #include "JointNode.hpp"
 #include "GeometryNode.hpp"
+#include "Texture.hpp"
 
 // Uncomment the following line to enable debugging messages
 //#define GRLUA_ENABLE_DEBUG
@@ -78,6 +79,10 @@ struct gr_node_ud {
 // allocated by Lua to represent materials.
 struct gr_material_ud {
   Material* material;
+};
+
+struct gr_texture_ud{
+  Texture* texture;
 };
 
 // Create a node
@@ -201,6 +206,25 @@ int gr_material_cmd(lua_State* L)
   return 1;
 }
 
+// Create a material
+extern "C"
+int gr_texture_cmd(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+  
+  gr_texture_ud* data = (gr_texture_ud*)lua_newuserdata(L, sizeof(gr_texture_ud));
+  data->texture = 0;
+  const char* filename = luaL_checkstring(L, 1);
+  
+  data->texture = new Texture((char*)filename);
+
+  luaL_newmetatable(L, "gr.texture");
+  lua_setmetatable(L, -2);
+  
+  return 1;
+}
+
+
 // Add a child to a node
 extern "C"
 int gr_node_add_child_cmd(lua_State* L)
@@ -242,6 +266,31 @@ int gr_node_set_material_cmd(lua_State* L)
 	self->material.kd = material->kd;
 	self->material.ks = material->ks;
 	self->material.shininess = material->shininess;
+
+  return 0;
+}
+
+// Set a node's texture
+extern "C"
+int gr_node_set_texture_cmd(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+
+  gr_node_ud* selfdata = (gr_node_ud*)luaL_checkudata(L, 1, "gr.node");
+  luaL_argcheck(L, selfdata != 0, 1, "Node expected");
+
+  GeometryNode* self = dynamic_cast<GeometryNode*>(selfdata->node);
+
+  luaL_argcheck(L, self != 0, 1, "Geometry node expected");
+
+  gr_texture_ud* texdata = (gr_texture_ud*)luaL_checkudata(L, 2, "gr.texture");
+  luaL_argcheck(L, texdata != 0, 2, "Texture expected");
+
+	Texture * texture = texdata->texture;
+	self->texture._w = texture->_w;
+	self->texture._h = texture->_h;
+	self->texture._comp = texture->_comp;
+  self->texture._data = texture->_data;
 
   return 0;
 }
@@ -367,6 +416,7 @@ static const luaL_Reg grlib_node_methods[] = {
   {"scale", gr_node_scale_cmd},
   {"rotate", gr_node_rotate_cmd},
   {"translate", gr_node_translate_cmd},
+  {"set_texture", gr_node_set_texture_cmd},
   {0, 0}
 };
 

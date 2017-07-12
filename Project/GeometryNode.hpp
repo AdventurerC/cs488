@@ -43,6 +43,7 @@ public:
 	//bool collide2D(GeometryNode* other, glm::vec3 &axis); //
 
 	Material material;
+	Texture texture;
 
 	Hitbox *hitbox;
 	std::vector<glm::vec3> m_vertices;
