@@ -60,10 +60,10 @@ vec3 phongModel(vec3 fragPosition, vec3 fragNormal) {
         specular = material.ks * pow(n_dot_h, material.shininess);
     }
 
-    vec3 t = vec3(1.0f);
+    //vec3 t = vec3(1.0f);
 
     if (drawTexture){
-        t = texture(textureSampler, fragNormal.xy).rgb;
+        diffuse = texture(textureSampler, (fragPosition.xz + 1.0f)/2.0f).rgb;
     }
 
     float bias = 0.005;
@@ -76,7 +76,7 @@ vec3 phongModel(vec3 fragPosition, vec3 fragNormal) {
 
     //float shadowDepth = texture(gl_FragCoord.xy).r;
 
-    return  ambientIntensity + t * visibility * light.rgbIntensity * (diffuse + specular);
+    return  ambientIntensity + visibility * light.rgbIntensity * (diffuse + specular);
 }
 
 void main() {

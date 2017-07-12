@@ -14,7 +14,7 @@ struct Texture{
     }
 
     void loadFile(char* filename){
-        _data = stbi_load(filename, &_w, &_h, &_comp, STBI_rgb);
+        _data = stbi_load(filename, &_w, &_h, &_comp, STBI_rgb_alpha);
         if (_data == nullptr){
             std::cout << ("Failed to load texture") << std::endl;
         }

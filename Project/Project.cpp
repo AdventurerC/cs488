@@ -754,7 +754,8 @@ void Project::drawPlane(){
 
 	//m_plane->texture.loadFile((char*)filename.c_str());
 
-	applyTexture(m_plane);
+	//if (m_drawTexture)
+		applyTexture(m_plane);
 
 	//-- Now render the mesh:
 	m_shader.enable();
@@ -769,29 +770,30 @@ void Project::drawPlane(){
 //----------------------------------------------------------------------------------------
 void Project::applyTexture(GeometryNode* node){
 
-	if (node->texture._data == nullptr) return;
-
 	m_shader.enable();
 	glGenTextures(1, &m_texture);
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	CHECK_GL_ERRORS;
 	
-	cout << "width: " << node->texture._w << ", height: " << node->texture._h << endl;
+	//cout << "width: " << node->texture._w << ", height: " << node->texture._h << endl;
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, node->texture._w, node->texture._h, 0, GL_BGR, GL_UNSIGNED_BYTE, node->texture._data);
-	CHECK_GL_ERRORS;
+	if (node->texture._data != nullptr && m_drawTexture){
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	CHECK_GL_ERRORS;
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, node->texture._w, node->texture._h, 0, GL_RGBA, GL_UNSIGNED_BYTE, node->texture._data);
+		CHECK_GL_ERRORS;
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		CHECK_GL_ERRORS;
+	}
 
 	GLuint location = m_shader.getUniformLocation("textureSampler");
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_texture);
-	glUniform1i(location, 1);
+	glUniform1i(location, 0);
 
 	location = m_shader.getUniformLocation("drawTexture");
-	glUniform1f(location, true);
+	glUniform1f(location, (node->texture._data != nullptr && m_drawTexture));
 	CHECK_GL_ERRORS;
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -839,6 +841,9 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 
 
 			if (!(!inReflectionMode && geometryNode->isTransparent())){
+				//if (m_drawTexture)
+					applyTexture(geometryNode);
+
 				BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
 
 				//-- Now render the mesh:

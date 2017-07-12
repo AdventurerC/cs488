@@ -101,7 +101,7 @@ plane = gr.mesh('plane', 'plane',2.0, 0.1, 2.0)
 plane:scale(12, 1.0, 20)
 plane:translate(0.0, -0.5, -5.0)
 plane:set_material(white)
-plane:set_texture(gr.texture("Assets/cat.jpg"))
+plane:set_texture(gr.texture('Assets/grass.png'))
 rootNode:add_child(plane)
 
 player = gr.mesh('player', 'player', 0.5, 0.1, 1.0)
