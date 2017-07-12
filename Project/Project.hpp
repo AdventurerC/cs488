@@ -124,8 +124,10 @@ protected:
 	GLuint m_vao_meshData;
 	GLuint m_vbo_vertexPositions;
 	GLuint m_vbo_vertexNormals;
+	GLuint m_vbo_vertexUV;
 	GLint m_positionAttribLocation;
 	GLint m_normalAttribLocation;
+	GLint m_textureAttrribLocation;
 	ShaderProgram m_shader;
 	GLuint m_framebuffer;
 	GLuint m_texture;

@@ -41,11 +41,12 @@ MeshConsolidator::MeshConsolidator(
 	MeshId meshId;
 	vector<vec3> positions;
 	vector<vec3> normals;
+	vector<vec2> uvCoords;
 	BatchInfo batchInfo;
 	unsigned long indexOffset(0);
 
     for(const ObjFilePath & objFile : objFileList) {
-	    ObjFileDecoder::decode(objFile.c_str(), meshId, positions, normals);
+	    ObjFileDecoder::decode(objFile.c_str(), meshId, positions, normals, uvCoords);
 
 	    uint numIndices = positions.size();
 
@@ -61,6 +62,7 @@ MeshConsolidator::MeshConsolidator(
 
 	    appendVector(m_vertexPositionData, positions);
 	    appendVector(m_vertexNormalData, normals);
+	    appendVector(m_vertexUVData, uvCoords);
 
 	    indexOffset += numIndices;
     }
@@ -87,6 +89,12 @@ const float * MeshConsolidator::getVertexNormalDataPtr() const {
 }
 
 //----------------------------------------------------------------------------------------
+// Returns the starting memory location for texture uv data.
+const float * MeshConsolidator::getVertexUVDataPtr() const {
+    return &(m_vertexUVData[0].x);
+}
+
+//----------------------------------------------------------------------------------------
 // Returns the total number of bytes of all vertex position data.
 size_t MeshConsolidator::getNumVertexPositionBytes() const {
 	return m_vertexPositionData.size() * sizeof(vec3);
@@ -96,4 +104,10 @@ size_t MeshConsolidator::getNumVertexPositionBytes() const {
 // Returns the total number of bytes of all vertex normal data.
 size_t MeshConsolidator::getNumVertexNormalBytes() const {
 	return m_vertexNormalData.size() * sizeof(vec3);
+}
+
+//----------------------------------------------------------------------------------------
+// Returns the total number of bytes of all vtexture uv data.
+size_t MeshConsolidator::getNumVertexUVBytes() const {
+	return m_vertexUVData.size() * sizeof(vec2);
 }

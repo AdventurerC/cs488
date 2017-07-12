@@ -35,9 +35,11 @@ Project::Project(const std::string & luaSceneFile)
 	: m_luaSceneFile(luaSceneFile),
 	  m_positionAttribLocation(0),
 	  m_normalAttribLocation(0),
+	  m_textureAttrribLocation(0),
 	  m_vao_meshData(0),
 	  m_vbo_vertexPositions(0),
 	  m_vbo_vertexNormals(0),
+	  m_vbo_vertexUV(0),
 	  m_vao_arcCircle(0),
 	  m_vbo_arcCircle(0),
 	  m_mouseX(0.0),
@@ -206,6 +208,9 @@ void Project::enableVertexShaderInputSlots()
 		m_normalAttribLocation = m_shader.getAttribLocation("normal");
 		glEnableVertexAttribArray(m_normalAttribLocation);
 
+		m_textureAttrribLocation = m_shader.getAttribLocation("uv");
+		glEnableVertexAttribArray(m_textureAttrribLocation);
+
 		CHECK_GL_ERRORS;
 	}
 
@@ -255,6 +260,19 @@ void Project::uploadVertexDataToVbos (
 		CHECK_GL_ERRORS;
 	}
 
+	// Generate VBO to store all texture UV data
+	{
+		glGenBuffers(1, &m_vbo_vertexUV);
+
+		glBindBuffer(GL_ARRAY_BUFFER, m_vbo_vertexUV);
+
+		glBufferData(GL_ARRAY_BUFFER, meshConsolidator.getNumVertexUVBytes(),
+				meshConsolidator.getVertexUVDataPtr(), GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		CHECK_GL_ERRORS;
+	}
+
 	// Generate VBO to store the trackball circle.
 	{
 		glGenBuffers( 1, &m_vbo_arcCircle );
@@ -289,6 +307,9 @@ void Project::mapVboDataToVertexShaderInputLocations()
 	// "normal" vertex attribute location for any bound vertex shader program.
 	glBindBuffer(GL_ARRAY_BUFFER, m_vbo_vertexNormals);
 	glVertexAttribPointer(m_normalAttribLocation, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_vbo_vertexUV);
+	glVertexAttribPointer(m_textureAttrribLocation, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 	//-- Unbind target, and restore default values:
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
