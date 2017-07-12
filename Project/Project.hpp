@@ -76,6 +76,7 @@ protected:
 	void initLightSources();
 	void findPlayerNode(SceneNode *root);
 	void findPlaneNode(SceneNode *root);
+	void findBgNode(SceneNode *root);
 	void findEnemyNodes(SceneNode *root);
 	void findSpecialObjects(SceneNode *root);
 
@@ -89,6 +90,7 @@ protected:
 	void getNodeShadows(SceneNode* root);
 	void drawReflection(SceneNode* root);
 	void drawPlane();
+	void applyTexture(GeometryNode* node);
 
 	void jointPickerGui(SceneNode *node);
 
@@ -126,11 +128,13 @@ protected:
 	GLint m_normalAttribLocation;
 	ShaderProgram m_shader;
 	GLuint m_framebuffer;
+	GLuint m_texture;
 	GLuint m_shadowMap;
 	ShaderProgram m_shader_shadow;
 
 	bool m_doShadowMapping;
 	bool m_drawReflection;
+	bool m_drawTexture;
 
 	//-- GL resources for trackball circle geometry:
 	GLuint m_vbo_arcCircle;
@@ -149,6 +153,7 @@ protected:
 
 	GeometryNode* m_playerNode;
 	GeometryNode* m_plane;
+	GeometryNode* m_bg;
 	GeometryNode* m_enemy1;
 	GeometryNode* m_enemy2;
 	GeometryNode* m_transparentNode;

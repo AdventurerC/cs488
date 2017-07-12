@@ -3,6 +3,7 @@
 // Model-Space coordinates
 in vec3 position;
 in vec3 normal;
+in vec2 uv;
 
 struct LightSource {
     vec3 position;
@@ -24,6 +25,7 @@ out VsOutFsIn {
 } vs_out;
 
 out vec4 ShadowCoord;
+out vec2 UV;
 
 uniform mat4 depthBiasMVP;
 
@@ -39,4 +41,6 @@ void main() {
 	ShadowCoord =  (depthBiasMVP * pos4);//* vec4(position,1);
 
 	gl_Position = Perspective * ModelView * vec4(position, 1.0);
+
+	UV = uv;
 }

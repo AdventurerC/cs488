@@ -63,7 +63,9 @@ Project::Project(const std::string & luaSceneFile)
 	  m_shadowView(mat4()),
 	  m_doShadowMapping(false),
 	  m_drawReflection(true),
-	  m_reflectedView(mat4())
+	  m_drawTexture(false),
+	  m_reflectedView(mat4()),
+	  m_texture(0)
 {
 
 }
@@ -130,6 +132,13 @@ void Project::init()
 	if (m_plane != nullptr){
 		cout << "Plane found" << endl;
 	}
+
+	//findBgNode((SceneNode*)&*m_rootNode);
+
+	/*if (m_bg != nullptr){
+		cout << "Bg found" << endl;
+	}*/
+
 
 	findEnemyNodes((SceneNode*)&*m_rootNode);
 
@@ -459,6 +468,10 @@ void Project::guiLogic()
 			
 		}
 
+		if( ImGui::Checkbox( "Apply Texture", &m_drawTexture) ) {
+			
+		}
+
 	ImGui::End();
 
 	
@@ -693,12 +706,25 @@ void Project::renderSceneGraph(const SceneNode & root, bool inReflectionMode) {
 //----------------------------------------------------------------------------------------
 void Project::drawPlane(){
 
+
+	/*updateShaderUniforms(m_shader, *m_bg, 
+					m_view, m_doShadowMapping, false);
+
+	BatchInfo batchInfo = m_batchInfoMap[m_bg->meshId];
+
+	m_shader.enable();
+	glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
+
+	m_shader.disable();*/
+
+	//cout << glm::to_string(m_bg->trans) << endl;
+
 	if (m_drawReflection){
-	glStencilFunc(GL_ALWAYS, 1, 0xFF);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-	glStencilMask(0xFF);
-	glDepthMask(GL_FALSE);
-	glClear(GL_STENCIL_BUFFER_BIT);
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		glStencilMask(0xFF);
+		glDepthMask(GL_FALSE);
+		glClear(GL_STENCIL_BUFFER_BIT);
 	}
 
 	updateShaderUniforms(m_shader, *m_plane, 
@@ -724,13 +750,57 @@ void Project::drawPlane(){
 
 	BatchInfo batchInfo = m_batchInfoMap[m_plane->meshId];
 
+	std::string filename = "Assets/cat.jpg";
+
+	//m_plane->texture.loadFile((char*)filename.c_str());
+
+	applyTexture(m_plane);
+
 	//-- Now render the mesh:
 	m_shader.enable();
 	glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
 
 	m_shader.disable();
+
+	
 }
 
+
+//----------------------------------------------------------------------------------------
+void Project::applyTexture(GeometryNode* node){
+
+	if (node->texture._data == nullptr) return;
+
+	m_shader.enable();
+	glGenTextures(1, &m_texture);
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	CHECK_GL_ERRORS;
+	
+	cout << "width: " << node->texture._w << ", height: " << node->texture._h << endl;
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, node->texture._w, node->texture._h, 0, GL_BGR, GL_UNSIGNED_BYTE, node->texture._data);
+	CHECK_GL_ERRORS;
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	CHECK_GL_ERRORS;
+
+	GLuint location = m_shader.getUniformLocation("textureSampler");
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glUniform1i(location, 1);
+
+	location = m_shader.getUniformLocation("drawTexture");
+	glUniform1f(location, true);
+	CHECK_GL_ERRORS;
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	CHECK_GL_ERRORS;
+	m_shader.disable();
+}
+
+
+//----------------------------------------------------------------------------------------
 void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 
 	//cout << "inReflectionMode: " << inReflectionMode << endl;
@@ -738,7 +808,7 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 	if (root->m_nodeType == NodeType::GeometryNode){
 		GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
 
-		if (!(m_drawReflection && geometryNode == m_plane)){
+		if (!(m_drawReflection && (geometryNode == m_plane || geometryNode == m_bg))){
 
 			if(inReflectionMode && m_drawReflection){
 				glStencilFunc(GL_EQUAL, 1, 0xFF); //pass if stencil value 1
@@ -908,6 +978,17 @@ void Project::findPlaneNode(SceneNode *root){
 		findPlaneNode(child);
 	}
 }
+//----------------------------------------------------------------------------------------
+void Project::findBgNode(SceneNode *root){
+	if (root->m_nodeType == NodeType::GeometryNode && root->m_name == "bg"){
+		m_bg = static_cast<GeometryNode *>(root);
+		return;
+	}
+	for (SceneNode *child : root->children){
+		findBgNode(child);
+	}
+}
+
 
 //----------------------------------------------------------------------------------------
 void Project::findEnemyNodes(SceneNode *root){

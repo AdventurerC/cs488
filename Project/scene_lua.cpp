@@ -286,11 +286,11 @@ int gr_node_set_texture_cmd(lua_State* L)
   gr_texture_ud* texdata = (gr_texture_ud*)luaL_checkudata(L, 2, "gr.texture");
   luaL_argcheck(L, texdata != 0, 2, "Texture expected");
 
-	Texture * texture = texdata->texture;
-	self->texture._w = texture->_w;
-	self->texture._h = texture->_h;
-	self->texture._comp = texture->_comp;
-  self->texture._data = texture->_data;
+	//Texture * texture = texdata->texture;
+	self->texture._w = texdata->texture->_w;
+	self->texture._h = texdata->texture->_h;
+	self->texture._comp = texdata->texture->_comp;
+  self->texture._data = texdata->texture->_data;
 
   return 0;
 }
@@ -394,6 +394,7 @@ static const luaL_Reg grlib_functions[] = {
   {"joint", gr_joint_cmd},
   {"mesh", gr_mesh_cmd},
   {"material", gr_material_cmd},
+  {"texture", gr_texture_cmd},
   {0, 0}
 };
 

@@ -27,6 +27,7 @@ uniform Material material;
 uniform bool picking;
 
 uniform bool drawShadows;
+uniform bool drawTexture;
 
 // Ambient light intensity for each RGB component.
 uniform vec3 ambientIntensity;
@@ -59,6 +60,12 @@ vec3 phongModel(vec3 fragPosition, vec3 fragNormal) {
         specular = material.ks * pow(n_dot_h, material.shininess);
     }
 
+    vec3 t = vec3(1.0f);
+
+    if (drawTexture){
+        t = texture(textureSampler, fragNormal.xy).rgb;
+    }
+
     float bias = 0.005;
 
     float visibility = 1.0f;
@@ -69,7 +76,7 @@ vec3 phongModel(vec3 fragPosition, vec3 fragNormal) {
 
     //float shadowDepth = texture(gl_FragCoord.xy).r;
 
-    return  ambientIntensity + visibility * light.rgbIntensity * (diffuse + specular);
+    return  ambientIntensity + t * visibility * light.rgbIntensity * (diffuse + specular);
 }
 
 void main() {
