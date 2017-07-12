@@ -138,6 +138,7 @@ bg:scale(20, 1.0, 20)
 bg:translate(0.0, 0.0, -20)
 bg:rotate(90, 0.0, 0.0)
 bg:set_material(white)
+bg:set_texture("Assets/cat.jpg")
 rootNode:add_child(bg)
 
 --t1 = gr.mesh('sphere', 't2', 1.5, 1.5,1.5)
