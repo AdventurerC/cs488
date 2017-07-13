@@ -137,6 +137,7 @@ protected:
 	bool m_doShadowMapping;
 	bool m_drawReflection;
 	bool m_drawTexture;
+	bool m_planeDrawn;
 
 	//-- GL resources for trackball circle geometry:
 	GLuint m_vbo_arcCircle;

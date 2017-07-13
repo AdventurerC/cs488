@@ -64,7 +64,7 @@ Project::Project(const std::string & luaSceneFile)
 	  m_shadowMap(0),
 	  m_shadowView(mat4()),
 	  m_doShadowMapping(false),
-	  m_drawReflection(true),
+	  m_drawReflection(false),
 	  m_drawTexture(false),
 	  m_reflectedView(mat4()),
 	  m_texture(0)
@@ -122,6 +122,24 @@ void Project::init()
 	initViewMatrix();
 
 	initLightSources();
+
+	{
+		glGenFramebuffers(1, &m_framebuffer);
+		//glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
+		CHECK_GL_ERRORS;
+	}
+
+	{
+		glGenTextures(1, &m_shadowMap);
+		//glBindTexture(GL_TEXTURE_2D, m_shadowMap);
+		CHECK_GL_ERRORS;
+	}
+
+	{
+		glGenTextures(1, &m_texture);
+		//glBindTexture(GL_TEXTURE_2D, m_texture);
+		CHECK_GL_ERRORS;
+	}
 
 	findPlayerNode((SceneNode*)&*m_rootNode);
 
@@ -207,6 +225,7 @@ void Project::enableVertexShaderInputSlots()
 		// Enable the vertex shader attribute location for "normal" when rendering.
 		m_normalAttribLocation = m_shader.getAttribLocation("normal");
 		glEnableVertexAttribArray(m_normalAttribLocation);
+
 
 		m_textureAttrribLocation = m_shader.getAttribLocation("uv");
 		glEnableVertexAttribArray(m_textureAttrribLocation);
@@ -405,7 +424,7 @@ void Project::uploadCommonSceneUniforms() {
 void Project::appLogic()
 {
 	// Place per frame, application logic here ...
-
+	m_planeDrawn = false;
 	uploadCommonSceneUniforms();
 }
 
@@ -554,11 +573,11 @@ static void updateShaderUniforms(
 //----------------------------------------------------------------------------------------
 void Project::getShadowMap(SceneNode* root){
 
-	glGenFramebuffers(1, &m_framebuffer);
+	//glGenFramebuffers(1, &m_framebuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
 	CHECK_GL_ERRORS;
 
-	glGenTextures(1, &m_shadowMap);
+	//glGenTextures(1, &m_shadowMap);
 	glBindTexture(GL_TEXTURE_2D, m_shadowMap);
 	CHECK_GL_ERRORS;	
 	
@@ -715,7 +734,9 @@ void Project::renderSceneGraph(const SceneNode & root, bool inReflectionMode) {
 
 	if (m_drawReflection && inReflectionMode){
 		drawPlane();
-	} 
+	} else if (m_drawTexture) {
+		applyTexture(m_plane);
+	}
 
 	renderNodes((SceneNode *) &root, inReflectionMode);
 
@@ -751,6 +772,8 @@ void Project::drawPlane(){
 	updateShaderUniforms(m_shader, *m_plane, 
 					m_view, m_doShadowMapping, false);
 
+	applyTexture(m_plane);
+
 	if (m_doShadowMapping){
 		m_shader.enable();
 		GLuint DepthBiasID = m_shader.getUniformLocation("depthBiasMVP");
@@ -771,34 +794,42 @@ void Project::drawPlane(){
 
 	BatchInfo batchInfo = m_batchInfoMap[m_plane->meshId];
 
-	std::string filename = "Assets/cat.jpg";
-
 	//m_plane->texture.loadFile((char*)filename.c_str());
 
 	//if (m_drawTexture)
-		applyTexture(m_plane);
 
 	//-- Now render the mesh:
 	m_shader.enable();
 	glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
 
+	glBindTexture(GL_TEXTURE_2D, 0);
+	CHECK_GL_ERRORS;
 	m_shader.disable();
 
-	
+	m_planeDrawn = true;
 }
 
 
 //----------------------------------------------------------------------------------------
 void Project::applyTexture(GeometryNode* node){
 
+	//return;
 	m_shader.enable();
-	glGenTextures(1, &m_texture);
+	//glGenTextures(1, &m_texture);
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	CHECK_GL_ERRORS;
 	
 	//cout << "width: " << node->texture._w << ", height: " << node->texture._h << endl;
 
+	/*if(m_doShadowMapping){
+		location = m_shader.getUniformLocation("shadowMap");
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, m_shadowMap);
+		glUniform1i(location, 1);			
+	}*/
+
 	if (node->texture._data != nullptr && m_drawTexture){
+		//cout << "applying textures" << endl;
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, node->texture._w, node->texture._h, 0, GL_RGBA, GL_UNSIGNED_BYTE, node->texture._data);
 		CHECK_GL_ERRORS;
@@ -806,20 +837,15 @@ void Project::applyTexture(GeometryNode* node){
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		CHECK_GL_ERRORS;
+
 	}
 
-	GLuint location = m_shader.getUniformLocation("textureSampler");
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_texture);
-	glUniform1i(location, 0);
-
-	location = m_shader.getUniformLocation("drawTexture");
+	GLuint location = m_shader.getUniformLocation("drawTexture");
 	glUniform1f(location, (node->texture._data != nullptr && m_drawTexture));
 	CHECK_GL_ERRORS;
 
-	glBindTexture(GL_TEXTURE_2D, 0);
-	CHECK_GL_ERRORS;
 	m_shader.disable();
+
 }
 
 
@@ -831,9 +857,10 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 	if (root->m_nodeType == NodeType::GeometryNode){
 		GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
 
-		if (!(m_drawReflection && (geometryNode == m_plane || geometryNode == m_bg))){
+		//if (!(m_planeDrawn && (geometryNode == m_plane || geometryNode == m_bg)))
+		{
 
-			if(inReflectionMode && m_drawReflection){
+			if(inReflectionMode && m_drawReflection && geometryNode != m_plane){
 				glStencilFunc(GL_EQUAL, 1, 0xFF); //pass if stencil value 1
 				glStencilMask(0x00); //don't write to stencil buffer
 				glDepthMask(GL_TRUE);
@@ -842,8 +869,21 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 			updateShaderUniforms(m_shader, *geometryNode, 
 					m_view, m_doShadowMapping, false, inReflectionMode);
 
+			m_shader.enable();
+
+			GLuint location = m_shader.getUniformLocation("drawTexture");
+			glUniform1f(location, (geometryNode->texture._data != nullptr && m_drawTexture));
+			CHECK_GL_ERRORS;
+
+			if (m_drawTexture && geometryNode->texture._data != nullptr){
+				GLuint location = m_shader.getUniformLocation("textureSampler");
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, m_texture);
+				glUniform1i(location, 0);
+				CHECK_GL_ERRORS;
+			}
+
 			if (m_doShadowMapping){
-				m_shader.enable();
 				GLuint DepthBiasID = m_shader.getUniformLocation("depthBiasMVP");
 				GLuint ShadowMapID = m_shader.getUniformLocation("shadowMap");
 
@@ -857,13 +897,15 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 				mat4 depthBias_times_model = m_depthBias*geometryNode->trans;
 				glUniformMatrix4fv(DepthBiasID, 1, GL_FALSE, value_ptr(depthBias_times_model));
 				CHECK_GL_ERRORS;
-				m_shader.disable();
 			}
 
+			m_shader.disable();
 
-			if (!(!inReflectionMode && geometryNode->isTransparent())){
+
+			if (!(!inReflectionMode && geometryNode->isTransparent()) && !(m_drawReflection && geometryNode == m_plane)){
 				//if (m_drawTexture)
-					applyTexture(geometryNode);
+				//if (geometryNode == m_plane)
+				//	applyTexture(geometryNode);
 
 				BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
 
@@ -875,12 +917,17 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 			}
 
 			if (RENDER_HITBOX && !inReflectionMode) renderHitbox(geometryNode);
-		} 
+		} /*else if (geometryNode == m_plane && !m_planeDrawn){
+			drawPlane();
+		}*/
 
 		/*if (geometryNode->m_name == "player") {
 			cout << "player: " << geometryNode->_hitbox->pos << endl;
 		}*/
 	}
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+				CHECK_GL_ERRORS;
 
 	for (SceneNode *child : root->children){
 
@@ -910,6 +957,30 @@ void Project::renderTransparentObjects(SceneNode *root){
 
 			glBlendFunc(GL_SRC_COLOR, GL_DST_ALPHA);
 			glBlendEquation(GL_FUNC_ADD);
+
+			m_shader.enable();
+			GLuint location = m_shader.getUniformLocation("drawTexture");
+			glUniform1f(location, (geometryNode->texture._data != nullptr && m_drawTexture));
+			CHECK_GL_ERRORS;
+
+			if (m_doShadowMapping){
+				
+				GLuint DepthBiasID = m_shader.getUniformLocation("depthBiasMVP");
+				GLuint ShadowMapID = m_shader.getUniformLocation("shadowMap");
+
+				//GLuint TextureID = glGetUniformLocation(programID, "textureSampler");
+
+				glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_2D, m_shadowMap);
+				glUniform1i(ShadowMapID, 1);
+				CHECK_GL_ERRORS;
+
+				mat4 depthBias_times_model = m_depthBias*geometryNode->trans;
+				glUniformMatrix4fv(DepthBiasID, 1, GL_FALSE, value_ptr(depthBias_times_model));
+				CHECK_GL_ERRORS;
+			}
+
+			m_shader.disable();
 
 			updateShaderUniforms(m_shader, *geometryNode, m_view, m_doShadowMapping, false);
 

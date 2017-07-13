@@ -6,7 +6,8 @@ includeDirList = {
     "../shared",
     "../shared/include",
     "../shared/gl3w",
-    "../shared/imgui"
+    "../shared/imgui",
+    "../shared/lodepng"
 }
 
 libDirectories = { 
@@ -39,7 +40,8 @@ if os.get() == "linux" then
         "X11",
         "stdc++",
         "dl",
-        "pthread"
+        "pthread",
+        "lodepng"
     }
 end
 
