@@ -46,7 +46,9 @@ public:
 	Keyframe* getKeyframeAt(int curtime);
 	Keyframe* getNextKeyframe(int curtime);
 	Keyframe* getPreviousKeyframe(int curtime);
-	void setNextKeyframe(Keyframe* cur, Keyframe* next);
+	Keyframe* getLastKeyframe();
+	Keyframe* getFirstKeyframe();
+	//void setNextKeyframe(Keyframe* cur, Keyframe* next);
 
 	void setKeyframe(int time);
 
@@ -65,4 +67,8 @@ public:
 	std::string meshId;
 
 	std::map<int, Keyframe*> m_keyframes;
+
+	int m_animationEnd;
+
+	int loop;
 };

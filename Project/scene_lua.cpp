@@ -85,6 +85,10 @@ struct gr_texture_ud{
   Texture* texture;
 };
 
+struct gr_keyframe_ud{
+  Keyframe* keyframe;
+}
+
 // Create a node
 extern "C"
 int gr_node_cmd(lua_State* L)

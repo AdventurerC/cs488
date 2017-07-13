@@ -26,7 +26,8 @@ GeometryNode::GeometryNode(
 	  meshId(meshId),
 	  hitbox(new Hitbox()),
 	  m_vertices(),
-	  m_faces()
+	  m_faces(),
+	  loop(0)
 {
 	m_nodeType = NodeType::GeometryNode;
 	hitbox->_pos = dvec3(0.0);
@@ -91,4 +92,70 @@ void GeometryNode::setTransparency(float alpha){
 
 bool GeometryNode::isTransparent(){
 	return abs(1.0f - material.alpha) > std::numeric_limits<float>::epsilon();
+}
+
+void GeometryNode::setKeyframe(int time){
+	Keyframe* key = new Keyframe(this, time);
+
+	m_keyframes[time] = key;
+}
+
+/*void GeometryNode::setNextKeyframe(Keyframe* cur, Keyframe* next){
+	cur->setNextKeyframe(next);
+}*/
+
+Keyframe* GeometryNode::getFirstKeyframe(){
+	if (m_keyframes.size() == 0) return nullptr;
+	return (m_keyframes.begin())->second;
+}
+
+Keyframe* GeometryNode::getLastKeyframe(){
+	if (m_keyframes.size() == 0) return nullptr;
+	return (m_keyframes.rbegin())->second;
+}
+
+Keyframe* GeometryNode::getKeyframeAt(int curtime){
+
+	if (m_keyframes.size() == 0) return nullptr;
+
+	auto it = m_keyframes.find(curtime);
+	if (it != m_keyframes.end()){
+		return it->second;
+	}
+
+	Keyframe* ret = nullptr;
+	int prevKeyTime = 0;
+	//int nextKeyTime = 0;
+
+	//find latest key before curtime
+	for (const auto& keyframe : m_keyframes){
+		int keyTime = keyframe.first;
+		if (keyTime > prevKeyTime && curtime > keyTime){
+			prevKeyTime = keyTime;
+			ret = keyframe.second;
+		} else if (curtime < keyTime){
+			break;
+		}
+	}
+
+	if (ret != nullptr){
+		return ret;
+	} else {//before first keyframe
+		//case that curtime < time of first keyframe
+		if (loop > 0){ //looping, gotta tween from last keyframe to first
+			return getLastKeyframe(); 
+		}
+	}
+
+}
+
+Keyframe* GeometryNode::getNextKeyframe(int curtime){
+	if (m_keyframes.size() == 0) return nullptr;
+	return (m_keyframes.upper_bound(curtime))->second;
+}
+
+Keyframe* GeometryNode::getPreviousKeyframe(int curtime){
+	if (m_keyframes.size() == 0) return nullptr;
+	auto it = m_keyframes.lower_bound(curtime);
+	return (--it)->second; 
 }

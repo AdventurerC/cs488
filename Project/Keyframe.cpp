@@ -11,8 +11,8 @@ using namespace glm;
 Keyframe::Keyframe(GeometryNode* node, int t) : 
 	time(t), 
 	position(vec4(0, 0, 0, 1)), 
-	trans(mat4()),
-	nextKeyframe(nullptr)
+	trans(mat4())
+	//nextKeyframe(nullptr)
 {
 	if (node != nullptr){
 		nodeTrans = node->trans;
@@ -49,6 +49,6 @@ void Keyframe::translate(const glm::vec3& amount) {
 	trans = glm::translate(amount) * trans;
 }
 
-void Keyframe::setNextKeyframe(Keyframe* next){
+/*void Keyframe::setNextKeyframe(Keyframe* next){
 	nextKeyframe = next;
-}
+}*/

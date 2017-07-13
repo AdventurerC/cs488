@@ -16,11 +16,11 @@ public:
     glm::vec4 position;
     glm::mat4 trans;
 
-    Keyframe* nextKeyframe;
+    //Keyframe* nextKeyframe;
 
     void rotate(char axis, float angle);
     void scale(const glm::vec3& amount);
     void translate(const glm::vec3& amount);
 
-    void setNextKeyframe(Keyframe* next);
+    //void setNextKeyframe(Keyframe* next);
 };
