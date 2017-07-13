@@ -98,6 +98,8 @@ void GeometryNode::setKeyframe(int time){
 	Keyframe* key = new Keyframe(this, time);
 
 	m_keyframes[time] = key;
+
+	cout << "Created keyframe for " << m_name << " at " << time << endl;
 }
 
 /*void GeometryNode::setNextKeyframe(Keyframe* cur, Keyframe* next){

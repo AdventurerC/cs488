@@ -11,11 +11,12 @@ using namespace glm;
 Keyframe::Keyframe(GeometryNode* node, int t) : 
 	time(t), 
 	position(vec4(0, 0, 0, 1)), 
-	trans(mat4())
+	trans(mat4()),
+	nodeTrans(mat4())
 	//nextKeyframe(nullptr)
 {
 	if (node != nullptr){
-		nodeTrans = node->trans;
+		trans = node->trans;
 		position = vec4(vec3(node->hitbox->_pos), 1);
 	}
 }

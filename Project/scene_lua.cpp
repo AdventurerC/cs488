@@ -85,9 +85,9 @@ struct gr_texture_ud{
   Texture* texture;
 };
 
-struct gr_keyframe_ud{
+/*struct gr_keyframe_ud{
   Keyframe* keyframe;
-}
+}*/
 
 // Create a node
 extern "C"
@@ -146,6 +146,7 @@ int gr_joint_cmd(lua_State* L)
 
   return 1;
 }
+
 extern "C"
 int gr_mesh_cmd(lua_State* L)
 {
@@ -226,6 +227,23 @@ int gr_texture_cmd(lua_State* L)
   lua_setmetatable(L, -2);
   
   return 1;
+}
+
+extern "C"
+int gr_keyframe_cmd(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+
+  gr_node_ud* selfdata = (gr_node_ud*)luaL_checkudata(L, 1, "gr.node");
+  luaL_argcheck(L, selfdata != 0, 1, "Node expected");
+
+  GeometryNode* self = dynamic_cast<GeometryNode*>(selfdata->node);
+
+  int time = (int)luaL_checknumber(L, 1);
+
+  self->setKeyframe(time);
+
+
 }
 
 
@@ -422,6 +440,7 @@ static const luaL_Reg grlib_node_methods[] = {
   {"rotate", gr_node_rotate_cmd},
   {"translate", gr_node_translate_cmd},
   {"set_texture", gr_node_set_texture_cmd},
+  {"set_keyframe", gr_keyframe_cmd},
   {0, 0}
 };
 
