@@ -2,6 +2,10 @@
 
 #include "SceneNode.hpp"
 #include <vector>
+#include <map>
+#include "Keyframe.hpp"
+
+class Keyframe;
 
 //rectangular hitbox
 class Hitbox{
@@ -39,6 +43,13 @@ public:
 	void setTransparency(float alpha);
 	bool isTransparent();
 
+	Keyframe* getKeyframeAt(int curtime);
+	Keyframe* getNextKeyframe(int curtime);
+	Keyframe* getPreviousKeyframe(int curtime);
+	void setNextKeyframe(Keyframe* cur, Keyframe* next);
+
+	void setKeyframe(int time);
+
 	//bool collide3D(GeometryNode* other, glm::vec3 &axis);
 	//bool collide2D(GeometryNode* other, glm::vec3 &axis); //
 
@@ -52,4 +63,6 @@ public:
 	// Mesh Identifier. This must correspond to an object name of
 	// a loaded .obj file.
 	std::string meshId;
+
+	std::map<int, Keyframe*> m_keyframes;
 };

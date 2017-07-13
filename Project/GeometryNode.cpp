@@ -31,11 +31,8 @@ GeometryNode::GeometryNode(
 	m_nodeType = NodeType::GeometryNode;
 	hitbox->_pos = dvec3(0.0);
 	hitbox->_maxXYZ = dvec3(hitwidth, hitheight, hitdepth);
-	//hitbox->_width = hitwidth;
-	//hitbox->_height = hitheight;
-	//hitbox->_depth = hitdepth;
 
-	std::string file = "Assets/" + meshId + ".obj";//ccheating here, assuming file name is Assets/meshId.obj
+	/*std::string file = "Assets/" + meshId + ".obj";//ccheating here, assuming file name is Assets/meshId.obj
 	std::ifstream in(file.c_str());
 	std::string code;
 	std::string objectName;
@@ -75,6 +72,7 @@ GeometryNode::GeometryNode(
     ObjFileDecoder::decode(file.c_str(), objectName, m_faces, m_normals, uv); 
 
 	//cout << name << endl;
+	*/
 }
 
 void GeometryNode::translate(const glm::vec3& amount) {

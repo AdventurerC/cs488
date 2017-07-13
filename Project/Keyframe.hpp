@@ -1,12 +1,26 @@
+#pragma once
+
+#include "GeometryNode.hpp"
 #include <glm/glm.hpp>
+
+class GeometryNode;
 
 class Keyframe {
 public:
-    Keyframe();
+    Keyframe(GeometryNode* node, int t);
 
-    glm::vec3 position;
-    glm::vec3 scale;
+    int time;
 
-    glm::vec3 nextPosition;
-    glm::vec3 nextScale;
-}
+    glm::mat4 nodeTrans;
+
+    glm::vec4 position;
+    glm::mat4 trans;
+
+    Keyframe* nextKeyframe;
+
+    void rotate(char axis, float angle);
+    void scale(const glm::vec3& amount);
+    void translate(const glm::vec3& amount);
+
+    void setNextKeyframe(Keyframe* next);
+};
