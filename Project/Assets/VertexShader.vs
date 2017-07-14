@@ -34,7 +34,7 @@ out vec2 UV;
 uniform mat4 depthBiasMVP;
 
 vec4 lerp(float curTime, float time0, vec4 p0, float time1, vec4 p1){
-	float epsilon = 0.001 f;
+	float epsilon = 0.001f;
 
 	if (abs(curTime - time0) < epsilon){
 		return p0;
@@ -60,7 +60,7 @@ void main() {
 	vec4 p0 = ModelView * pos4;
 	vec4 p1 = nextModelView * pos4;
 
-	gl_Position = Perspective * ModelView * lerp(curTime, time0, p0, time1, p1);//vec4(position, 1.0);
+	gl_Position = Perspective * lerp(curTime, time0, p0, time1, p1);//vec4(position, 1.0);
 
 	UV = uv;
 }

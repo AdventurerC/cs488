@@ -34,47 +34,6 @@ GeometryNode::GeometryNode(
 	hitbox->_pos = dvec3(0.0);
 	hitbox->_maxXYZ = dvec3(hitwidth, hitheight, hitdepth);
 
-	/*std::string file = "Assets/" + meshId + ".obj";//ccheating here, assuming file name is Assets/meshId.obj
-	std::ifstream in(file.c_str());
-	std::string code;
-	std::string objectName;
-	double vx, vy, vz;
-	size_t s1, s2, s3;
-
-	string currentLine;
-	//copypasted part of ObjFileDecoder::decode since that doesn't return vertices 
-	while (!in.eof()) {
-        try {
-            getline(in, currentLine);
-        } catch (const ifstream::failure &e) {
-            in.close();
-            stringstream errorMessage;
-            errorMessage << "Error calling getline() -- " << e.what() << endl;
-        }
-	    if (currentLine.substr(0, 2) == "o ") {
-		    // Get entire line excluding first 2 chars.
-		    istringstream s(currentLine.substr(2));
-		    s >> objectName;
-
-
-	    } else if (currentLine.substr(0, 2) == "v ") {
-            // Vertex data on this line.
-            // Get entire line excluding first 2 chars.
-            istringstream s(currentLine.substr(2));
-            glm::vec3 vertex;
-            s >> vertex.x;
-            s >> vertex.y;
-            s >> vertex.z;
-            m_vertices.push_back(vertex);
-
-        }
-    }
-
-    std::vector<glm::vec2> uv;
-    ObjFileDecoder::decode(file.c_str(), objectName, m_faces, m_normals, uv); 
-
-	//cout << name << endl;
-	*/
 }
 
 void GeometryNode::translate(const glm::vec3& amount) {
@@ -148,43 +107,30 @@ Keyframe* GeometryNode::getKeyframeAt(int curtime){
 
 	return (--it)->second;
 
-	//ret = it->second;
-	/*int prevKeyTime = 0;
-	//int nextKeyTime = 0;
-
-	//find latest key before curtime
-	for (const auto& keyframe : m_keyframes){
-		int keyTime = keyframe.first;
-		if (keyTime > prevKeyTime && curtime > keyTime){
-			prevKeyTime = keyTime;
-			ret = keyframe.second;
-		} else if (curtime < keyTime){
-			break;
-		}
-	}
-
-	if (ret != nullptr){
-		return ret;
-	} else {//before first keyframe
-		//case that curtime < time of first keyframe
-		if (loop > 0){ //looping, gotta tween from last keyframe to first
-			return getLastKeyframe(); 
-		}
-	}*/
-
 }
 
 Keyframe* GeometryNode::getNextKeyframe(int curtime){
+
+	//std::cout << "curtime = " << curtime << endl;
 
 	loop = curtime/m_animationEnd;
 
 	curtime = curtime%m_animationEnd;
 
 	if (m_keyframes.size() == 0) return nullptr;
+
+	/*auto it = m_keyframes.find(++curtime);
+	if (it != m_keyframes.end()){
+		return it->second;
+	}*/
+
+
 	auto it = m_keyframes.upper_bound(curtime);
-	if (it == m_keyframes.end()){
+	if (it == m_keyframes.end() ){
+	//	std::cout << m_name << " curtime " << curtime <<" next key at " << m_keyframes.begin()->first << std::endl;
 		return getFirstKeyframe();
 	}
+	//std::cout << m_name << " curtime " << curtime << " next key at " << (it)->first << std::endl;
 	return (it)->second;
 }
 
@@ -203,7 +149,7 @@ Keyframe* GeometryNode::getPreviousKeyframe(int curtime){
 }
 
 void GeometryNode::setAnimationLength(int time){
-	m_animationEnd = std::max(time,  (m_keyframes.rbegin())->first);
+	m_animationEnd = std::max(time, (m_keyframes.rbegin())->first);
 }
 
 bool GeometryNode::hasAnimation(){

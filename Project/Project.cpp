@@ -1002,7 +1002,8 @@ void Project::renderAnimatedObject(GeometryNode *node, bool inReflectionMode){
 		CHECK_GL_ERRORS;
 
 		location = m_shader.getUniformLocation("curTime");
-		glUniform1f(location, m_current_time_secs);
+		float dec = (float)(m_current_time_secs - seconds);
+		glUniform1f(location, (float)(seconds%node->m_animationEnd) + dec);
 		CHECK_GL_ERRORS;
 
 		location = m_shader.getUniformLocation("drawTexture");
