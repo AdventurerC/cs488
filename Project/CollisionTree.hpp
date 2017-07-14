@@ -30,16 +30,16 @@ public:
     // q3 | q4
 
     bool intersect(CollisionTreeNode* other);
-    bool intersectGeometry(GeometryNode* other, bool checkY = false);
-    void collideGeometry(GeometryNode* other, std::vector<GeometryNode*> &collisions, std::vector<glm::vec3> &axis, bool checkY = false);
+    bool intersectGeometry(GeometryNode* other, float curtime = 0, bool checkY = false);
+    void collideGeometry(GeometryNode* other, std::vector<GeometryNode*> &collisions, std::vector<glm::vec3> &axis, float curtime = 0, bool checkY = false);
     int findQuadrant(Bounds other);
-    void construct(SceneNode* root);
-    void construct(SceneNode* root, float time);
+    //void construct(SceneNode* root);
+    void construct(SceneNode* root, float curtime = 0);
     //void constructDynamic(SceneNode* root);
-    void insert(GeometryNode* node);
+    void insert(GeometryNode* node, float curtime = 0);
     void clear();
     void makeChildren();
-    bool collide2Geo(GeometryNode* node, GeometryNode* other, glm::vec3 &axis, bool checkY = false);
+    bool collide2Geo(GeometryNode* node, GeometryNode* other, glm::vec3 &axis, float curtime = 0, bool checkY = false);
 private:
     int _depth;
     std::vector<CollisionTreeNode* > _children;

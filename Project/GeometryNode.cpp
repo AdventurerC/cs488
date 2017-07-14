@@ -168,3 +168,15 @@ void GeometryNode::set_keyframe_parent_transform(const glm::mat4& parentTrans){
 		keyframe.second->set_parent_transform(parentTrans);
 	}
 }
+
+void GeometryNode::updateHitbox(float curtime){
+	if (!hasAnimation()) return;
+	int t = (int)curtime;
+	Keyframe* cur = getKeyframeAt(t);
+	Keyframe* next = getNextKeyframe(t);
+
+	vec4 p0 = cur->trans * vec4(hitbox->_basePos, 1);
+	vec4 p1 = next->trans * vec4(hitbox->_basePos, 1);
+	vec4 lerp = p0 + (curtime - t)*(p1-p0);
+	hitbox->_pos = dvec3(get_inverse() * lerp);
+}

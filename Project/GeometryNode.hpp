@@ -11,12 +11,14 @@ class Keyframe;
 class Hitbox{
 public:
 	glm::dvec3 _pos;
+	glm::dvec3 _basePos;
 	glm::dvec3 _maxXYZ;
 	//double _width;
 	//double _height;
 	//double _depth;
 
-	Hitbox() : _pos(glm::dvec3(0.0f)), 
+	Hitbox() : _basePos(glm::dvec3(0.0f)),
+		_pos(glm::dvec3(0.0f)), 
 		_maxXYZ(glm::dvec3(1.0f)){ }
 	double x(){ return _pos[0] - _maxXYZ.x/2.0; }
 	double z(){ return _pos[2] + _maxXYZ.z/2.0; }
@@ -45,6 +47,8 @@ public:
 
 	bool hasAnimation();
 	void set_keyframe_parent_transform(const glm::mat4& parentTrans);
+	void updateHitbox(float curtime);
+
 
 	Keyframe* getKeyframeAt(int curtime);
 	Keyframe* getNextKeyframe(int curtime);

@@ -13,22 +13,37 @@ CollisionTreeNode::CollisionTreeNode(Bounds bounds, int curDepth)
 {
 }
 
-void CollisionTreeNode::construct(SceneNode* root){
+void CollisionTreeNode::construct(SceneNode* root, float curtime){
     if (root->m_nodeType == NodeType::GeometryNode){
         GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
-        insert(geometryNode);
+        insert(geometryNode, curtime);
     }
 
     for (SceneNode *child : root->children){
 		child->set_transform(root->get_transform() * child->get_transform());
-		construct(child);
+		construct(child, curtime);
 		child->set_transform(glm::inverse(root->get_transform()) * child->get_transform());
 	}
 }
 
-void CollisionTreeNode::insert(GeometryNode* node){
+
+void CollisionTreeNode::insert(GeometryNode* node, float curtime){
     Bounds nodeBounds;
-    nodeBounds._origin = glm::dvec3(node->trans * glm::vec4(glm::vec3(node->hitbox->_pos), 1)); 
+    //nodeBounds._origin = glm::dvec3(node->trans * glm::vec4(glm::vec3(node->hitbox->_pos), 1)); 
+    
+    if (node->hasAnimation()){
+        int t = (int)curtime;
+        Keyframe* cur = node->getKeyframeAt(t);
+        Keyframe* next = node->getNextKeyframe(t);
+        glm::vec4 p0 = cur->get_total_transform() * glm::vec4(node->hitbox->_pos, 1);
+        glm::vec4 p1 = next->get_total_transform() * glm::vec4(node->hitbox->_pos, 1);
+        glm::vec4 lerp = p0 + (curtime - t)*(p1-p0);
+        nodeBounds._origin = glm::vec3(lerp);
+    } else {
+    //nodeBounds._origin = dvec3(node->trans * node->hitbox->_pos); 
+    //nodeBounds._maxXYZ = node->trans * node->hitbox->_maxXYZ;
+        nodeBounds._origin = glm::dvec3(node->trans * glm::vec4(glm::vec3(node->hitbox->_pos), 1)); 
+    }
     nodeBounds._maxXYZ = glm::dvec3(node->hitbox->_maxXYZ);//glm::dvec3(other->trans * glm::scale(mat4(), vec3(other->hitbox->_maxXYZ)) * glm::vec4(1.0f));
     
     //nodeBounds._maxXYZ = glm::dvec3(node->trans * glm::scale(mat4(), vec3(node->hitbox->_maxXYZ)) * glm::vec4(1.0f));
@@ -36,8 +51,8 @@ void CollisionTreeNode::insert(GeometryNode* node){
     if (_children.size() > 0){
         int q = findQuadrant(nodeBounds);
         if (q != -1){
-            //std::cout << "inserting " << node->m_name << "into q" << q+1 << std::endl;
-            _children[q]->insert(node);
+            std::cout << "inserting " << node->m_name << "into q" << q+1 << std::endl;
+            _children[q]->insert(node, curtime);
             return;
         }
     }
@@ -49,7 +64,7 @@ void CollisionTreeNode::insert(GeometryNode* node){
             std::vector<GeometryNode*> tempList = _geometryList;
             _geometryList.clear();
             for (int i = 0; i < tempList.size(); i++){
-                insert(tempList[i]);
+                insert(tempList[i], curtime);
             }
     }
     
@@ -67,15 +82,18 @@ void CollisionTreeNode::clear(){
 }
 
 int CollisionTreeNode::findQuadrant(Bounds other){
-    dvec3 otherXYZ = other._maxXYZ;
+    dvec3 otherXYZ = other._origin + 0.5*other._maxXYZ;
     dvec3 otherOrigin = other._origin;
     dvec3 origin = _bounds._origin;
-    dvec3 maxXYZ = _bounds._maxXYZ;
+    dvec3 maxXYZ = origin + 0.5*_bounds._maxXYZ;
 
     double otherX = otherOrigin.x - otherXYZ.x/2;
     double otherZ = otherOrigin.z - otherXYZ.z/2;
     double minZ = origin.z - maxXYZ.z/2;
     double minX = origin.x - maxXYZ.x/2;
+
+    //std::cout << "origin min x " << origin.x << "other min x" << otherX 
+    //<< "origin min z " << origin.z << "other max z" << otherXYZ.z << maxXYZ.x << otherXYZ.x << minZ << otherZ << std::endl;
 
     //q1
     if (origin.x <= otherX && origin.z >= otherXYZ.z && maxXYZ.x >= otherXYZ.x && minZ <= otherZ){
@@ -125,7 +143,7 @@ void CollisionTreeNode::makeChildren(){
     _children.push_back(q4);
 }
 
-bool CollisionTreeNode::intersectGeometry(GeometryNode* other, bool checkY){
+/*bool CollisionTreeNode::intersectGeometry(GeometryNode* other, bool checkY){
     Bounds nodeBounds;
     //nodeBounds._origin = dvec3(node->trans * node->hitbox->_pos); 
     //nodeBounds._maxXYZ = node->trans * node->hitbox->_maxXYZ;
@@ -150,11 +168,48 @@ bool CollisionTreeNode::intersectGeometry(GeometryNode* other, bool checkY){
 
     return false;
     
+}*/
+
+bool CollisionTreeNode::intersectGeometry(GeometryNode* other, float curtime, bool checkY){
+    Bounds nodeBounds;
+    if (other->hasAnimation()){
+        int t = (int)curtime;
+        Keyframe* cur = other->getKeyframeAt(t);
+        Keyframe* next = other->getNextKeyframe(t);
+        glm::vec4 p0 = cur->get_total_transform() * glm::vec4(other->hitbox->_pos, 1);
+        glm::vec4 p1 = next->get_total_transform() * glm::vec4(other->hitbox->_pos, 1);
+        glm::vec4 lerp = p0 + (curtime - t)*(p1-p0);
+        nodeBounds._origin = glm::vec3(lerp);
+    } else {
+    //nodeBounds._origin = dvec3(node->trans * node->hitbox->_pos); 
+    //nodeBounds._maxXYZ = node->trans * node->hitbox->_maxXYZ;
+        nodeBounds._origin = glm::dvec3(other->trans * glm::vec4(glm::vec3(other->hitbox->_pos), 1)); 
+    }
+    nodeBounds._maxXYZ = glm::dvec3(other->hitbox->_maxXYZ);//glm::dvec3(other->trans * glm::scale(mat4(), vec3(other->hitbox->_maxXYZ)) * glm::vec4(1.0f));
+
+    //std::cout << "origin = " << glm::to_string(nodeBounds._origin) << "maxXYZ = " << glm::to_string(nodeBounds._maxXYZ) << std::endl;
+
+    bool hit(false);
+
+    bool yHit = false;
+
+    if (checkY){
+        yHit = _bounds.y() < nodeBounds.y1() && _bounds.y1() > nodeBounds.y();
+    }
+
+    if (_bounds.x() < nodeBounds.x1() && _bounds.x1() > nodeBounds.x() &&
+        _bounds.z() < nodeBounds.z1() && _bounds.z1() > nodeBounds.z()){
+        return checkY ? yHit*true : true;
+    }
+
+
+    return false;
+    
 }
 
 //in: other
 //out: collisions
-void CollisionTreeNode::collideGeometry(GeometryNode* other, std::vector<GeometryNode*> &collisions, std::vector<vec3> &axis, bool checkY){
+void CollisionTreeNode::collideGeometry(GeometryNode* other, std::vector<GeometryNode*> &collisions, std::vector<vec3> &axis, float curtime, bool checkY){
     //Bounds nodeBounds;
     //nodeBounds._origin = dvec3(node->trans * node->hitbox->_pos); 
     //nodeBounds._maxXYZ = node->trans * node->hitbox->_maxXYZ;
@@ -163,30 +218,55 @@ void CollisionTreeNode::collideGeometry(GeometryNode* other, std::vector<Geometr
 
     for (auto node : _geometryList){
         vec3 geoAxis;
-        if (collide2Geo(node, other, geoAxis, checkY) || collide2Geo(other, node, geoAxis, checkY) ){
+        if (collide2Geo(node, other, geoAxis, curtime, checkY) || collide2Geo(other, node, geoAxis, curtime, checkY) ){
             collisions.push_back(node);
             axis.push_back(geoAxis);
         }
     }
 
     for (auto child : _children){
-        if (child->intersectGeometry(other, checkY)){
-            child->collideGeometry(other, collisions, axis, checkY);
+        if (child->intersectGeometry(other, curtime, checkY)){
+            child->collideGeometry(other, collisions, axis, curtime, checkY);
         }
     }
 }
 
-bool CollisionTreeNode::collide2Geo(GeometryNode* node, GeometryNode* other, glm::vec3 &axis, bool checkY){
+bool CollisionTreeNode::collide2Geo(GeometryNode* node, GeometryNode* other, glm::vec3 &axis, float curtime, bool checkY){
     Bounds nodeBounds;
+
     //nodeBounds._origin = dvec3(node->trans * node->hitbox->_pos); 
     //nodeBounds._maxXYZ = node->trans * node->hitbox->_maxXYZ;
-    nodeBounds._origin = glm::dvec3(node->trans * glm::vec4(glm::vec3(node->hitbox->_pos), 1)); 
+    if (node->hasAnimation()){
+        int t = (int)curtime;
+        Keyframe* cur = node->getKeyframeAt(t);
+        Keyframe* next = node->getNextKeyframe(t);
+        glm::vec4 p0 = cur->get_total_transform() * glm::vec4(node->hitbox->_pos, 1);
+        glm::vec4 p1 = next->get_total_transform() * glm::vec4(node->hitbox->_pos, 1);
+        glm::vec4 lerp = p0 + (curtime - t)*(p1-p0);
+        nodeBounds._origin = glm::vec3(lerp);
+    } else {
+        nodeBounds._origin = glm::dvec3(node->trans * glm::vec4(glm::vec3(node->hitbox->_pos), 1)); 
+    }    
+
+    //nodeBounds._origin = glm::dvec3(node->trans * glm::vec4(glm::vec3(node->hitbox->_pos), 1)); 
     nodeBounds._maxXYZ = glm::dvec3(node->hitbox->_maxXYZ);//glm::dvec3(node->trans * glm::scale(mat4(), vec3(node->hitbox->_maxXYZ)) * glm::vec4(1.0f));
 
     Bounds otherBounds;
+    if (other->hasAnimation()){
+        int t = (int)curtime;
+        Keyframe* cur = other->getKeyframeAt(t);
+        Keyframe* next = other->getNextKeyframe(t);
+        glm::vec4 p0 = cur->get_total_transform() * glm::vec4(other->hitbox->_pos, 1);
+        glm::vec4 p1 = next->get_total_transform() * glm::vec4(other->hitbox->_pos, 1);
+        glm::vec4 lerp = p0 + (curtime - t)*(p1-p0);
+        otherBounds._origin = glm::vec3(lerp);
+    } else {
+        otherBounds._origin = glm::dvec3(other->trans * glm::vec4(glm::vec3(other->hitbox->_pos), 1)); 
+    }    
+
     //nodeBounds._origin = dvec3(node->trans * node->hitbox->_pos); 
     //nodeBounds._maxXYZ = node->trans * node->hitbox->_maxXYZ;
-    otherBounds._origin = glm::dvec3(other->trans * glm::vec4(glm::vec3(other->hitbox->_pos), 1)); 
+    //otherBounds._origin = glm::dvec3(other->trans * glm::vec4(glm::vec3(other->hitbox->_pos), 1)); 
     otherBounds._maxXYZ = glm::dvec3(other->hitbox->_maxXYZ);//glm::dvec3(other->trans * glm::scale(mat4(), vec3(other->hitbox->_maxXYZ)) * glm::vec4(1.0f));
 
     bool hit(false);

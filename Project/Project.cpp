@@ -17,6 +17,7 @@ using namespace std;
 #include <stack>
 #include <algorithm>
 #include <limits>
+#include <cstdlib>
 
 #define RENDER_HITBOX false
 
@@ -70,7 +71,9 @@ Project::Project(const std::string & luaSceneFile)
 	  m_drawReflection(false),
 	  m_drawTexture(false),
 	  m_reflectedView(mat4()),
-	  m_texture(0)
+	  m_texture(0),
+	  e(rd()),
+	  dis(0,2)
 {
 
 }
@@ -433,8 +436,10 @@ void Project::appLogic()
 	m_planeDrawn = false;
 	m_current_time = clock() - m_start_time;
 	m_current_time_secs = ((float)m_current_time)/CLOCKS_PER_SEC;
+	
+	moveEnemy(m_enemy1);
 	m_collisionTree->clear();
-	m_collisionTree->construct((SceneNode*)&*m_rootNode);
+	m_collisionTree->construct((SceneNode*)&*m_rootNode, m_current_time_secs);
 	uploadCommonSceneUniforms();
 }
 
@@ -876,7 +881,7 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 
 	if (root->m_nodeType == NodeType::GeometryNode){
 		GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
-
+		//geometryNode->updateHitbox(m_current_time_secs);
 		//if (!(m_planeDrawn && (geometryNode == m_plane || geometryNode == m_bg)))
 		if (!(geometryNode->hasAnimation()))
 		{
@@ -1057,6 +1062,8 @@ void Project::renderAnimatedObject(GeometryNode *node, bool inReflectionMode){
 
 		m_shader.disable();
 	}
+
+	if (RENDER_HITBOX && !inReflectionMode) renderHitbox(node);
 }
 
 void Project::renderTransparentObjects(SceneNode *root){
@@ -1355,6 +1362,38 @@ void Project::redo(){
 
 }
 
+void Project::moveEnemy(GeometryNode* enemy){
+	//std::uniform_real_distribution<> dis(-1, 1);
+	//srand(m_current_time);
+	double x =  dis(e) - 1.0;
+	double y = 0;//rand() % 2 - 1;
+	double z = dis(e) - 1.0;//rand() % 2 - 1;
+
+	double modifier = 1.0;
+
+	enemy->translate(vec3(modifier*x, modifier*y, modifier*z));
+
+	std::vector<GeometryNode*> collisions;
+	std::vector<vec3> axis;
+	m_collisionTree->collideGeometry(enemy, collisions, axis, false);
+	bool adjust(false);
+
+	for (int i = 0; i < collisions.size(); i++){
+		GeometryNode* collision = collisions[i];
+		//cout << collision->m_name << endl;
+		if (collision == m_plane || collision == enemy) {
+			continue;
+		} else if (collision == m_playerNode){
+			//deduct lives
+			continue;
+		}
+		adjust = true;
+	}
+
+	if (adjust){
+		enemy->translate(vec3(-modifier*x, -modifier*y, -modifier*z));
+	}
+}
 
 void Project::movePlayer(double x, double z, bool adjusting){
 	dvec3 transl(x, 0.0, z);

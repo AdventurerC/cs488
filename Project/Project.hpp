@@ -15,6 +15,7 @@
 #include <vector>
 #include <cmath>
 #include <ctime>
+#include <random>
 
 struct LightSource {
 	glm::vec3 position;
@@ -109,6 +110,7 @@ protected:
 	void redo();
 
 	void movePlayer(double x, double z, bool adjusting = false);
+	void moveEnemy(GeometryNode* enemy);
 	void rotateShot(double x);
 
 	clock_t m_start_time;
@@ -203,4 +205,8 @@ protected:
 	std::vector<SceneNode*> m_selectedJoints;
 	std::vector<Command*> m_undoStack;
 	std::vector<Command*> m_redoStack;
+
+	std::random_device rd;
+	std::mt19937 e;
+	std::uniform_real_distribution<> dis;//(-1, 1);
 };
