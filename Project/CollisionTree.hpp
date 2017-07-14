@@ -34,7 +34,10 @@ public:
     void collideGeometry(GeometryNode* other, std::vector<GeometryNode*> &collisions, std::vector<glm::vec3> &axis, bool checkY = false);
     int findQuadrant(Bounds other);
     void construct(SceneNode* root);
+    void construct(SceneNode* root, float time);
+    //void constructDynamic(SceneNode* root);
     void insert(GeometryNode* node);
+    void clear();
     void makeChildren();
     bool collide2Geo(GeometryNode* node, GeometryNode* other, glm::vec3 &axis, bool checkY = false);
 private:

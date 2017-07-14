@@ -29,7 +29,9 @@ void CollisionTreeNode::construct(SceneNode* root){
 void CollisionTreeNode::insert(GeometryNode* node){
     Bounds nodeBounds;
     nodeBounds._origin = glm::dvec3(node->trans * glm::vec4(glm::vec3(node->hitbox->_pos), 1)); 
-    nodeBounds._maxXYZ = glm::dvec3(node->trans * glm::scale(mat4(), vec3(node->hitbox->_maxXYZ)) * glm::vec4(1.0f));
+    nodeBounds._maxXYZ = glm::dvec3(node->hitbox->_maxXYZ);//glm::dvec3(other->trans * glm::scale(mat4(), vec3(other->hitbox->_maxXYZ)) * glm::vec4(1.0f));
+    
+    //nodeBounds._maxXYZ = glm::dvec3(node->trans * glm::scale(mat4(), vec3(node->hitbox->_maxXYZ)) * glm::vec4(1.0f));
 
     if (_children.size() > 0){
         int q = findQuadrant(nodeBounds);
@@ -51,6 +53,17 @@ void CollisionTreeNode::insert(GeometryNode* node){
             }
     }
     
+}
+
+void CollisionTreeNode::clear(){
+    if (_children.size() > 0){
+        for (CollisionTreeNode* child : _children){
+            child->clear();
+        }
+    }
+
+    _children.clear();
+    _geometryList.clear();
 }
 
 int CollisionTreeNode::findQuadrant(Bounds other){

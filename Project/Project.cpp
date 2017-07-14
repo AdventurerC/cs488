@@ -433,6 +433,8 @@ void Project::appLogic()
 	m_planeDrawn = false;
 	m_current_time = clock() - m_start_time;
 	m_current_time_secs = ((float)m_current_time)/CLOCKS_PER_SEC;
+	m_collisionTree.clear();
+	m_collisionTree.construct((SceneNode*)&*m_rootNode);
 	uploadCommonSceneUniforms();
 }
 
