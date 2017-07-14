@@ -38,11 +38,17 @@ GeometryNode::GeometryNode(
 
 void GeometryNode::translate(const glm::vec3& amount) {
 	set_transform( glm::translate(amount) * trans );
+	/*for(const auto& keyframe : m_keyframes){
+		keyframe.second->translate(amount);
+	}*/
 	//hitbox->_pos = glm::translate(amount) * hitbox->_pos;
 }
 
 void GeometryNode::scale(const glm::vec3 & amount) {
 	set_transform( glm::scale(amount) * trans );
+	/*for(const auto& keyframe : m_keyframes){
+		keyframe.second->scale(amount);
+	}*/
 	//hitbox->_maxXYZ = glm::scale(amount) * hitbox->_maxXYZ;
 }
 

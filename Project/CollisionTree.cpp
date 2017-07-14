@@ -36,7 +36,7 @@ void CollisionTreeNode::insert(GeometryNode* node){
     if (_children.size() > 0){
         int q = findQuadrant(nodeBounds);
         if (q != -1){
-            std::cout << "inserting " << node->m_name << "into q" << q+1 << std::endl;
+            //std::cout << "inserting " << node->m_name << "into q" << q+1 << std::endl;
             _children[q]->insert(node);
             return;
         }

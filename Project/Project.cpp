@@ -433,8 +433,8 @@ void Project::appLogic()
 	m_planeDrawn = false;
 	m_current_time = clock() - m_start_time;
 	m_current_time_secs = ((float)m_current_time)/CLOCKS_PER_SEC;
-	m_collisionTree.clear();
-	m_collisionTree.construct((SceneNode*)&*m_rootNode);
+	m_collisionTree->clear();
+	m_collisionTree->construct((SceneNode*)&*m_rootNode);
 	uploadCommonSceneUniforms();
 }
 
@@ -939,7 +939,7 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 
 			if (RENDER_HITBOX && !inReflectionMode) renderHitbox(geometryNode);
 		} else {
-			renderAnimatedObject(geometryNode);
+			renderAnimatedObject(geometryNode, inReflectionMode);
 		}
 	}
 
@@ -986,6 +986,11 @@ void Project::renderAnimatedObject(GeometryNode *node, bool inReflectionMode){
 		mat4 modelView1 = m_view * next->get_total_transform();
 		float time0 = (float)(cur->time);
 		float time1 = (float)(next->time);
+
+		if (inReflectionMode){
+			modelView0 = m_view * cur->parentTrans * glm::scale(vec3(1, -1, 1)) * translate(vec3(0, 1, 0)) * cur->trans;
+			modelView1 = m_view * next->parentTrans * glm::scale(vec3(1, -1, 1)) * translate(vec3(0, 1, 0)) * next->trans;
+		}
 
 		GLuint location = m_shader.getUniformLocation("ModelView");
 		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView0));
