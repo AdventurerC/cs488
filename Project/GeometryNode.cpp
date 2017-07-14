@@ -27,7 +27,8 @@ GeometryNode::GeometryNode(
 	  hitbox(new Hitbox()),
 	  m_vertices(),
 	  m_faces(),
-	  loop(0)
+	  loop(0),
+	  m_animationEnd(0)
 {
 	m_nodeType = NodeType::GeometryNode;
 	hitbox->_pos = dvec3(0.0);
@@ -100,6 +101,8 @@ void GeometryNode::setKeyframe(int time){
 	m_keyframes[time] = key;
 
 	cout << "Created keyframe for " << m_name << " at " << time << endl;
+
+	setAnimationLength(m_animationEnd);
 }
 
 /*void GeometryNode::setNextKeyframe(Keyframe* cur, Keyframe* next){
@@ -160,4 +163,8 @@ Keyframe* GeometryNode::getPreviousKeyframe(int curtime){
 	if (m_keyframes.size() == 0) return nullptr;
 	auto it = m_keyframes.lower_bound(curtime);
 	return (--it)->second; 
+}
+
+void GeometryNode::setAnimationLength(int time){
+	m_animationEnd = std::max(time,  (m_keyframes.rbegin())->first);
 }

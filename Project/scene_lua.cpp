@@ -238,8 +238,10 @@ int gr_keyframe_cmd(lua_State* L)
   luaL_argcheck(L, selfdata != 0, 1, "Node expected");
 
   GeometryNode* self = dynamic_cast<GeometryNode*>(selfdata->node);
+  luaL_argcheck(L, self != 0, 1, "Geometry node expected");
 
-  int time = (int)luaL_checknumber(L, 1);
+
+  int time = (int)luaL_checknumber(L, 2);
 
   self->setKeyframe(time);
 

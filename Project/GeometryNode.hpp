@@ -52,6 +52,8 @@ public:
 
 	void setKeyframe(int time);
 
+	void setAnimationLength(int time);
+
 	//bool collide3D(GeometryNode* other, glm::vec3 &axis);
 	//bool collide2D(GeometryNode* other, glm::vec3 &axis); //
 
