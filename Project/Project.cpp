@@ -28,6 +28,9 @@ const size_t CIRCLE_PTS = 48;
 
 static const size_t DIM = 8;
 
+//clock_t m_start_time = 0;
+//clock_t m_current_time = 0;
+//float m_current_time_secs = 0;
 
 //----------------------------------------------------------------------------------------
 // Constructor
@@ -167,6 +170,9 @@ void Project::init()
 	Bounds bounds(m_plane->hitbox->_pos, m_plane->hitbox->_maxXYZ);
 	m_collisionTree = new CollisionTreeNode(bounds, 0);
 	m_collisionTree->construct((SceneNode*)&*m_rootNode);
+
+	m_start_time = clock();
+
 	/*if (m_playerNode != nullptr){
 		cout << "Player found" << endl;
 	}*/
@@ -425,6 +431,8 @@ void Project::appLogic()
 {
 	// Place per frame, application logic here ...
 	m_planeDrawn = false;
+	m_current_time = clock() - m_start_time;
+	m_current_time_secs = ((float)m_current_time)/CLOCKS_PER_SEC;
 	uploadCommonSceneUniforms();
 }
 
@@ -530,10 +538,20 @@ static void updateShaderUniforms(
 
 	shader.enable();
 	{
+
+		GLuint location;
 		//-- Set ModelView matrix:
-		GLint location = shader.getUniformLocation("ModelView");
+		location = shader.getUniformLocation("ModelView");
 		mat4 modelView = viewMatrix * node.trans;
 		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
+		CHECK_GL_ERRORS;
+
+		location = shader.getUniformLocation("curTime");
+		glUniform1f(location, 0);
+		CHECK_GL_ERRORS;
+
+		location = shader.getUniformLocation("time0");
+		glUniform1f(location, 0);
 		CHECK_GL_ERRORS;
 
 		GLuint draw_shadows = shader.getUniformLocation("drawShadows");
@@ -558,7 +576,7 @@ static void updateShaderUniforms(
 			glUniform3fv(location, 1, value_ptr(ks));
 			CHECK_GL_ERRORS;
 			location = shader.getUniformLocation("material.shininess");
-			glUniform1f(location, node.isSelected ? 0.0f :node.material.shininess);
+			glUniform1f(location, node.material.shininess);
 			CHECK_GL_ERRORS;
 			location = shader.getUniformLocation("material.alpha");
 			glUniform1f(location, node.material.alpha);
@@ -858,6 +876,7 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 		GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
 
 		//if (!(m_planeDrawn && (geometryNode == m_plane || geometryNode == m_bg)))
+		if (!(geometryNode->hasAnimation()))
 		{
 
 			if(inReflectionMode && m_drawReflection && geometryNode != m_plane){
@@ -917,13 +936,9 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 			}
 
 			if (RENDER_HITBOX && !inReflectionMode) renderHitbox(geometryNode);
-		} /*else if (geometryNode == m_plane && !m_planeDrawn){
-			drawPlane();
-		}*/
-
-		/*if (geometryNode->m_name == "player") {
-			cout << "player: " << geometryNode->_hitbox->pos << endl;
-		}*/
+		} else {
+			renderAnimatedObject(geometryNode);
+		}
 	}
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -935,15 +950,104 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 			child->translate(vec3(0, 1, 0));
 			child->scale(vec3(1, -1, 1));
 		}
+		child->set_keyframe_parent_transform(root->get_transform());
 		child->set_transform(root->get_transform() * child->get_transform());
 		renderNodes(child, inReflectionMode);
 		if (inReflectionMode && m_drawReflection){
 			child->scale(vec3(1, -1, 1));
 			child->translate(vec3(0, -1, 0));
-			
 		}
 		child->set_transform(glm::inverse(root->get_transform()) * child->get_transform());
 
+	}
+}
+
+//----------------------------------------------------------------------------------------
+void Project::renderAnimatedObject(GeometryNode *node, bool inReflectionMode){
+	if(inReflectionMode && m_drawReflection && node != m_plane){
+		glStencilFunc(GL_EQUAL, 1, 0xFF); //pass if stencil value 1
+		glStencilMask(0x00); //don't write to stencil buffer
+		glDepthMask(GL_TRUE);
+	}
+
+	updateShaderUniforms(m_shader, *node, 
+		m_view, m_doShadowMapping, false, inReflectionMode);
+
+		m_shader.enable();
+
+		int seconds = (int) m_current_time_secs;
+
+		Keyframe* cur = node->getKeyframeAt(seconds);
+		Keyframe* next = node->getNextKeyframe(seconds);
+
+		mat4 modelView0 = m_view * cur->get_total_transform();
+		mat4 modelView1 = m_view * next->get_total_transform();
+		float time0 = (float)(cur->time);
+		float time1 = (float)(next->time);
+
+		GLuint location = m_shader.getUniformLocation("ModelView");
+		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView0));
+		CHECK_GL_ERRORS;
+
+		location = m_shader.getUniformLocation("nextModelView");
+		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView1));
+		CHECK_GL_ERRORS;
+
+		location = m_shader.getUniformLocation("time0");
+		glUniform1f(location, time0);
+		CHECK_GL_ERRORS;
+
+		location = m_shader.getUniformLocation("time1");
+		glUniform1f(location, time1);
+		CHECK_GL_ERRORS;
+
+		location = m_shader.getUniformLocation("curTime");
+		glUniform1f(location, m_current_time_secs);
+		CHECK_GL_ERRORS;
+
+		location = m_shader.getUniformLocation("drawTexture");
+		glUniform1f(location, (node->texture._data != nullptr && m_drawTexture));
+		CHECK_GL_ERRORS;
+
+		if (m_drawTexture && node->texture._data != nullptr){
+			location = m_shader.getUniformLocation("textureSampler");
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, m_texture);
+			glUniform1i(location, 0);
+			CHECK_GL_ERRORS;
+		}
+
+		if (m_doShadowMapping){
+			GLuint DepthBiasID = m_shader.getUniformLocation("depthBiasMVP");
+			GLuint ShadowMapID = m_shader.getUniformLocation("shadowMap");
+
+				//GLuint TextureID = glGetUniformLocation(programID, "textureSampler");
+
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, m_shadowMap);
+			glUniform1i(ShadowMapID, 1);
+			CHECK_GL_ERRORS;
+
+			mat4 depthBias_times_model = m_depthBias*node->trans;
+			glUniformMatrix4fv(DepthBiasID, 1, GL_FALSE, value_ptr(depthBias_times_model));
+			CHECK_GL_ERRORS;
+		}
+
+	m_shader.disable();
+
+
+	if (!(!inReflectionMode && node->isTransparent()) && !(m_drawReflection && node == m_plane)){
+				//if (m_drawTexture)
+				//if (geometryNode == m_plane)
+				//	applyTexture(geometryNode);
+
+		BatchInfo batchInfo = m_batchInfoMap[node->meshId];
+
+				//-- Now render the mesh:
+		m_shader.enable();
+		glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
+
+		m_shader.disable();
 	}
 }
 
@@ -1210,36 +1314,6 @@ bool Project::mouseMoveEvent (
 	return eventHandled;
 }
 
-void Project::moveJoints(SceneNode *root, float x, float y){
-	if (mmb_down){
-		std::vector<SceneNode*>::iterator it = m_selectedJoints.begin();
-		for (it; it != m_selectedJoints.end(); ++it){
-			JointNode * jointNode = static_cast<JointNode *>(*it);
-			if((*it)->m_name == "leftElbow-hand" 
-				|| (*it)->m_name == "rightElbow-hand"
-				|| (*it)->m_name ==  "leftArm-elbow"
-				|| (*it)->m_name ==  "rightArm-elbow"){
-				
-				jointNode->rotate('y', x);
-			} else {
-				jointNode->rotate('x', x);
-			}
-			
-		}
-	}
-
-	if (rmb_down){
-		//m_curCmd->_neckY += y;
-		std::vector<SceneNode*>::iterator it = m_selectedJoints.begin();
-		for (it; it != m_selectedJoints.end(); ++it){
-			if ((*it)->m_name == "neckJoint"){
-				JointNode * jointNode = static_cast<JointNode *>(*it);
-				jointNode->rotate('y', y);
-			}
-		}
-	}
-}
-
 void Project::select(SceneNode *node){
 	if (node->isSelected) {
 		cout << "selected " << *node << endl;
@@ -1284,7 +1358,7 @@ void Project::movePlayer(double x, double z, bool adjusting){
 	//cout << "collisions: " << collisions.size() << endl;
 	for (int i = 0; i < collisions.size(); i++){
 		GeometryNode* collision = collisions[i];
-//		cout << collision->m_name << endl;
+		//cout << collision->m_name << endl;
 		if (collision == m_plane || collision == m_playerNode) continue;
 		adjust = true;
 	}

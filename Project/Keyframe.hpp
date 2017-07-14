@@ -11,7 +11,7 @@ public:
 
     int time;
 
-    glm::mat4 nodeTrans;
+    glm::mat4 parentTrans;
 
     glm::vec4 position;
     glm::mat4 trans;
@@ -21,6 +21,9 @@ public:
     void rotate(char axis, float angle);
     void scale(const glm::vec3& amount);
     void translate(const glm::vec3& amount);
+
+    void set_parent_transform(const glm::mat4& pTrans);
+    glm::mat4 get_total_transform();
 
     //void setNextKeyframe(Keyframe* next);
 };

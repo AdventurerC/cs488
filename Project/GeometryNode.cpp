@@ -121,6 +121,10 @@ Keyframe* GeometryNode::getLastKeyframe(){
 
 Keyframe* GeometryNode::getKeyframeAt(int curtime){
 
+	loop = curtime/m_animationEnd;
+
+	curtime = curtime%m_animationEnd;
+
 	if (m_keyframes.size() == 0) return nullptr;
 
 	auto it = m_keyframes.find(curtime);
@@ -129,7 +133,23 @@ Keyframe* GeometryNode::getKeyframeAt(int curtime){
 	}
 
 	Keyframe* ret = nullptr;
-	int prevKeyTime = 0;
+
+	it = m_keyframes.upper_bound(curtime);
+	if (it == m_keyframes.end()){ //after last keyframe
+		return getLastKeyframe();
+	} else if (it == m_keyframes.begin()){ //before first keyframe
+		if (loop > 1){
+			return getLastKeyframe();
+		} else {
+			return getFirstKeyframe();
+		}
+
+	}
+
+	return (--it)->second;
+
+	//ret = it->second;
+	/*int prevKeyTime = 0;
 	//int nextKeyTime = 0;
 
 	//find latest key before curtime
@@ -150,21 +170,49 @@ Keyframe* GeometryNode::getKeyframeAt(int curtime){
 		if (loop > 0){ //looping, gotta tween from last keyframe to first
 			return getLastKeyframe(); 
 		}
-	}
+	}*/
 
 }
 
 Keyframe* GeometryNode::getNextKeyframe(int curtime){
+
+	loop = curtime/m_animationEnd;
+
+	curtime = curtime%m_animationEnd;
+
 	if (m_keyframes.size() == 0) return nullptr;
-	return (m_keyframes.upper_bound(curtime))->second;
+	auto it = m_keyframes.upper_bound(curtime);
+	if (it == m_keyframes.end()){
+		return getFirstKeyframe();
+	}
+	return (it)->second;
 }
 
 Keyframe* GeometryNode::getPreviousKeyframe(int curtime){
+
+	loop = curtime/m_animationEnd;
+
+	curtime = curtime%m_animationEnd;
+
 	if (m_keyframes.size() == 0) return nullptr;
 	auto it = m_keyframes.lower_bound(curtime);
+	if (it == m_keyframes.end()){
+		return getLastKeyframe();
+	}
 	return (--it)->second; 
 }
 
 void GeometryNode::setAnimationLength(int time){
 	m_animationEnd = std::max(time,  (m_keyframes.rbegin())->first);
+}
+
+bool GeometryNode::hasAnimation(){
+	return m_keyframes.size() > 0;
+}
+
+//in -- tranformation of all parent nodes up to this one
+void GeometryNode::set_keyframe_parent_transform(const glm::mat4& parentTrans){
+	for(const auto& keyframe : m_keyframes){
+		keyframe.second->set_parent_transform(parentTrans);
+	}
 }

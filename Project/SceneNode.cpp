@@ -107,6 +107,9 @@ void SceneNode::translate(const glm::vec3& amount) {
 	set_transform( glm::translate(amount) * trans );
 }
 
+void SceneNode::set_keyframe_parent_transform(const glm::mat4& parentTrans) {
+	return;
+}
 
 //---------------------------------------------------------------------------------------
 int SceneNode::totalSceneNodes() const {

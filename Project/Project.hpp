@@ -14,6 +14,7 @@
 #include <memory>
 #include <vector>
 #include <cmath>
+#include <ctime>
 
 struct LightSource {
 	glm::vec3 position;
@@ -91,6 +92,7 @@ protected:
 	void drawReflection(SceneNode* root);
 	void drawPlane();
 	void applyTexture(GeometryNode* node);
+	void renderAnimatedObject(GeometryNode* node, bool inReflectionMode = false);
 
 	void jointPickerGui(SceneNode *node);
 
@@ -100,7 +102,7 @@ protected:
 	void deselectJoints(SceneNode *root);
 	void resetAll();
 
-	void moveJoints(SceneNode *root, float x, float y);
+	//void moveJoints(SceneNode *root, float x, float y);
 	void select(SceneNode *node);
 
 	void undo();
@@ -108,6 +110,11 @@ protected:
 
 	void movePlayer(double x, double z, bool adjusting = false);
 	void rotateShot(double x);
+
+	clock_t m_start_time;
+	clock_t m_current_time;
+
+	float m_current_time_secs;
 
 	glm::mat4 m_perpsective;
 	glm::mat4 m_view;

@@ -12,7 +12,7 @@ Keyframe::Keyframe(GeometryNode* node, int t) :
 	time(t), 
 	position(vec4(0, 0, 0, 1)), 
 	trans(mat4()),
-	nodeTrans(mat4())
+	parentTrans(mat4())
 	//nextKeyframe(nullptr)
 {
 	if (node != nullptr){
@@ -53,3 +53,11 @@ void Keyframe::translate(const glm::vec3& amount) {
 /*void Keyframe::setNextKeyframe(Keyframe* next){
 	nextKeyframe = next;
 }*/
+
+void Keyframe::set_parent_transform(const glm::mat4& pTrans){
+	parentTrans = pTrans; 
+}
+
+glm::mat4 Keyframe::get_total_transform(){
+	return parentTrans * trans;
+}

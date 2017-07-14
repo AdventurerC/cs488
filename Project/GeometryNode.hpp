@@ -43,6 +43,9 @@ public:
 	void setTransparency(float alpha);
 	bool isTransparent();
 
+	bool hasAnimation();
+	void set_keyframe_parent_transform(const glm::mat4& parentTrans);
+
 	Keyframe* getKeyframeAt(int curtime);
 	Keyframe* getNextKeyframe(int curtime);
 	Keyframe* getPreviousKeyframe(int curtime);

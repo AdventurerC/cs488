@@ -53,6 +53,8 @@ public:
     
     void remove_child(SceneNode* child);
 
+	void set_keyframe_parent_transform(const glm::mat4& parentTrans);
+
 	//-- Transformations:
     void rotate(char axis, float angle);
     void scale(const glm::vec3& amount);
