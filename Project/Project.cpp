@@ -1363,13 +1363,14 @@ void Project::redo(){
 }
 
 void Project::moveEnemy(GeometryNode* enemy){
+	//if (m_current_time%1000 != 0) return;
 	//std::uniform_real_distribution<> dis(-1, 1);
 	//srand(m_current_time);
 	double x =  dis(e) - 1.0;
 	double y = 0;//rand() % 2 - 1;
 	double z = dis(e) - 1.0;//rand() % 2 - 1;
 
-	double modifier = 1.0;
+	double modifier = 0.5;
 
 	enemy->translate(vec3(modifier*x, modifier*y, modifier*z));
 

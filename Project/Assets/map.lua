@@ -110,7 +110,7 @@ player:translate(0.2, 0.3, 7.6)
 player:set_material(black)
 rootNode:add_child(player)
 
-enemy1 = gr.mesh('sphere', 'e1', 0.9, 0.9, 0.9)
+enemy1 = gr.mesh('sphere', 'e1', 1.4, 1.4, 1.4)
 enemy1:scale(0.7,0.7,0.7)
 enemy1:translate(5, 0.2, -15)
 enemy1:set_material(black)
