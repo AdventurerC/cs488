@@ -433,8 +433,11 @@ void Project::appLogic()
 
 	if (lmb_down){
 		Shot* shot = new Shot(m_playerNode, shotId);
-		cout << "Added shot " << shotId << endl;
+		//cout << "Added shot " << shotId << endl;
 		shotId++;
+		if (shotId > 10000){
+			shotId = 0;
+		}
 		m_shots.emplace_back(shot);
 		m_playerNode->add_child(shot->_self);
 	}
@@ -1504,7 +1507,7 @@ void Project::checkShotCollisions(Shot* shot){
 
 	for (int i = 0; i < collisions.size(); i++){
 		GeometryNode* collision = collisions[i];
-		cout << shot->_self->m_name << " collided with " << collision->m_name << endl;
+		//cout << shot->_self->m_name << " collided with " << collision->m_name << endl;
 		if (collision == m_plane || collision == m_playerNode){
 			continue;
 		} else if (collision->m_name.find("shot") != std::string::npos) {
@@ -1530,9 +1533,9 @@ void Project::checkShotCollisions(Shot* shot){
 void Project::removeNode(SceneNode* root, GeometryNode* target){
 	for (SceneNode* child : root->children){
 		if (child->m_nodeType == NodeType::GeometryNode){
-			GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
+			GeometryNode * geometryNode = static_cast<GeometryNode *>(child);
 			if (geometryNode == target){
-				cout << "removing "<< target->m_name << endl; 
+				//cout << "removing "<< target->m_name << endl; 
 				root->remove_child(child);
 				return;
 			}
