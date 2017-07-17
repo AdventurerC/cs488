@@ -9,6 +9,7 @@
 #include "GeometryNode.hpp"
 #include "CollisionTree.hpp"
 #include "Texture.hpp"
+#include "Shot.hpp"
 
 #include <glm/glm.hpp>
 #include <memory>
@@ -94,6 +95,7 @@ protected:
 	void drawPlane();
 	void applyTexture(GeometryNode* node);
 	void renderAnimatedObject(GeometryNode* node, bool inReflectionMode = false);
+	void drawShot(Shot* shot);
 
 	void jointPickerGui(SceneNode *node);
 
@@ -111,7 +113,9 @@ protected:
 
 	void movePlayer(double x, double z, bool adjusting = false);
 	void moveEnemy(GeometryNode* enemy);
+	void checkShotCollisions(Shot* shot);
 	void rotateShot(double x);
+	void removeNode(SceneNode* root, GeometryNode* target);
 
 	clock_t m_start_time;
 	clock_t m_current_time;
@@ -171,6 +175,8 @@ protected:
 	GeometryNode* m_transparentNode;
 	GeometryNode* m_reflectNode;
 	CollisionTreeNode* m_collisionTree;
+	std::vector<Shot*> m_shots;
+	int shotId;
 
 	enum Mode {
 		POSITION,

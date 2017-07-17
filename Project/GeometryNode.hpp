@@ -44,6 +44,7 @@ public:
 	void scale(const glm::vec3& amount);
 	void setTransparency(float alpha);
 	bool isTransparent();
+	void kill();
 
 	bool hasAnimation();
 	void set_keyframe_parent_transform(const glm::mat4& parentTrans);
@@ -76,4 +77,6 @@ public:
 	int m_animationEnd;
 
 	int loop;
+
+	//bool draw;
 };

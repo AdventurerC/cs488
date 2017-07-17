@@ -73,7 +73,8 @@ Project::Project(const std::string & luaSceneFile)
 	  m_reflectedView(mat4()),
 	  m_texture(0),
 	  e(rd()),
-	  dis(0,2)
+	  dis(0,2),
+	  shotId(0)
 {
 
 }
@@ -159,12 +160,7 @@ void Project::init()
 		cout << "Plane found" << endl;
 	}
 
-	//findBgNode((SceneNode*)&*m_rootNode);
-
-	/*if (m_bg != nullptr){
-		cout << "Bg found" << endl;
-	}*/
-
+	//m_shot = new Shot(m_playerNode);
 
 	findEnemyNodes((SceneNode*)&*m_rootNode);
 
@@ -436,10 +432,22 @@ void Project::appLogic()
 	m_planeDrawn = false;
 	m_current_time = clock() - m_start_time;
 	m_current_time_secs = ((float)m_current_time)/CLOCKS_PER_SEC;
+
+	if (lmb_down){
+		Shot* shot = new Shot(m_playerNode, shotId);
+		shotId++;
+		m_shots.emplace_back(shot);
+		m_playerNode->add_child(shot->_self);
+	}
 	
 	moveEnemy(m_enemy1);
 	m_collisionTree->clear();
 	m_collisionTree->construct((SceneNode*)&*m_rootNode, m_current_time_secs);
+
+	for (Shot* shot : m_shots){
+		checkShotCollisions(shot);
+	}
+
 	uploadCommonSceneUniforms();
 }
 
@@ -836,6 +844,55 @@ void Project::drawPlane(){
 
 
 //----------------------------------------------------------------------------------------
+void Project::drawShot(Shot* shot){
+	m_shader.enable();
+
+	GLuint location = m_shader.getUniformLocation("ModelView");
+	mat4 modelView = m_view * shot->_self->trans;
+	glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
+	CHECK_GL_ERRORS;
+
+	location = m_shader.getUniformLocation("curTime");
+	glUniform1f(location, 0);
+	CHECK_GL_ERRORS;
+
+	location = m_shader.getUniformLocation("time0");
+	glUniform1f(location, 0);
+	CHECK_GL_ERRORS;
+
+	GLuint draw_shadows = m_shader.getUniformLocation("drawShadows");
+	glUniform1f(draw_shadows, false);
+	CHECK_GL_ERRORS;
+
+	location = m_shader.getUniformLocation("NormalMatrix");
+	mat3 normalMatrix = glm::transpose(glm::inverse(mat3(modelView)));
+	glUniformMatrix3fv(location, 1, GL_FALSE, value_ptr(normalMatrix));
+	CHECK_GL_ERRORS;
+
+	location = m_shader.getUniformLocation("material.kd");
+	vec3 kd(1.0, 1.0, 0.0); // yellow
+	glUniform3fv(location, 1, value_ptr(kd));
+	CHECK_GL_ERRORS;
+	location = m_shader.getUniformLocation("material.ks");
+	vec3 ks(1.0, 1.0, 0.0); // yellow
+	glUniform3fv(location, 1, value_ptr(ks));
+	CHECK_GL_ERRORS;
+
+	location = m_shader.getUniformLocation("material.shininess");
+	glUniform1f(location, 100);
+	CHECK_GL_ERRORS;
+	location = m_shader.getUniformLocation("material.alpha");
+	glUniform1f(location, 1.0);
+
+	BatchInfo batchInfo = m_batchInfoMap[shot->_meshId];
+
+	glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
+
+	m_shader.disable();
+
+}
+
+//----------------------------------------------------------------------------------------
 void Project::applyTexture(GeometryNode* node){
 
 	//return;
@@ -881,6 +938,14 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 
 	if (root->m_nodeType == NodeType::GeometryNode){
 		GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
+
+		if (geometryNode == m_playerNode){
+			for (Shot* shot : m_shots){
+				shot->advance();
+				drawShot(shot);
+			}
+
+		}
 		//geometryNode->updateHitbox(m_current_time_secs);
 		//if (!(m_planeDrawn && (geometryNode == m_plane || geometryNode == m_bg)))
 		if (!(geometryNode->hasAnimation()))
@@ -1421,18 +1486,49 @@ void Project::movePlayer(double x, double z, bool adjusting){
 		if (abs(z) > std::numeric_limits<double>::epsilon()){
 			backz = std::copysign(0.1, adjusting ? z : -z);
 		}
-		
-		/*while (adjust){
-
-			m_playerNode->translate(dvec3(, 0.0, -z));
-			
-			collisions.clear();
-			axis.clear();
-			m_collisionTree->collideGeometry(m_playerNode, collisions, axis, false);
-
-		}*/
 
 		movePlayer(backx, backz, true);
+	}
+}
+
+void Project::checkShotCollisions(Shot* shot){
+	GeometryNode* node = shot->_self;
+
+	std::vector<GeometryNode*> collisions;
+	std::vector<vec3> axis;
+	m_collisionTree->collideGeometry(node, collisions, axis, false);
+	bool removeSelf = false;
+
+	for (int i = 0; i < collisions.size(); i++){
+		GeometryNode* collision = collisions[i];
+		if (collision == m_plane || collision == m_playerNode){
+			continue;
+		} else if (collision == m_enemy1 || collision == m_enemy2){
+			removeNode((SceneNode*)&*m_rootNode, collision);
+			removeSelf = true;
+		} else {
+			removeSelf = true;
+		}
+	}
+
+	if (removeSelf){
+		auto it = std::find(m_shots.begin(), m_shots.end(), shot);
+		if (it != m_shots.end()){
+			m_shots.erase(it);
+		}
+	}
+}
+
+void Project::removeNode(SceneNode* root, GeometryNode* target){
+	for (SceneNode* child : root->children){
+		if (child->m_nodeType == NodeType::GeometryNode){
+			GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
+			if (geometryNode == target){
+				root->remove_child(child);
+				return;
+			}
+		}
+		removeNode(child, target);
 	}
 }
 
@@ -1462,11 +1558,21 @@ bool Project::mouseButtonInputEvent (
 			mmb_down = true;
 			eventHandled = true;
 		}
+
+		if (button == GLFW_MOUSE_BUTTON_LEFT){
+			lmb_down = true;
+			eventHandled = true;
+		}
 	}
 
 	if (actions == GLFW_RELEASE){
 		if (button == GLFW_MOUSE_BUTTON_MIDDLE){
 			mmb_down = false;
+			eventHandled = true;
+		}
+
+		if (button == GLFW_MOUSE_BUTTON_LEFT){
+			lmb_down = true;
 			eventHandled = true;
 		}
 	}
