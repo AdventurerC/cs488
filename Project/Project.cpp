@@ -160,8 +160,6 @@ void Project::init()
 		cout << "Plane found" << endl;
 	}
 
-	//m_shot = new Shot(m_playerNode);
-
 	findEnemyNodes((SceneNode*)&*m_rootNode);
 
 	findSpecialObjects((SceneNode*)&*m_rootNode);
@@ -435,6 +433,7 @@ void Project::appLogic()
 
 	if (lmb_down){
 		Shot* shot = new Shot(m_playerNode, shotId);
+		cout << "Added shot " << shotId << endl;
 		shotId++;
 		m_shots.emplace_back(shot);
 		m_playerNode->add_child(shot->_self);
@@ -445,6 +444,8 @@ void Project::appLogic()
 	m_collisionTree->construct((SceneNode*)&*m_rootNode, m_current_time_secs);
 
 	for (Shot* shot : m_shots){
+		shot->advance();
+		//cout << "shot " << shot->_self->m_name << " advancing " << endl;
 		checkShotCollisions(shot);
 	}
 
@@ -939,13 +940,6 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 	if (root->m_nodeType == NodeType::GeometryNode){
 		GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
 
-		if (geometryNode == m_playerNode){
-			for (Shot* shot : m_shots){
-				shot->advance();
-				drawShot(shot);
-			}
-
-		}
 		//geometryNode->updateHitbox(m_current_time_secs);
 		//if (!(m_planeDrawn && (geometryNode == m_plane || geometryNode == m_bg)))
 		if (!(geometryNode->hasAnimation()))
@@ -1010,6 +1004,13 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 			if (RENDER_HITBOX && !inReflectionMode) renderHitbox(geometryNode);
 		} else {
 			renderAnimatedObject(geometryNode, inReflectionMode);
+		}
+
+		if (geometryNode == m_playerNode){
+			for (Shot* shot : m_shots){
+				drawShot(shot);
+			}
+			return; //don't draw shots twice
 		}
 	}
 
@@ -1499,19 +1500,26 @@ void Project::checkShotCollisions(Shot* shot){
 	m_collisionTree->collideGeometry(node, collisions, axis, false);
 	bool removeSelf = false;
 
+	//cout << "shot collided with " << collisions.size() << "objects" <<endl;
+
 	for (int i = 0; i < collisions.size(); i++){
 		GeometryNode* collision = collisions[i];
+		cout << shot->_self->m_name << " collided with " << collision->m_name << endl;
 		if (collision == m_plane || collision == m_playerNode){
+			continue;
+		} else if (collision->m_name.find("shot") != std::string::npos) {
 			continue;
 		} else if (collision == m_enemy1 || collision == m_enemy2){
 			removeNode((SceneNode*)&*m_rootNode, collision);
 			removeSelf = true;
 		} else {
 			removeSelf = true;
+			//cout << "collided with " << collision->m_name << endl;
 		}
 	}
 
 	if (removeSelf){
+		m_playerNode->remove_child(shot->_self);
 		auto it = std::find(m_shots.begin(), m_shots.end(), shot);
 		if (it != m_shots.end()){
 			m_shots.erase(it);
@@ -1524,6 +1532,7 @@ void Project::removeNode(SceneNode* root, GeometryNode* target){
 		if (child->m_nodeType == NodeType::GeometryNode){
 			GeometryNode * geometryNode = static_cast<GeometryNode *>(root);
 			if (geometryNode == target){
+				cout << "removing "<< target->m_name << endl; 
 				root->remove_child(child);
 				return;
 			}
@@ -1572,7 +1581,7 @@ bool Project::mouseButtonInputEvent (
 		}
 
 		if (button == GLFW_MOUSE_BUTTON_LEFT){
-			lmb_down = true;
+			lmb_down = false;
 			eventHandled = true;
 		}
 	}

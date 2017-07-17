@@ -232,6 +232,8 @@ void CollisionTreeNode::collideGeometry(GeometryNode* other, std::vector<Geometr
 }
 
 bool CollisionTreeNode::collide2Geo(GeometryNode* node, GeometryNode* other, glm::vec3 &axis, float curtime, bool checkY){
+    if (node == other) return false;
+
     Bounds nodeBounds;
 
     //nodeBounds._origin = dvec3(node->trans * node->hitbox->_pos); 
