@@ -46,8 +46,8 @@ Project::Project(const std::string & luaSceneFile)
 	  m_vbo_vertexUV(0),
 	  m_vao_arcCircle(0),
 	  m_vbo_arcCircle(0),
-	  m_vao_particle(0),
-	  m_vbo_particle(0),
+	  //m_vao_particle(0),
+	  //m_vbo_particle(0),
 	  m_mouseX(0.0),
 	  m_mouseY(0.0),
 	  m_zbuffer(true),
@@ -74,11 +74,11 @@ Project::Project(const std::string & luaSceneFile)
 	  m_texture(0),
 	  e(rd()),
 	  dis(0,2),
-	  shotId(0),
-	  particleCount(0),
-	  lastUsedParticle(0),
-	  particles(new Particle[MAX_PARTICLES]),
-	  particle_positions(new float[3*MAX_PARTICLES])
+	  shotId(0)
+	  //particleCount(0),
+	  //lastUsedParticle(0)
+	  //particles(new Particle[MAX_PARTICLES]),
+	  //particle_positions(new float[3*MAX_PARTICLES])
 {
 
 }
@@ -103,7 +103,7 @@ void Project::init()
 
 	glGenVertexArrays(1, &m_vao_arcCircle);
 	glGenVertexArrays(1, &m_vao_meshData);
-	glGenVertexArrays(1, &m_vao_particle);
+//	glGenVertexArrays(1, &m_vao_particle);
 	enableVertexShaderInputSlots();
 
 	processLuaSceneFile(m_luaSceneFile);
@@ -218,10 +218,10 @@ void Project::createShaderProgram()
 	m_shader_shadow.attachFragmentShader( getAssetFilePath("shadow_FragmentShader.fs").c_str() );
 	m_shader_shadow.link();
 
-	m_particle_shader.generateProgramObject();
+	/*m_particle_shader.generateProgramObject();
 	m_particle_shader.attachVertexShader( getAssetFilePath("particle_vs.vs").c_str());
 	m_particle_shader.attachFragmentShader( getAssetFilePath("particle_fs.fs").c_str() );
-	m_particle_shader.link();
+	m_particle_shader.link();*/
 }
 
 //----------------------------------------------------------------------------------------
@@ -258,13 +258,13 @@ void Project::enableVertexShaderInputSlots()
 		CHECK_GL_ERRORS;
 	}
 
-	{
+	/*{
 		glBindVertexArray(m_vao_particle);
 
 		m_particleAttrribLocation = m_particle_shader.getAttribLocation("position");
 		glEnableVertexAttribArray(m_particleAttrribLocation);
 		//bind stuff later
-	}
+	}*/
 
 	// Restore defaults
 	glBindVertexArray(0);
@@ -332,7 +332,7 @@ void Project::uploadVertexDataToVbos (
 	}
 
 	// Generate VBO to store the particles.
-	{
+	/*{
 		glGenBuffers( 1, &m_vbo_particle );
 		glBindBuffer( GL_ARRAY_BUFFER, m_vbo_particle );
 
@@ -340,7 +340,7 @@ void Project::uploadVertexDataToVbos (
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		CHECK_GL_ERRORS;
-	}
+	}*/
 }
 
 //----------------------------------------------------------------------------------------
@@ -382,14 +382,14 @@ void Project::mapVboDataToVertexShaderInputLocations()
 
 	CHECK_GL_ERRORS;
 
-	glBindVertexArray(m_vao_particle);
+	/*glBindVertexArray(m_vao_particle);
 	glBindBuffer(GL_ARRAY_BUFFER, m_vao_particle);
 	glVertexAttribPointer(m_particleAttrribLocation, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	CHECK_GL_ERRORS;
+	CHECK_GL_ERRORS;*/
 
 }
 
@@ -490,6 +490,8 @@ void Project::appLogic()
 		//cout << "shot " << shot->_self->m_name << " advancing " << endl;
 		checkShotCollisions(shot);
 	}
+
+	moveParticles();
 
 	uploadCommonSceneUniforms();
 }
@@ -765,6 +767,8 @@ void Project::draw() {
 	glBindVertexArray(0);
 	CHECK_GL_ERRORS;
 
+	drawParticles();
+
 	if (m_zbuffer)
 		glDisable( GL_DEPTH_TEST );
 
@@ -919,45 +923,117 @@ void Project::drawShot(Shot* shot){
 
 }
 
-void Project::drawParticles(GeometryNode* node){
+void Project::drawParticles(){
+	for (auto& p : particles){
 
-	generateParticles();
-
-	updateShaderUniforms(m_shader, *node, 
-					m_view, m_doShadowMapping, false);
-
-	glBindBuffer( GL_ARRAY_BUFFER, m_vbo_particle );
-
-	glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLES*3*sizeof(float), NULL, GL_STREAM_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, particleCount*3*sizeof(float), particle_positions);
-
-	BatchInfo batchInfo = m_batchInfoMap["plane"];
+	if (p->_life <= 0) continue; 
+	//updateShaderUniforms(m_particle_shader, *node, 
+	//				m_view, m_doShadowMapping, false);
+	glBindVertexArray(m_vao_meshData);
 
 	m_shader.enable();
 
-	glDrawArraysInstanced(GL_TRIANGLE_STRIP, batchInfo.startIndex, batchInfo.numIndices, particleCount);
+	GLuint location;
+		//-- Set ModelView matrix:
+	//cout << "trans: " << glm::to_string(p->_trans) << endl;
+	location = m_shader.getUniformLocation("ModelView");
+	mat4 modelView = m_view  */** glm::translate(p->_pos) * */p->_trans;
+	glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
+	CHECK_GL_ERRORS;
+
+	location = m_shader.getUniformLocation("curTime");
+		glUniform1f(location, 0);
+		CHECK_GL_ERRORS;
+
+		location = m_shader.getUniformLocation("time0");
+		glUniform1f(location, 0);
+		CHECK_GL_ERRORS;
+
+			//-- Set NormMatrix:
+	location = m_shader.getUniformLocation("NormalMatrix");
+	mat3 normalMatrix = glm::transpose(glm::inverse(mat3(modelView)));
+	glUniformMatrix3fv(location, 1, GL_FALSE, value_ptr(normalMatrix));
+	CHECK_GL_ERRORS;
+
+
+		//-- Set Material values:
+	location = m_shader.getUniformLocation("material.kd");
+	vec3 kd(1.0, 1.0, 0.0);
+	glUniform3fv(location, 1, value_ptr(kd));
+	CHECK_GL_ERRORS;
+	location = m_shader.getUniformLocation("material.ks");
+	vec3 ks(1.0, 1.0, 0.0);
+	glUniform3fv(location, 1, value_ptr(ks));
+	CHECK_GL_ERRORS;
+	location = m_shader.getUniformLocation("material.shininess");
+	glUniform1f(location, 100);
+	CHECK_GL_ERRORS;
+	location = m_shader.getUniformLocation("material.alpha");
+	glUniform1f(location, 1.0f);
+	CHECK_GL_ERRORS;
+		
+
+	//glBindBuffer( GL_ARRAY_BUFFER, m_vbo_particle );
+
+	//glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLES*3*sizeof(float), NULL, GL_STREAM_DRAW);
+	//glBufferSubData(GL_ARRAY_BUFFER, 0, particleCount*3*sizeof(float), particle_positions);
+	CHECK_GL_ERRORS;
+
+
+	BatchInfo batchInfo = m_batchInfoMap["cube"];
+
+	//m_particle_shader.enable();
+	/*for (int i = 0; i < particleCount; i++){
+		glDrawArrays(GL_TRIANGLES, 0, 6)
+	}*/
+	//cout << "particle count: "<< particleCount << endl;
+	//glDrawArraysInstanced(GL_TRIANGLES, 0, 3, particleCount);
+	glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
+
+	//CHECK_GL_ERRORS;
 
 	m_shader.disable();
+
+	glBindVertexArray(0);
+	CHECK_GL_ERRORS;
+	}
 }
 
-void Project::generateParticles(){
-	particleCount = 0;
-	for (int i = 0; i < MAX_PARTICLES; i++){
-		Particle &p = particles[i];
-
-		if(p._life > 0){
-			p._life--;
-			if (p._life > 0){
-				p._speed += glm::vec3(0.0, -9.81, 0.0) * 0.1;
-				p._pos += p._speed;
-
-				particle_positions[3*particleCount] = p._pos.x;
-				particle_positions[3*particleCount+1] = p._pos.y;
-				particle_positions[3*particleCount+2] = p._pos.z;
-
+void Project::moveParticles(){
+	for (auto& p : particles){
+		//Particle& p = particles[i];
+		if (p->_life > 0){
+			p->_life--;
+			if (p->_life > 0){
+				p->_speed += glm::vec3(0.0, -9.81, 0.0) * 0.1;
+				//p._pos += p._speed;
+				p->move();
 			}
-			particleCount++;
+		} else {
+			auto it = std::find(particles.begin(), particles.end(), p);
+			if (it != particles.end()){
+				particles.erase(it);
+			}
 		}
+	}
+
+	
+}
+
+void Project::generateParticles(GeometryNode* node){
+	cout << "generateParticles at " << glm::to_string(node->trans) << endl;
+	for (int i = 0; i < 50; i++){
+		float x = dis(e) - 1.0;
+		float y = dis(e);
+		float z = dis(e) - 1.0;
+
+		float modifier = 1.5;
+
+		vec3 pos(x*modifier, y*modifier, z*modifier);
+
+		Particle* p = new Particle(node->trans,pos);
+
+		particles.emplace_back(p);
 	}
 }
 
@@ -1521,12 +1597,12 @@ void Project::checkShotCollisions(Shot* shot){
 		} else if (collision->m_name.find("shot") != std::string::npos) {
 			continue;
 		} else if (collision == m_enemy1 || collision == m_enemy2){
+			generateParticles(collision);
 			removeNode((SceneNode*)&*m_rootNode, collision);
 			removeSelf = true;
-			drawParticles(collision);
 		} else {
+			//generateParticles(collision);
 			removeSelf = true;
-			//cout << "collided with " << collision->m_name << endl;
 		}
 	}
 

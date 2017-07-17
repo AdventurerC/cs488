@@ -12,6 +12,10 @@ struct LightSource {
 uniform LightSource light;
 
 uniform mat4 ModelView;
+uniform mat4 nextModelView;
+uniform float time0;
+uniform float time1;
+uniform float curTime;
 uniform mat4 Perspective;
 
 // Remember, this is transpose(inverse(ModelView)).  Normals should be
