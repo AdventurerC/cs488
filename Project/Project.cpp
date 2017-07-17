@@ -46,10 +46,10 @@ Project::Project(const std::string & luaSceneFile)
 	  m_vbo_vertexUV(0),
 	  m_vao_arcCircle(0),
 	  m_vbo_arcCircle(0),
+	  m_vao_particle(0),
+	  m_vbo_particle(0),
 	  m_mouseX(0.0),
 	  m_mouseY(0.0),
-	  tempMode(0),
-	  m_mode(Mode::POSITION),
 	  m_zbuffer(true),
 	  m_backfaceCulling(false),
 	  m_frontfaceCulling(false),
@@ -74,7 +74,11 @@ Project::Project(const std::string & luaSceneFile)
 	  m_texture(0),
 	  e(rd()),
 	  dis(0,2),
-	  shotId(0)
+	  shotId(0),
+	  particleCount(0),
+	  lastUsedParticle(0),
+	  particles(new Particle[MAX_PARTICLES]),
+	  particle_positions(new float[3*MAX_PARTICLES])
 {
 
 }
@@ -99,6 +103,7 @@ void Project::init()
 
 	glGenVertexArrays(1, &m_vao_arcCircle);
 	glGenVertexArrays(1, &m_vao_meshData);
+	glGenVertexArrays(1, &m_vao_particle);
 	enableVertexShaderInputSlots();
 
 	processLuaSceneFile(m_luaSceneFile);
@@ -212,6 +217,11 @@ void Project::createShaderProgram()
 	m_shader_shadow.attachVertexShader( getAssetFilePath("shadow_VertexShader.vs").c_str() );
 	m_shader_shadow.attachFragmentShader( getAssetFilePath("shadow_FragmentShader.fs").c_str() );
 	m_shader_shadow.link();
+
+	m_particle_shader.generateProgramObject();
+	m_particle_shader.attachVertexShader( getAssetFilePath("particle_vs.vs").c_str());
+	m_particle_shader.attachFragmentShader( getAssetFilePath("particle_fs.fs").c_str() );
+	m_particle_shader.link();
 }
 
 //----------------------------------------------------------------------------------------
@@ -246,6 +256,14 @@ void Project::enableVertexShaderInputSlots()
 		glEnableVertexAttribArray(m_arc_positionAttribLocation);
 
 		CHECK_GL_ERRORS;
+	}
+
+	{
+		glBindVertexArray(m_vao_particle);
+
+		m_particleAttrribLocation = m_particle_shader.getAttribLocation("position");
+		glEnableVertexAttribArray(m_particleAttrribLocation);
+		//bind stuff later
 	}
 
 	// Restore defaults
@@ -312,6 +330,17 @@ void Project::uploadVertexDataToVbos (
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		CHECK_GL_ERRORS;
 	}
+
+	// Generate VBO to store the particles.
+	{
+		glGenBuffers( 1, &m_vbo_particle );
+		glBindBuffer( GL_ARRAY_BUFFER, m_vbo_particle );
+
+		glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLES*3*sizeof(float), NULL, GL_STREAM_DRAW);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		CHECK_GL_ERRORS;
+	}
 }
 
 //----------------------------------------------------------------------------------------
@@ -352,6 +381,16 @@ void Project::mapVboDataToVertexShaderInputLocations()
 	glBindVertexArray(0);
 
 	CHECK_GL_ERRORS;
+
+	glBindVertexArray(m_vao_particle);
+	glBindBuffer(GL_ARRAY_BUFFER, m_vao_particle);
+	glVertexAttribPointer(m_particleAttrribLocation, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	CHECK_GL_ERRORS;
+
 }
 
 //----------------------------------------------------------------------------------------
@@ -491,27 +530,11 @@ void Project::guiLogic()
 			resetOrientation();
 		}
 
-		if( ImGui::Button( "Reset Joints" ) ) {
-			resetJoints();
-		}
-
 		if( ImGui::Button( "Reset All" ) ) {
 			resetAll();
 		}
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
-
-	ImGui::End();
-
-	ImGui::Begin("Edit", &showDebugWindow, ImVec2(100,100), opacity,
-			windowFlags);
-		if( ImGui::Button( "Undo" ) ) {
-			undo();
-		}
-
-		if( ImGui::Button( "Redo" ) ) {
-			redo();
-		}
 
 	ImGui::End();
 
@@ -894,6 +917,48 @@ void Project::drawShot(Shot* shot){
 
 	m_shader.disable();
 
+}
+
+void Project::drawParticles(GeometryNode* node){
+
+	generateParticles();
+
+	updateShaderUniforms(m_shader, *node, 
+					m_view, m_doShadowMapping, false);
+
+	glBindBuffer( GL_ARRAY_BUFFER, m_vbo_particle );
+
+	glBufferData(GL_ARRAY_BUFFER, MAX_PARTICLES*3*sizeof(float), NULL, GL_STREAM_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, particleCount*3*sizeof(float), particle_positions);
+
+	BatchInfo batchInfo = m_batchInfoMap["plane"];
+
+	m_shader.enable();
+
+	glDrawArraysInstanced(GL_TRIANGLE_STRIP, batchInfo.startIndex, batchInfo.numIndices, particleCount);
+
+	m_shader.disable();
+}
+
+void Project::generateParticles(){
+	particleCount = 0;
+	for (int i = 0; i < MAX_PARTICLES; i++){
+		Particle &p = particles[i];
+
+		if(p._life > 0){
+			p._life--;
+			if (p._life > 0){
+				p._speed += glm::vec3(0.0, -9.81, 0.0) * 0.1;
+				p._pos += p._speed;
+
+				particle_positions[3*particleCount] = p._pos.x;
+				particle_positions[3*particleCount+1] = p._pos.y;
+				particle_positions[3*particleCount+2] = p._pos.z;
+
+			}
+			particleCount++;
+		}
+	}
 }
 
 //----------------------------------------------------------------------------------------
@@ -1316,35 +1381,10 @@ void Project::resetPosition(){
 	m_translation = mat4();
 }
 
-//reset& deselects joints, have to manually clear selection vector
-void Project::resetJoints(){	
-	while(!m_undoStack.empty()){
-		Command* cmd = m_undoStack.back();
-		m_undoStack.pop_back();
-		cmd->execute(-1);
-	}
-	std::vector<SceneNode*>::iterator it = m_selectedJoints.begin();
-	for (it; it != m_selectedJoints.end(); ++it){
-		JointNode * jointNode = static_cast<JointNode *>(*it);
-		jointNode->resetJoint();
-	}
-	deselectJoints((SceneNode*)&*m_rootNode);
-	m_selectedJoints.clear();
-	m_undoStack.clear();
-	m_redoStack.clear();
-}
-
-void Project::deselectJoints(SceneNode *root){	
-	root->isSelected = false;
-	for (SceneNode *child : root->children){
-		deselectJoints(child);
-	}
-}
 
 void Project::resetAll(){
 	resetOrientation();
 	resetPosition();
-	resetJoints();
 }
 
 //----------------------------------------------------------------------------------------
@@ -1398,38 +1438,6 @@ bool Project::mouseMoveEvent (
 	return eventHandled;
 }
 
-void Project::select(SceneNode *node){
-	if (node->isSelected) {
-		cout << "selected " << *node << endl;
-		m_selectedJoints.emplace_back(node);
-	} else {
-		auto it = std::find(m_selectedJoints.begin(), m_selectedJoints.end(), node);
-		if (it != m_selectedJoints.end()){
-			cout << "deselected " << *node << endl;
-			m_selectedJoints.erase(it);
-		}
-	}
-
-}
-
-void Project::undo(){
-	if (m_undoStack.empty()) return;
-
-	Command* cmd = m_undoStack.back();
-	m_undoStack.pop_back();
-	cmd->execute(-1);
-	m_redoStack.emplace_back(cmd);
-}
-
-void Project::redo(){
-	if (m_redoStack.empty()) return;
-
-	Command* cmd = m_redoStack.back();
-	m_redoStack.pop_back();
-	cmd->execute(1);
-	m_undoStack.emplace_back(cmd);
-
-}
 
 void Project::moveEnemy(GeometryNode* enemy){
 	//if (m_current_time%1000 != 0) return;
@@ -1515,6 +1523,7 @@ void Project::checkShotCollisions(Shot* shot){
 		} else if (collision == m_enemy1 || collision == m_enemy2){
 			removeNode((SceneNode*)&*m_rootNode, collision);
 			removeSelf = true;
+			drawParticles(collision);
 		} else {
 			removeSelf = true;
 			//cout << "collided with " << collision->m_name << endl;

@@ -10,6 +10,7 @@
 #include "CollisionTree.hpp"
 #include "Texture.hpp"
 #include "Shot.hpp"
+#include "Particle.hpp"
 
 #include <glm/glm.hpp>
 #include <memory>
@@ -18,35 +19,13 @@
 #include <ctime>
 #include <random>
 
+#define MAX_PARTICLES 500
+
 struct LightSource {
 	glm::vec3 position;
 	glm::vec3 rgbIntensity;
 };
 
-//since all you do to joints is rotate, extremely lazy implementation
-class Command {
-public:
-	std::vector<SceneNode*> _nodes;
-	std::vector<glm::mat4> _mats;
-	float _rotateX;
-	float _rotateY;
-	float _neckY;
-
-	Command() : _rotateX(0.0), _rotateY(0.0), _neckY(0.0) { }
-
-	void execute(int direction){
-		direction = std::copysign(1, direction);
-		//idk how to undo rotate on 2 DOF on the head so have to work with entire matrix
-		for (int i = 0; i < _nodes.size(); i++){
-			if (direction < 0){
-				_nodes[i]->set_transform( glm::inverse(_mats[i]) * _nodes[i]->get_transform());
-			} else {
-				_nodes[i]->set_transform( _mats[i] * _nodes[i]->get_transform());
-			}
-		}
-		
-	}
-};
 
 class Project : public CS488Window {
 public:
@@ -97,19 +76,14 @@ protected:
 	void renderAnimatedObject(GeometryNode* node, bool inReflectionMode = false);
 	void drawShot(Shot* shot);
 
+	void drawParticles(GeometryNode* node);
+	void generateParticles();
+
 	void jointPickerGui(SceneNode *node);
 
 	void resetOrientation();
 	void resetPosition();
-	void resetJoints();
-	void deselectJoints(SceneNode *root);
 	void resetAll();
-
-	//void moveJoints(SceneNode *root, float x, float y);
-	void select(SceneNode *node);
-
-	void undo();
-	void redo();
 
 	void movePlayer(double x, double z, bool adjusting = false);
 	void moveEnemy(GeometryNode* enemy);
@@ -147,6 +121,15 @@ protected:
 	GLuint m_shadowMap;
 	ShaderProgram m_shader_shadow;
 
+	GLuint m_vao_particle;
+	GLuint m_vbo_particle;
+	ShaderProgram m_particle_shader;
+	Particle* particles;
+	float* particle_positions;
+	int particleCount;
+	GLint m_particleAttrribLocation;
+	int lastUsedParticle;
+
 	bool m_doShadowMapping;
 	bool m_drawReflection;
 	bool m_drawTexture;
@@ -183,8 +166,6 @@ protected:
 		JOINT
 	};
 
-	int tempMode;
-	Mode m_mode;
 	bool m_zbuffer;
 	bool m_backfaceCulling;
 	bool m_frontfaceCulling;
@@ -200,17 +181,9 @@ protected:
 	float m_jointRotateX;
 	float m_jointRotateY;
 
-	Command* m_curCmd;
-	Command* m_neckCmd;
-	bool cmd_started;
-
 	bool lmb_down;
 	bool mmb_down;
 	bool rmb_down;
-
-	std::vector<SceneNode*> m_selectedJoints;
-	std::vector<Command*> m_undoStack;
-	std::vector<Command*> m_redoStack;
 
 	std::random_device rd;
 	std::mt19937 e;
