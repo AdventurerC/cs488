@@ -60,6 +60,10 @@ bool GeometryNode::isTransparent(){
 	return abs(1.0f - material.alpha) > std::numeric_limits<float>::epsilon();
 }
 
+bool GeometryNode::isEnemy(){
+	return m_name[0] == 'e' && std::atoi(m_name.substr(1).c_str()) > 0;
+}
+
 void GeometryNode::setKeyframe(int time){
 	Keyframe* key = new Keyframe(this, time);
 

@@ -38,7 +38,7 @@ static const size_t DIM = 8;
 Project::Project(const std::string & luaSceneFile)
 	: m_luaSceneFile(luaSceneFile),
 	  m_positionAttribLocation(0),
-	  m_normalAttribLocation(0),
+	  m_normalAttribLocation(0), 
 	  m_textureAttrribLocation(0),
 	  m_vao_meshData(0),
 	  m_vbo_vertexPositions(0),
@@ -74,7 +74,8 @@ Project::Project(const std::string & luaSceneFile)
 	  m_texture(0),
 	  e(rd()),
 	  dis(0,2),
-	  shotId(0)
+	  shotId(0),
+	  lives(3)
 	  //particleCount(0),
 	  //lastUsedParticle(0)
 	  //particles(new Particle[MAX_PARTICLES]),
@@ -466,11 +467,15 @@ void Project::uploadCommonSceneUniforms() {
 void Project::appLogic()
 {
 	// Place per frame, application logic here ...
+	if (invincibilityTime > 0){
+		invincibilityTime--;
+		//cout << "invincibilityTime: " << invincibilityTime << endl;
+	}
 	m_planeDrawn = false;
 	m_current_time = clock() - m_start_time;
 	m_current_time_secs = ((float)m_current_time)/CLOCKS_PER_SEC;
 
-	if (lmb_down){
+	if (lmb_down && m_playerNode != nullptr && lives > 0){
 		Shot* shot = new Shot(m_playerNode, shotId);
 		//cout << "Added shot " << shotId << endl;
 		shotId++;
@@ -481,7 +486,10 @@ void Project::appLogic()
 		m_playerNode->add_child(shot->_self);
 	}
 	
-	moveEnemy(m_enemy1);
+	for (auto& enemy: m_enemies){
+		moveEnemy(enemy);
+	}
+	//moveEnemy(m_enemy1);
 	m_collisionTree->clear();
 	m_collisionTree->construct((SceneNode*)&*m_rootNode, m_current_time_secs);
 
@@ -537,6 +545,19 @@ void Project::guiLogic()
 		}
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
+
+	ImGui::End();
+
+	ImGui::Begin("Player", &showDebugWindow, ImVec2(100, 300), opacity,
+			windowFlags);
+
+		string livesDisplay = "";
+		for (int i = 0; i < lives; i++){
+			livesDisplay += "*";
+		}
+
+		ImGui::Text("Lives: %s", livesDisplay.c_str());
+
 
 	ImGui::End();
 
@@ -1418,13 +1439,15 @@ void Project::findBgNode(SceneNode *root){
 
 //----------------------------------------------------------------------------------------
 void Project::findEnemyNodes(SceneNode *root){
-	if (root->m_nodeType == NodeType::GeometryNode && root->m_name == "e1"){
-		m_enemy1 = static_cast<GeometryNode *>(root);
-	} else if (root->m_nodeType == NodeType::GeometryNode && root->m_name == "e2"){
+	if (root->m_nodeType == NodeType::GeometryNode){
+		GeometryNode* enemy1 = static_cast<GeometryNode *>(root);
+		if (enemy1->isEnemy())
+			m_enemies.emplace_back(enemy1);
+	} /*else if (root->m_nodeType == NodeType::GeometryNode && root->m_name == "e2"){
 		m_enemy2 = static_cast<GeometryNode *>(root);
-	}
+	}*/
 
-	if (m_enemy1 != nullptr && m_enemy2 != nullptr) return;
+	//if (m_enemy1 != nullptr && m_enemy2 != nullptr) return;
 	for (SceneNode *child : root->children){
 		findEnemyNodes(child);
 	}
@@ -1538,8 +1561,15 @@ void Project::moveEnemy(GeometryNode* enemy){
 		if (collision == m_plane || collision == enemy) {
 			continue;
 		} else if (collision == m_playerNode){
-			//deduct lives
-			continue;
+			if (invincibilityTime <= 0){
+				lives--;
+				generateParticles(m_playerNode);
+				invincibilityTime = 5;
+				if (lives <=0){
+					removeNode((SceneNode*)&*m_rootNode, m_playerNode);
+				}
+			}
+			//continue;
 		}
 		adjust = true;
 	}
@@ -1550,6 +1580,7 @@ void Project::moveEnemy(GeometryNode* enemy){
 }
 
 void Project::movePlayer(double x, double z, bool adjusting){
+	if (m_playerNode == nullptr) return;
 	dvec3 transl(x, 0.0, z);
 	m_playerNode->translate(transl);
 	std::vector<GeometryNode*> collisions;
@@ -1561,6 +1592,14 @@ void Project::movePlayer(double x, double z, bool adjusting){
 		GeometryNode* collision = collisions[i];
 		//cout << collision->m_name << endl;
 		if (collision == m_plane || collision == m_playerNode) continue;
+		if (invincibilityTime <= 0 && collision->isEnemy()){//(collision == m_enemy1 || collision == m_enemy2)){
+			lives--;
+			generateParticles(m_playerNode);
+			invincibilityTime = 5;
+			if (lives <= 0){
+				removeNode((SceneNode*)&*m_rootNode, m_playerNode);
+			}
+		}
 		adjust = true;
 	}
 
@@ -1580,6 +1619,7 @@ void Project::movePlayer(double x, double z, bool adjusting){
 }
 
 void Project::checkShotCollisions(Shot* shot){
+	if (lives <= 0) return;
 	GeometryNode* node = shot->_self;
 
 	std::vector<GeometryNode*> collisions;
@@ -1596,7 +1636,7 @@ void Project::checkShotCollisions(Shot* shot){
 			continue;
 		} else if (collision->m_name.find("shot") != std::string::npos) {
 			continue;
-		} else if (collision == m_enemy1 || collision == m_enemy2){
+		} else if (collision->isEnemy()){// == m_enemy1 || collision == m_enemy2){
 			generateParticles(collision);
 			removeNode((SceneNode*)&*m_rootNode, collision);
 			removeSelf = true;
@@ -1616,6 +1656,7 @@ void Project::checkShotCollisions(Shot* shot){
 }
 
 void Project::removeNode(SceneNode* root, GeometryNode* target){
+	if (root == nullptr) return;
 	for (SceneNode* child : root->children){
 		if (child->m_nodeType == NodeType::GeometryNode){
 			GeometryNode * geometryNode = static_cast<GeometryNode *>(child);
@@ -1630,6 +1671,7 @@ void Project::removeNode(SceneNode* root, GeometryNode* target){
 }
 
 void Project::rotateShot(double x){
+	if (m_playerNode == nullptr) return;
 	mat4 temp = m_playerNode->get_transform();
 	m_playerNode->set_transform(mat4());
 	m_playerNode->rotate('y', x);
@@ -1650,6 +1692,7 @@ bool Project::mouseButtonInputEvent (
 
 	if (ImGui::IsMouseHoveringAnyWindow()) return eventHandled;
 	// Fill in with event handling code...
+
 	if (actions == GLFW_PRESS){
 		if (button == GLFW_MOUSE_BUTTON_MIDDLE){
 			mmb_down = true;

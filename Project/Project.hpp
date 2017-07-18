@@ -152,6 +152,8 @@ protected:
 
 	std::shared_ptr<SceneNode> m_rootNode;
 
+	int lives;
+	int invincibilityTime; 
 	GeometryNode* m_playerNode;
 	GeometryNode* m_plane;
 	GeometryNode* m_bg;
@@ -162,6 +164,7 @@ protected:
 	CollisionTreeNode* m_collisionTree;
 	std::vector<Shot*> m_shots;
 	int shotId;
+	std::vector<GeometryNode*> m_enemies;
 
 	enum Mode {
 		POSITION,

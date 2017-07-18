@@ -45,6 +45,7 @@ public:
 	void setTransparency(float alpha);
 	bool isTransparent();
 	void kill();
+	bool isEnemy();
 
 	bool hasAnimation();
 	void set_keyframe_parent_transform(const glm::mat4& parentTrans);
