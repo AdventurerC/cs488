@@ -478,9 +478,12 @@ void Project::appLogic()
 		m_playerNode->add_child(shot->_self);
 	}
 	
-	for (auto& enemy: m_enemies){
-		moveEnemy(enemy);
+	if (m_current_time_secs - (int)m_current_time_secs < std::numeric_limits<float>::epsilon()){
+		for (auto& enemy: m_enemies){
+			moveEnemy(enemy);
+		}
 	}
+	
 	//moveEnemy(m_enemy1);
 	m_collisionTree->clear();
 	m_collisionTree->construct((SceneNode*)&*m_rootNode, m_current_time_secs);
@@ -1482,7 +1485,7 @@ void Project::resetAll(){
 
 	processLuaSceneFile(m_luaSceneFile);
 
-	if (m_rootNode){
+	if (m_rootNode != nullptr){
 		cout << "reconstructed root node" << endl;
 	}
 
@@ -1582,7 +1585,7 @@ void Project::moveEnemy(GeometryNode* enemy){
 			if (invincibilityTime <= 0){
 				lives--;
 				generateParticles(m_playerNode);
-				invincibilityTime = 5;
+				invincibilityTime = 50;
 				if (lives <=0){
 					removeNode((SceneNode*)&*m_rootNode, m_playerNode);
 				}
@@ -1614,7 +1617,7 @@ void Project::movePlayer(double x, double z, bool adjusting){
 			cout << "collided into " << collision->m_name << endl;
 			lives--;
 			generateParticles(m_playerNode);
-			invincibilityTime = 5;
+			invincibilityTime = 50;
 			if (lives <= 0){
 				removeNode((SceneNode*)&*m_rootNode, m_playerNode);
 			}
