@@ -1600,7 +1600,7 @@ void Project::moveEnemy(GeometryNode* enemy){
 	double z = dis(e) - 1.0;
 
 	double modifier = 0.5;
-	if (moving_enemies){
+	if (moving_enemies && !enemy->hasAnimation()){
 		enemy->translate(vec3(modifier*x, modifier*y, modifier*z));
 	}
 
@@ -1611,7 +1611,7 @@ void Project::moveEnemy(GeometryNode* enemy){
 		enemy->set_transform(trans * enemy->get_transform());
 	}
 	
-	if (moving_enemies){
+	if (moving_enemies && !enemy->hasAnimation()){
 		std::vector<GeometryNode*> collisions;
 		std::vector<vec3> axis;
 		m_collisionTree->collideGeometry(enemy, collisions, axis, false);
