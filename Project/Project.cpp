@@ -78,7 +78,8 @@ Project::Project(const std::string & luaSceneFile)
 	  lives(3),
 	  m_particles_on_all_collisions(false),
 	  danmaku(true),
-	  moving_enemies(false)
+	  moving_enemies(false),
+	  m_shadow_positionAttribLocation(0)
 	  //particleCount(0),
 	  //lastUsedParticle(0)
 	  //particles(new Particle[MAX_PARTICLES]),
@@ -231,6 +232,10 @@ void Project::enableVertexShaderInputSlots()
 		m_positionAttribLocation = m_shader.getAttribLocation("position");
 		glEnableVertexAttribArray(m_positionAttribLocation);
 
+		m_shadow_positionAttribLocation = m_shader_shadow.getAttribLocation("position");
+		glEnableVertexAttribArray(m_shadow_positionAttribLocation);
+		
+
 		// Enable the vertex shader attribute location for "normal" when rendering.
 		m_normalAttribLocation = m_shader.getAttribLocation("normal");
 		glEnableVertexAttribArray(m_normalAttribLocation);
@@ -349,6 +354,9 @@ void Project::mapVboDataToVertexShaderInputLocations()
 	// "position" vertex attribute location for any bound vertex shader program.
 	glBindBuffer(GL_ARRAY_BUFFER, m_vbo_vertexPositions);
 	glVertexAttribPointer(m_positionAttribLocation, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_vbo_vertexPositions);
+	glVertexAttribPointer(m_shadow_positionAttribLocation, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 	// Tell GL how to map data from the vertex buffer "m_vbo_vertexNormals" into the
 	// "normal" vertex attribute location for any bound vertex shader program.

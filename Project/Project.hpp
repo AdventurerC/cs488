@@ -116,6 +116,7 @@ protected:
 	GLint m_positionAttribLocation;
 	GLint m_normalAttribLocation;
 	GLint m_textureAttrribLocation;
+	GLint m_shadow_positionAttribLocation;
 	ShaderProgram m_shader;
 	GLuint m_framebuffer;
 	GLuint m_texture;
