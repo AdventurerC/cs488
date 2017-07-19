@@ -1153,6 +1153,8 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 			glUniform1f(location, (geometryNode->texture._data != nullptr && m_drawTexture));
 			CHECK_GL_ERRORS;
 
+			m_shader.disable();
+
 			if (m_drawTexture && geometryNode->texture._data != nullptr){
 				applyTexture(geometryNode);
 				/*GLuint location = m_shader.getUniformLocation("textureSampler");
@@ -1163,6 +1165,7 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 			}
 
 			if (m_doShadowMapping){
+				m_shader.enable();
 				GLuint DepthBiasID = m_shader.getUniformLocation("depthBiasMVP");
 				GLuint ShadowMapID = m_shader.getUniformLocation("shadowMap");
 
@@ -1176,9 +1179,10 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 				mat4 depthBias_times_model = m_depthBias*geometryNode->trans;
 				glUniformMatrix4fv(DepthBiasID, 1, GL_FALSE, value_ptr(depthBias_times_model));
 				CHECK_GL_ERRORS;
+				m_shader.disable();
 			}
 
-			m_shader.disable();
+			
 
 
 			if (!(!inReflectionMode && geometryNode->isTransparent()) && !(m_drawReflection && geometryNode == m_plane)){
