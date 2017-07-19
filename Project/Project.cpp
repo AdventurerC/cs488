@@ -1704,9 +1704,16 @@ void Project::checkShotCollisions(Shot* shot, bool enemy){
 
 	if (removeSelf){
 		shot->_player->remove_child(shot->_self);
-		auto it = std::find(m_shots.begin(), m_shots.end(), shot);
-		if (it != m_shots.end()){
-			m_shots.erase(it);
+		if (enemy){
+			auto it = std::find(m_enemyShots.begin(), m_enemyShots.end(), shot);
+			if (it != m_enemyShots.end()){
+				m_enemyShots.erase(it);
+			} 
+		} else {
+			auto it = std::find(m_shots.begin(), m_shots.end(), shot);
+			if (it != m_shots.end()){
+				m_shots.erase(it);
+			} 
 		}
 	}
 }
