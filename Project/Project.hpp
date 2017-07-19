@@ -169,6 +169,8 @@ protected:
 	bool m_frontfaceCulling;
 	bool m_useAlpha;
 
+	bool m_particles_on_all_collisions;
+
 	float m_mouseX;
 	float m_mouseY;
 	float m_playerX;

@@ -75,7 +75,8 @@ Project::Project(const std::string & luaSceneFile)
 	  e(rd()),
 	  dis(0,2),
 	  shotId(0),
-	  lives(3)
+	  lives(3),
+	  m_particles_on_all_collisions(false)
 	  //particleCount(0),
 	  //lastUsedParticle(0)
 	  //particles(new Particle[MAX_PARTICLES]),
@@ -539,7 +540,7 @@ void Project::guiLogic()
 			glfwSetWindowShouldClose(m_window, GL_TRUE);
 		}
 
-		if( ImGui::Button( "Reset Position" ) ) {
+		/*if( ImGui::Button( "Reset Position" ) ) {
 			resetPosition();
 		}
 
@@ -549,7 +550,7 @@ void Project::guiLogic()
 
 		if( ImGui::Button( "Reset All" ) ) {
 			resetAll();
-		}
+		}*/
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
 
@@ -589,6 +590,10 @@ void Project::guiLogic()
 		}
 
 		if( ImGui::Checkbox( "Apply Texture", &m_drawTexture) ) {
+			
+		}
+
+		if( ImGui::Checkbox( "Particle effects on all collisions", &m_particles_on_all_collisions)){
 			
 		}
 
@@ -1703,7 +1708,9 @@ void Project::checkShotCollisions(Shot* shot, bool enemy){
 			}
 			removeSelf = true;
 		}else if (collision != m_playerNode && !collision->isEnemy()){
-			//generateParticles(collision);
+			if(m_particles_on_all_collisions){
+				generateParticles(collision);
+			}
 			removeSelf = true;
 		}
 	}

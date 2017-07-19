@@ -62,5 +62,5 @@ void main() {
 
 	gl_Position = Perspective * lerp(curTime, time0, p0, time1, p1);//vec4(position, 1.0);
 
-	UV = uv;
+	UV = Perspective * ModelView * uv;
 }
