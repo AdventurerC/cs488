@@ -1622,6 +1622,8 @@ void Project::moveEnemy(GeometryNode* enemy){
 			//cout << collision->m_name << endl;
 			if (collision == m_plane || collision == enemy) {
 				continue;
+			} else if (collision->m_name.find("shot") != std::string::npos) {
+				continue;
 			} else if (collision == m_playerNode){
 				if (invincibilityTime <= 0){
 					lives--;
