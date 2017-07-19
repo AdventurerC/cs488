@@ -594,7 +594,7 @@ void Project::guiLogic()
 		}
 
 		if( ImGui::Checkbox( "Particle effects on all collisions", &m_particles_on_all_collisions)){
-			
+
 		}
 
 	ImGui::End();
@@ -1114,6 +1114,12 @@ void Project::applyTexture(GeometryNode* node){
 	glUniform1f(location, (node->texture._data != nullptr && m_drawTexture));
 	CHECK_GL_ERRORS;
 
+	location = m_shader.getUniformLocation("textureSampler");
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glUniform1i(location, 0);
+	CHECK_GL_ERRORS;
+
 	m_shader.disable();
 
 }
@@ -1148,11 +1154,12 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 			CHECK_GL_ERRORS;
 
 			if (m_drawTexture && geometryNode->texture._data != nullptr){
-				GLuint location = m_shader.getUniformLocation("textureSampler");
+				applyTexture(geometryNode);
+				/*GLuint location = m_shader.getUniformLocation("textureSampler");
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, m_texture);
 				glUniform1i(location, 0);
-				CHECK_GL_ERRORS;
+				CHECK_GL_ERRORS;*/
 			}
 
 			if (m_doShadowMapping){
