@@ -1570,19 +1570,17 @@ bool Project::mouseMoveEvent (
 
 
 void Project::moveEnemy(GeometryNode* enemy){
-	//if (m_current_time%1000 != 0) return;
-	std::uniform_real_distribution<> dis(-1, 1);
-	//srand(m_current_time);
+	/*std::uniform_real_distribution<> dis(-1, 1);
 	double x =  dis(e) - 1.0;
-	double y = 0;//rand() % 2 - 1;
-	double z = dis(e) - 1.0;//rand() % 2 - 1;
+	double y = 0;
+	double z = dis(e) - 1.0;
 
 	double modifier = 0.5;
 
 	enemy->translate(vec3(modifier*x, modifier*y, modifier*z));
-
-	enemy->rotate('x', 1);
-
+	*/
+	enemy->rotate('y', 1);
+	/*
 	std::vector<GeometryNode*> collisions;
 	std::vector<vec3> axis;
 	m_collisionTree->collideGeometry(enemy, collisions, axis, false);
@@ -1609,7 +1607,7 @@ void Project::moveEnemy(GeometryNode* enemy){
 
 	if (adjust){
 		enemy->translate(vec3(-modifier*x, -modifier*y, -modifier*z));
-	}
+	}*/
 }
 
 void Project::movePlayer(double x, double z, bool adjusting){
@@ -1671,9 +1669,14 @@ void Project::checkShotCollisions(Shot* shot, bool enemy){
 		} else if (collision->m_name.find("shot") != std::string::npos) {
 			continue;
 		} else if (collision->isEnemy() && !enemy){// == m_enemy1 || collision == m_enemy2){
-			generateParticles(collision);
-			removeNode((SceneNode*)&*m_rootNode, collision);
-			removeSelf = true;
+			
+			auto it = std::find(m_enemies.begin(), m_enemies.end(), collision);
+			if (it != m_enemies.end()){
+				generateParticles(collision);
+				removeNode((SceneNode*)&*m_rootNode, collision);
+				removeSelf = true;
+				m_enemies.erase(it);
+			}
 		} else if (collision == m_playerNode && enemy) {
 			if (invincibilityTime <= 0){
 				lives--;
@@ -1691,7 +1694,7 @@ void Project::checkShotCollisions(Shot* shot, bool enemy){
 	}
 
 	if (removeSelf){
-		m_playerNode->remove_child(shot->_self);
+		shot->_player->remove_child(shot->_self);
 		auto it = std::find(m_shots.begin(), m_shots.end(), shot);
 		if (it != m_shots.end()){
 			m_shots.erase(it);
