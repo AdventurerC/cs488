@@ -170,6 +170,8 @@ protected:
 	bool m_useAlpha;
 
 	bool m_particles_on_all_collisions;
+	bool danmaku;
+	bool moving_enemies;
 
 	float m_mouseX;
 	float m_mouseY;

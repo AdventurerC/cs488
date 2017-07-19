@@ -76,7 +76,9 @@ Project::Project(const std::string & luaSceneFile)
 	  dis(0,2),
 	  shotId(0),
 	  lives(3),
-	  m_particles_on_all_collisions(false)
+	  m_particles_on_all_collisions(false),
+	  danmaku(true),
+	  moving_enemies(false)
 	  //particleCount(0),
 	  //lastUsedParticle(0)
 	  //particles(new Particle[MAX_PARTICLES]),
@@ -482,13 +484,15 @@ void Project::appLogic()
 	//if (m_current_time_secs - (int)m_current_time_secs < std::numeric_limits<float>::epsilon()){
 	for (auto& enemy: m_enemies){
 		moveEnemy(enemy);
-		Shot* shot = new Shot(enemy, shotId);
-		shotId++;
-		if (shotId > 10000){
-			shotId = 0;
+		if (danmaku){
+			Shot* shot = new Shot(enemy, shotId);
+			shotId++;
+			if (shotId > 10000){
+				shotId = 0;
+			}
+			m_enemyShots.emplace_back(shot);
+			enemy->add_child(shot->_self);
 		}
-		m_enemyShots.emplace_back(shot);
-		enemy->add_child(shot->_self);
 	}
 	
 	//moveEnemy(m_enemy1);
@@ -540,24 +544,7 @@ void Project::guiLogic()
 			glfwSetWindowShouldClose(m_window, GL_TRUE);
 		}
 
-		/*if( ImGui::Button( "Reset Position" ) ) {
-			resetPosition();
-		}
-
-		if( ImGui::Button( "Reset Orientation" ) ) {
-			resetOrientation();
-		}
-
-		if( ImGui::Button( "Reset All" ) ) {
-			resetAll();
-		}*/
-
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
-
-	ImGui::End();
-
-	ImGui::Begin("Player", &showDebugWindow, ImVec2(100, 300), opacity,
-			windowFlags);
 
 		string livesDisplay = "";
 		for (int i = 0; i < lives; i++){
@@ -594,6 +581,14 @@ void Project::guiLogic()
 		}
 
 		if( ImGui::Checkbox( "Particle effects on all collisions", &m_particles_on_all_collisions)){
+
+		}
+
+		if( ImGui::Checkbox("Bullet Hell", &danmaku)){
+
+		}
+
+		if( ImGui::Checkbox("Moving Enemies", &moving_enemies)){
 
 		}
 
@@ -1085,7 +1080,7 @@ void Project::applyTexture(GeometryNode* node){
 
 	//return;
 	m_shader.enable();
-	glGenTextures(1, &m_texture);
+	//glGenTextures(1, &m_texture);
 	glBindTexture(GL_TEXTURE_2D, m_texture);
 	CHECK_GL_ERRORS;
 	
@@ -1106,9 +1101,6 @@ void Project::applyTexture(GeometryNode* node){
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		
 		CHECK_GL_ERRORS;
 
 	}
@@ -1601,47 +1593,53 @@ bool Project::mouseMoveEvent (
 
 
 void Project::moveEnemy(GeometryNode* enemy){
-	/*std::uniform_real_distribution<> dis(-1, 1);
+	
+	std::uniform_real_distribution<> dis(-1, 1);
 	double x =  dis(e) - 1.0;
 	double y = 0;
 	double z = dis(e) - 1.0;
 
 	double modifier = 0.5;
-
-	enemy->translate(vec3(modifier*x, modifier*y, modifier*z));
-	*/
-	mat4 trans = enemy->get_transform();
-	enemy->set_transform(mat4());
-	enemy->rotate('y', 2);
-	enemy->set_transform(trans * enemy->get_transform());
-	/*
-	std::vector<GeometryNode*> collisions;
-	std::vector<vec3> axis;
-	m_collisionTree->collideGeometry(enemy, collisions, axis, false);
-	bool adjust(false);
-
-	for (int i = 0; i < collisions.size(); i++){
-		GeometryNode* collision = collisions[i];
-		//cout << collision->m_name << endl;
-		if (collision == m_plane || collision == enemy) {
-			continue;
-		} else if (collision == m_playerNode){
-			if (invincibilityTime <= 0){
-				lives--;
-				generateParticles(m_playerNode);
-				invincibilityTime = 50;
-				if (lives <=0){
-					removeNode((SceneNode*)&*m_rootNode, m_playerNode);
-				}
-			}
-			//continue;
-		}
-		adjust = true;
+	if (moving_enemies){
+		enemy->translate(vec3(modifier*x, modifier*y, modifier*z));
 	}
 
-	if (adjust){
-		enemy->translate(vec3(-modifier*x, -modifier*y, -modifier*z));
-	}*/
+	if (danmaku){
+		mat4 trans = enemy->get_transform();
+		enemy->set_transform(mat4());
+		enemy->rotate('y', 2);
+		enemy->set_transform(trans * enemy->get_transform());
+	}
+	
+	if (moving_enemies){
+		std::vector<GeometryNode*> collisions;
+		std::vector<vec3> axis;
+		m_collisionTree->collideGeometry(enemy, collisions, axis, false);
+		bool adjust(false);
+
+		for (int i = 0; i < collisions.size(); i++){
+			GeometryNode* collision = collisions[i];
+			//cout << collision->m_name << endl;
+			if (collision == m_plane || collision == enemy) {
+				continue;
+			} else if (collision == m_playerNode){
+				if (invincibilityTime <= 0){
+					lives--;
+					generateParticles(m_playerNode);
+					invincibilityTime = 50;
+					if (lives <=0){
+						removeNode((SceneNode*)&*m_rootNode, m_playerNode);
+					}
+				}
+				//continue;
+			}
+			adjust = true;
+		}
+
+		if (adjust){
+			enemy->translate(vec3(-modifier*x, -modifier*y, -modifier*z));
+		}
+	}
 }
 
 void Project::movePlayer(double x, double z, bool adjusting){
