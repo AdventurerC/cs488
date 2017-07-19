@@ -1178,7 +1178,7 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 			renderAnimatedObject(geometryNode, inReflectionMode);
 		}
 
-		if (geometryNode == m_playerNode || geometryNode->isEnemy()){
+		if (geometryNode == m_playerNode){
 			for (Shot* shot : m_shots){
 				drawShot(shot);
 			}
@@ -1571,7 +1571,7 @@ bool Project::mouseMoveEvent (
 
 void Project::moveEnemy(GeometryNode* enemy){
 	//if (m_current_time%1000 != 0) return;
-	//std::uniform_real_distribution<> dis(-1, 1);
+	std::uniform_real_distribution<> dis(-1, 1);
 	//srand(m_current_time);
 	double x =  dis(e) - 1.0;
 	double y = 0;//rand() % 2 - 1;
@@ -1580,6 +1580,8 @@ void Project::moveEnemy(GeometryNode* enemy){
 	double modifier = 0.5;
 
 	enemy->translate(vec3(modifier*x, modifier*y, modifier*z));
+
+	enemy->rotate('x', 1);
 
 	std::vector<GeometryNode*> collisions;
 	std::vector<vec3> axis;
