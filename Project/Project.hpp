@@ -187,6 +187,10 @@ protected:
 	bool lmb_down;
 	bool mmb_down;
 	bool rmb_down;
+	bool up_key;
+	bool down_key;
+	bool left_key;
+	bool right_key;
 
 	std::random_device rd;
 	std::mt19937 e;

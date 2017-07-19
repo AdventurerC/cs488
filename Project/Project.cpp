@@ -420,11 +420,11 @@ void Project::initViewMatrix() {
 //----------------------------------------------------------------------------------------
 void Project::initLightSources() {
 	// World-space position
-	m_light.position = vec3(-2.0f, 5.0f, 0.5f);
+	m_light.position = vec3(-5.0f, 5.0f, 0.5f);
 	m_light.rgbIntensity = vec3(0.8f); // White light
 	m_shadowView = glm::lookAt( 
 		m_light.position,
-		glm::vec3( 0.0f, -0.5f, -5.0f ),
+		glm::vec3( 0.0f, -0.0f, -5.0f ),
 		glm::vec3( 0.0f, 1.0f, 0.0f ) );
 }
 
@@ -469,6 +469,7 @@ void Project::uploadCommonSceneUniforms() {
  */
 void Project::appLogic()
 {
+
 	// Place per frame, application logic here ...
 	if (invincibilityTime > 0){
 		invincibilityTime--;
@@ -520,6 +521,26 @@ void Project::appLogic()
 	}
 
 	moveParticles();
+	double moveX = 0;
+	double moveZ = 0;
+
+	if (up_key){
+		moveZ -= 0.3; 
+	}
+
+	if (down_key){
+		moveZ += 0.3;
+	}
+	
+	if (left_key){
+		moveX -= 0.3;
+	}
+
+	if (right_key){
+		moveX += 0.3;
+	}
+	if (moveX != 0 || moveZ != 0)
+	movePlayer(moveX, moveZ);
 
 	uploadCommonSceneUniforms();
 }
@@ -1603,9 +1624,9 @@ bool Project::mouseMoveEvent (
 void Project::moveEnemy(GeometryNode* enemy){
 	
 	std::uniform_real_distribution<> dis(-1, 1);
-	double x =  dis(e) - 1.0;
+	double x =  dis(e);// - 1.0;
 	double y = 0;
-	double z = dis(e) - 1.0;
+	double z = dis(e);// - 1.0;
 
 	double modifier = 0.5;
 	if (moving_enemies && !enemy->hasAnimation()){
@@ -1857,9 +1878,6 @@ bool Project::keyInputEvent (
 ) {
 	bool eventHandled(false);
 
-	double moveX = 0;
-	double moveZ = 0;
-
 	if( action == GLFW_PRESS ) {
 		if( key == GLFW_KEY_M ) {
 			show_gui = !show_gui;
@@ -1875,22 +1893,33 @@ bool Project::keyInputEvent (
 		} 
 
 		if (key == GLFW_KEY_W){
-			moveZ -= 0.3;
+			up_key = true;//moveZ -= 0.3;
 		} else if (key == GLFW_KEY_S){
-			moveZ += 0.3;
+			down_key = true;//moveZ += 0.3;
 		} 
 		if (key == GLFW_KEY_A){
-			moveX -= 0.3;
+			left_key = true;//moveX -= 0.3;
 		} else if (key == GLFW_KEY_D){
-			moveX += 0.3;
-		}
-
-		if (moveX != 0 || moveZ != 0){
-			movePlayer(moveX, moveZ);
+			right_key = true;//moveX += 0.3;
 		}
 	}
 
-	else if (action == GLFW_REPEAT){
+	if( action == GLFW_RELEASE ) {
+
+		if (key == GLFW_KEY_W){
+			up_key = false;//moveZ -= 0.3;
+		} else if (key == GLFW_KEY_S){
+			down_key = false;//moveZ += 0.3;
+		} 
+		if (key == GLFW_KEY_A){
+			left_key = false;//moveX -= 0.3;
+		} else if (key == GLFW_KEY_D){
+			right_key = false;//moveX += 0.3;
+		}
+
+	}
+
+	/*else if (action == GLFW_REPEAT){
 		if (key == GLFW_KEY_W){
 			moveZ -= 0.3;
 		} else if (key == GLFW_KEY_S){
@@ -1905,7 +1934,7 @@ bool Project::keyInputEvent (
 		if (moveX != 0 || moveZ != 0){
 			movePlayer(moveX, moveZ);
 		}
-	}
+	}*/
 	// Fill in with event handling code...
 
 	return eventHandled;
