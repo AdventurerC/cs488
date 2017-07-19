@@ -156,15 +156,7 @@ void Project::init()
 
 	findPlayerNode((SceneNode*)&*m_rootNode);
 
-	if (m_playerNode != nullptr){
-		cout << "Player found" << endl;
-	}
-
 	findPlaneNode((SceneNode*)&*m_rootNode);
-
-	if (m_plane != nullptr){
-		cout << "Plane found" << endl;
-	}
 
 	findEnemyNodes((SceneNode*)&*m_rootNode);
 
@@ -958,7 +950,7 @@ void Project::drawParticles(){
 		//-- Set ModelView matrix:
 	//cout << "trans: " << glm::to_string(p->_trans) << endl;
 	location = m_shader.getUniformLocation("ModelView");
-	mat4 modelView = m_view  */** glm::translate(p->_pos) * */p->_trans;
+	mat4 modelView = m_view  * p->_trans;
 	glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
 	CHECK_GL_ERRORS;
 
@@ -1042,7 +1034,7 @@ void Project::moveParticles(){
 }
 
 void Project::generateParticles(GeometryNode* node){
-	cout << "generateParticles at " << glm::to_string(node->trans) << endl;
+	//cout << "generateParticles at " << glm::to_string(node->trans) << endl;
 	for (int i = 0; i < 50; i++){
 		float x = dis(e) - 1.0;
 		float y = dis(e);
@@ -1482,8 +1474,23 @@ void Project::resetPosition(){
 
 
 void Project::resetAll(){
-	resetOrientation();
-	resetPosition();
+	processLuaSceneFile(m_luaSceneFile);
+
+	findPlayerNode((SceneNode*)&*m_rootNode);
+
+	findPlaneNode((SceneNode*)&*m_rootNode);
+
+	findEnemyNodes((SceneNode*)&*m_rootNode);
+
+	findSpecialObjects((SceneNode*)&*m_rootNode);
+
+	Bounds bounds(m_plane->hitbox->_pos, m_plane->hitbox->_maxXYZ);
+	m_collisionTree = new CollisionTreeNode(bounds, 0);
+	m_collisionTree->construct((SceneNode*)&*m_rootNode);
+
+	m_start_time = clock();
+
+	lives = 3;
 }
 
 //----------------------------------------------------------------------------------------
@@ -1593,6 +1600,7 @@ void Project::movePlayer(double x, double z, bool adjusting){
 		//cout << collision->m_name << endl;
 		if (collision == m_plane || collision == m_playerNode) continue;
 		if (invincibilityTime <= 0 && collision->isEnemy()){//(collision == m_enemy1 || collision == m_enemy2)){
+			cout << "collided into " << collision->m_name << endl;
 			lives--;
 			generateParticles(m_playerNode);
 			invincibilityTime = 5;

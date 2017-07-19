@@ -122,15 +122,7 @@ protected:
 	GLuint m_shadowMap;
 	ShaderProgram m_shader_shadow;
 
-	//GLuint m_vao_particle;
-	//GLuint m_vbo_particle;
-	//ShaderProgram m_particle_shader;
 	std::vector<Particle*> particles;
-	//float* particle_positions;
-	//int particleCount;
-	//GLint m_particleAttrribLocation;
-	//int lastUsedParticle;
-	//std::vector<glm::mat4> particle_sources;
 
 	bool m_doShadowMapping;
 	bool m_drawReflection;
@@ -192,5 +184,5 @@ protected:
 
 	std::random_device rd;
 	std::mt19937 e;
-	std::uniform_real_distribution<> dis;//(-1, 1);
+	std::uniform_real_distribution<> dis;
 };
