@@ -1187,7 +1187,9 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 				drawShot(shot);
 			}
 			return; //don't draw shots twice
-		} 
+		} else if (geometryNode->isEnemy()){
+			return; // shots drawn later
+		}
 	}
 
 	glBindTexture(GL_TEXTURE_2D, 0);
