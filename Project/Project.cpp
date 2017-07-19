@@ -1482,6 +1482,10 @@ void Project::resetAll(){
 
 	processLuaSceneFile(m_luaSceneFile);
 
+	if (m_rootNode){
+		cout << "reconstructed root node" << endl;
+	}
+
 	findPlayerNode((SceneNode*)&*m_rootNode);
 
 	findPlaneNode((SceneNode*)&*m_rootNode);
