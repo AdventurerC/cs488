@@ -88,7 +88,7 @@ protected:
 
 	void movePlayer(double x, double z, bool adjusting = false);
 	void moveEnemy(GeometryNode* enemy);
-	void checkShotCollisions(Shot* shot);
+	void checkShotCollisions(Shot* shot, bool enemy = false);
 	void rotateShot(double x);
 	void removeNode(SceneNode* root, GeometryNode* target);
 
@@ -155,6 +155,7 @@ protected:
 	GeometryNode* m_reflectNode;
 	CollisionTreeNode* m_collisionTree;
 	std::vector<Shot*> m_shots;
+	std::vector<Shot*> m_enemyShots;
 	int shotId;
 	std::vector<GeometryNode*> m_enemies;
 

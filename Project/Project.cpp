@@ -478,10 +478,16 @@ void Project::appLogic()
 		m_playerNode->add_child(shot->_self);
 	}
 	
-	if (m_current_time_secs - (int)m_current_time_secs < std::numeric_limits<float>::epsilon()){
-		for (auto& enemy: m_enemies){
-			moveEnemy(enemy);
+	//if (m_current_time_secs - (int)m_current_time_secs < std::numeric_limits<float>::epsilon()){
+	for (auto& enemy: m_enemies){
+		moveEnemy(enemy);
+		Shot* shot = new Shot(enemy, shotId);
+		shotId++;
+		if (shotId > 10000){
+			shotId = 0;
 		}
+		m_enemyShots.emplace_back(shot);
+		enemy->add_child(shot->_self);
 	}
 	
 	//moveEnemy(m_enemy1);
@@ -492,6 +498,12 @@ void Project::appLogic()
 		shot->advance();
 		//cout << "shot " << shot->_self->m_name << " advancing " << endl;
 		checkShotCollisions(shot);
+	}
+
+	for (Shot* shot : m_enemyShots){
+		shot->advance();
+		//cout << "shot " << shot->_self->m_name << " advancing " << endl;
+		checkShotCollisions(shot, true);
 	}
 
 	moveParticles();
@@ -1166,7 +1178,7 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 			renderAnimatedObject(geometryNode, inReflectionMode);
 		}
 
-		if (geometryNode == m_playerNode){
+		if (geometryNode == m_playerNode || geometryNode->isEnemy()){
 			for (Shot* shot : m_shots){
 				drawShot(shot);
 			}
@@ -1481,8 +1493,6 @@ void Project::resetAll(){
 		m_rootNode->remove_child(child);
 	}
 
-	m_rootNode = nullptr;
-
 	processLuaSceneFile(m_luaSceneFile);
 
 	if (m_rootNode != nullptr){
@@ -1640,7 +1650,7 @@ void Project::movePlayer(double x, double z, bool adjusting){
 	}
 }
 
-void Project::checkShotCollisions(Shot* shot){
+void Project::checkShotCollisions(Shot* shot, bool enemy){
 	if (lives <= 0) return;
 	GeometryNode* node = shot->_self;
 
@@ -1654,15 +1664,25 @@ void Project::checkShotCollisions(Shot* shot){
 	for (int i = 0; i < collisions.size(); i++){
 		GeometryNode* collision = collisions[i];
 		//cout << shot->_self->m_name << " collided with " << collision->m_name << endl;
-		if (collision == m_plane || collision == m_playerNode){
+		if (collision == m_plane){
 			continue;
 		} else if (collision->m_name.find("shot") != std::string::npos) {
 			continue;
-		} else if (collision->isEnemy()){// == m_enemy1 || collision == m_enemy2){
+		} else if (collision->isEnemy() && !enemy){// == m_enemy1 || collision == m_enemy2){
 			generateParticles(collision);
 			removeNode((SceneNode*)&*m_rootNode, collision);
 			removeSelf = true;
-		} else {
+		} else if (collision == m_playerNode && enemy) {
+			if (invincibilityTime <= 0){
+				lives--;
+				generateParticles(m_playerNode);
+				invincibilityTime = 50;
+				if (lives <=0){
+					removeNode((SceneNode*)&*m_rootNode, m_playerNode);
+				}
+			}
+			removeSelf = true;
+		}else {
 			//generateParticles(collision);
 			removeSelf = true;
 		}

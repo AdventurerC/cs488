@@ -118,7 +118,7 @@ rootNode:add_child(enemy1)
 
 x = -1;
 x = 1;
-for i = 1,10 do
+for i = 1,2 do
     enemy = gr.mesh('sphere', 'e'..i+1, 1.4, 1.4, 1.4)
     enemy:scale(0.7,0.7,0.7)
     enemy:translate(0+x*0.5*i, 0.2, -15+i)
@@ -130,7 +130,7 @@ end
 --enemy1:translate(0, 1, 0)
 --enemy1:set_keyframe(1)
 
-enemy2 = gr.mesh('sphere', 'e2',1.4, 1.4, 1.4)
+enemy2 = gr.mesh('sphere', 'e4',1.4, 1.4, 1.4)
 enemy2:scale(0.7, 0.7, 0.7)
 enemy2:scale(1.5, 0.5, 1.5)
 enemy2:translate(-5, 0.0, -15)
