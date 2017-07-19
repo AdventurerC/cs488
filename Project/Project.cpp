@@ -734,6 +734,12 @@ void Project::getNodeShadows(SceneNode* root){
 		m_shader_shadow.disable();
 		}
 
+		if (geometryNode == m_playerNode){
+			return; //don't draw shots twice
+		} else if (geometryNode->isEnemy()){
+			return; // shots drawn later
+		}
+
 	}
 	for (SceneNode *child : root->children){
 		child->set_transform(root->get_transform() * child->get_transform());
@@ -1697,7 +1703,7 @@ void Project::checkShotCollisions(Shot* shot, bool enemy){
 			}
 			removeSelf = true;
 		}else {
-			//generateParticles(collision);
+			generateParticles(collision);
 			removeSelf = true;
 		}
 	}
