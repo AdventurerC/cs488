@@ -1474,6 +1474,12 @@ void Project::resetPosition(){
 
 
 void Project::resetAll(){
+	for (auto child : m_rootNode->children){
+		m_rootNode->remove_child(child);
+	}
+
+	m_rootNode = nullptr;
+
 	processLuaSceneFile(m_luaSceneFile);
 
 	findPlayerNode((SceneNode*)&*m_rootNode);
@@ -1485,7 +1491,8 @@ void Project::resetAll(){
 	findSpecialObjects((SceneNode*)&*m_rootNode);
 
 	Bounds bounds(m_plane->hitbox->_pos, m_plane->hitbox->_maxXYZ);
-	m_collisionTree = new CollisionTreeNode(bounds, 0);
+	//m_collisionTree = new CollisionTreeNode(bounds, 0);
+	m_collisionTree.clear();
 	m_collisionTree->construct((SceneNode*)&*m_rootNode);
 
 	m_start_time = clock();
