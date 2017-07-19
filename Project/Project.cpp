@@ -1702,8 +1702,8 @@ void Project::checkShotCollisions(Shot* shot, bool enemy){
 				}
 			}
 			removeSelf = true;
-		}else {
-			generateParticles(collision);
+		}else if (collision != m_playerNode && !collision->isEnemy()){
+			//generateParticles(collision);
 			removeSelf = true;
 		}
 	}
