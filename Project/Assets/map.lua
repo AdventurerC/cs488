@@ -117,15 +117,15 @@ enemy1:set_material(black)
 rootNode:add_child(enemy1)
 
 --x = -1;
---x = 1;
---for i = 1,2 do
---    enemy = gr.mesh('sphere', 'e'..i+1, 1.4, 1.4, 1.4)
---    enemy:scale(0.7,0.7,0.7)
---    enemy:translate(0+x*0.5*i, 0.2, -15+i)
---    enemy:set_material(orange)
---    rootNode:add_child(enemy)
---    x=-x
---end
+x = 1;
+for i = 1,3 do
+    enemy = gr.mesh('sphere', 'e'..i+1, 1.4, 1.4, 1.4)
+    enemy:scale(0.7,0.7,0.7)
+    enemy:translate(0+x*0.5*i, 0.2, -15+i)
+    enemy:set_material(orange)
+    rootNode:add_child(enemy)
+    x=-x
+end
 --enemy1:set_keyframe(0)
 --enemy1:translate(0, 1, 0)
 --enemy1:set_keyframe(1)

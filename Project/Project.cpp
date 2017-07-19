@@ -420,11 +420,11 @@ void Project::initViewMatrix() {
 //----------------------------------------------------------------------------------------
 void Project::initLightSources() {
 	// World-space position
-	m_light.position = vec3(-5.0f, 5.0f, 0.5f);
+	m_light.position = vec3(5.0f, 10.0f, 0.0f);
 	m_light.rgbIntensity = vec3(0.8f); // White light
 	m_shadowView = glm::lookAt( 
 		m_light.position,
-		glm::vec3( 0.0f, -0.0f, -5.0f ),
+		glm::vec3( 0.0f, 0.0f, 0.0f ),
 		glm::vec3( 0.0f, 1.0f, 0.0f ) );
 }
 
@@ -721,7 +721,7 @@ void Project::getShadowMap(SceneNode* root){
 	/*if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		return false;*/
 
-	mat4 ortho_mat = glm::ortho<float>(-12, 12, -20, 20, -25, 25); //glm::perspective(degreesToRadians(60.0f), aspect, 0.1f, 100.0f);
+	mat4 ortho_mat = glm::ortho<float>(-20, 20, -25, 25, -25, 25); //glm::perspective(degreesToRadians(60.0f), aspect, 0.1f, 100.0f);
 	//m_shadowView already set
 	m_ortho_shadowView = ortho_mat * m_shadowView;// * mat4(1.0);
 	//cout << "generating shadows" << endl;
@@ -807,8 +807,6 @@ void Project::draw() {
 	if (m_doShadowMapping){
 		getShadowMap((SceneNode *) &*m_rootNode);
 
-		//glBindTexture(GL_TEXTURE_CUBE_MAP, m_shadowMap);
-		//CHECK_GL_ERRORS;
 		glm::mat4 biasMatrix(
 				0.5, 0.0, 0.0, 0.0, 
 				0.0, 0.5, 0.0, 0.0,
