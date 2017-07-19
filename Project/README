@@ -1,15 +1,16 @@
 --COMPILATION--
-default is ok:
+due to changing some files in cs488/shared, need to compile in cs488 directory first, then cd into cs488/Project and compile
+in /cs488:
+premake4 gmake
+make
+cd Project
 premake4 gmake
 make
 
 --RUN--
-to show puppet:
+to run program:
 ./Project Assets/puppet.lua
-(default)
 
 --MANUAL--
-Tested on gl14
-picking is implemented and works, but picking menu left in for convenience
-puppet limbs distort during movement due to bad scaling
-Menu windows might be on top of each other during first run
+Tested on gl28
+--texture mapping doesn't work properly (only shows one constant color instead of texture, UVs are probably messed up)
