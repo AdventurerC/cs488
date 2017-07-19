@@ -1492,7 +1492,7 @@ void Project::resetAll(){
 
 	Bounds bounds(m_plane->hitbox->_pos, m_plane->hitbox->_maxXYZ);
 	//m_collisionTree = new CollisionTreeNode(bounds, 0);
-	m_collisionTree.clear();
+	m_collisionTree->clear();
 	m_collisionTree->construct((SceneNode*)&*m_rootNode);
 
 	m_start_time = clock();
