@@ -1579,7 +1579,10 @@ void Project::moveEnemy(GeometryNode* enemy){
 
 	enemy->translate(vec3(modifier*x, modifier*y, modifier*z));
 	*/
+	mat4 trans = enemy->get_transform();
+	enemy->set_transform(mat4());
 	enemy->rotate('y', 1);
+	enemy->set_transform(trans * enemy->get_transform());
 	/*
 	std::vector<GeometryNode*> collisions;
 	std::vector<vec3> axis;
