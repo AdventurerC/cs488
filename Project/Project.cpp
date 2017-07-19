@@ -832,6 +832,10 @@ void Project::renderSceneGraph(const SceneNode & root, bool inReflectionMode) {
 
 	renderNodes((SceneNode *) &root, inReflectionMode);
 
+	for (Shot* shot : m_enemyShots){
+		drawShot(shot);
+	}
+
 	glBindVertexArray(0);
 	CHECK_GL_ERRORS;
 }
@@ -1183,7 +1187,7 @@ void Project::renderNodes(SceneNode *root, bool inReflectionMode){
 				drawShot(shot);
 			}
 			return; //don't draw shots twice
-		}
+		} 
 	}
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -1581,7 +1585,7 @@ void Project::moveEnemy(GeometryNode* enemy){
 	*/
 	mat4 trans = enemy->get_transform();
 	enemy->set_transform(mat4());
-	enemy->rotate('y', 1);
+	enemy->rotate('y', 2);
 	enemy->set_transform(trans * enemy->get_transform());
 	/*
 	std::vector<GeometryNode*> collisions;
